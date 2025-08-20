@@ -63,4 +63,4 @@ He is versatile and reliable, dangerous in duels and capable of swinging chaotic
 ---
 
 ## Additional Documentation
-- [Systems Design](SYSTEMS_DESIGN.md)
+- [Systems Design](Systems-Design.md)
