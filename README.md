@@ -51,13 +51,6 @@ He is versatile and reliable, dangerous in duels and capable of swinging chaotic
 
 ---
 
-## Development Notes
-- **Engine:** Unity (C#)  
-- **Networking:** Server-authoritative architecture with SpacetimeDB.  
-- **Status:** Early development; currently focusing on prototyping movement, combat systems, and core abilities.  
-
----
-
 ## Roadmap
 - [ ] Initial Spacetime DB connection with Unity
 - [ ] Create simple rigged model with animations
@@ -66,9 +59,3 @@ He is versatile and reliable, dangerous in duels and capable of swinging chaotic
 - [ ] Model and implement map  
 - [ ] Model and implement second and third playable characters (The Hunter, The Monk)  
 - [ ] Ending polish, gameplay balancing, map changes
-
----
-
-## Contributors
-- **Teo Mendoza** – Lead developer, designer, and 3D modeler
-
