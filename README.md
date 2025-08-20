@@ -59,3 +59,8 @@ He is versatile and reliable, dangerous in duels and capable of swinging chaotic
 - [ ] Model and implement map  
 - [ ] Model and implement second and third playable characters (The Hunter, The Monk)  
 - [ ] Ending polish, gameplay balancing, map changes
+
+---
+
+## Additional Documentation
+- [Systems Design](SYSTEMS_DESIGN.md)
