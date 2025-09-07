@@ -1,5 +1,3 @@
-# 3D-Brawler
-
 ## Game Premise
 A fast-paced, skill-based free-for-all brawler where up to 8–10 players clash in chaotic arenas.  
 The game emphasizes **mechanical skill and decision-making**, but remains **non-punishing** thanks to quick respawns.  
