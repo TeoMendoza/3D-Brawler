@@ -29,18 +29,13 @@ Each client renders one local instance (the player-controlled character) and N�
 - **Remote instances:** Each subscribes to its own row; they do not subscribe to the local player’s rows or any global authority.
 
 ### Read/Write Authority
-**Local instance (player-controlled):**
-- Reads DB updates for its own state (same as remotes).
-- Writes via reducers to its own row only, including:
-  - State transition requests (e.g., enter `ProjectileThrowing`).
-  - Position/velocity updates (movement requests).
-  - Ability/attack usage requests.
-  - Config lock/unlock updates tied to animation lifecycle (see Section 7).
-  - Effect-queue appends targeted at other players only through validated game events (e.g., projectile hit reducer), not by directly mutating another player’s row.
-
-**Remote instances (read-only mirrors):**
-- Read-only. Never send reducers.
-- Update visuals/animation purely from observed DB state changes.
+  - **Local instance (player-controlled):**
+    - Reads DB updates for its own state (same as remotes).
+    - Writes via reducers to its own row only (State transitions, Config lock & unlock (Section 4), etc)
+      
+  - **Remote instances (read-only mirrors):**
+    - Read-only. Never send reducers.
+    - Update visuals/animation purely from observed DB state changes.
 
 ### Processing Loop (per instance)
 1. **Apply DB updates →** Update transform, visible state, and animation (state-driven).  
@@ -55,7 +50,7 @@ Each client renders one local instance (the player-controlled character) and N�
 - **CapabilityConfig:** A dictionary of permission keys → set/list of locking states currently occupying that permission (e.g., `CanMove`, `UpperLocked`).
 - **Permit rule:** An action is permitted only if the corresponding lock list is empty.
 - **Locking model:** States add/remove themselves to/from the relevant lists (deduped; one state cannot occupy the same list twice).
-- **Overlap-safe:** Multiple states may lock the same permission concurrently; permission unlocks only when the list becomes empty (see Section 7 for animation-locked details).
+- **Overlap-safe:** Multiple states may lock the same permission concurrently; permission unlocks only when the list becomes empty (see Section 4 for animation-locked details).
 
 ### Animation Control
 - Animations are state-driven, not directly controlled by input.
@@ -67,7 +62,7 @@ Each client renders one local instance (the player-controlled character) and N�
 - **Processing effects:** The target’s own client consumes its queue and applies effects via interfaces (e.g., `IReceiveDamage`, `IReceiveSnare`), enabling:
   - Local resistance/immunity/config adjustments.
   - Character/state-specific behavior (e.g., ult forms ignoring knockback).
-- **Duration effects:** Managed by a duration-effects table and periodic reducer (see Section 8). Reapplication is triggered on any state change by resetting the per-effect applied flag(s), ensuring the current state’s base stats remain authoritative.
+- **Duration effects:** Managed by a duration-effects table and periodic reducer (Section 5). Reapplication is triggered on any state change by resetting the per-effect applied flag(s), ensuring the current state’s base stats remain authoritative.
 
 ### Authority Invariants
 - A client never writes to another player’s core state (position, health, configs) directly.
@@ -113,7 +108,7 @@ Each client renders one local instance (the player-controlled character) and N�
   - This design assumption ensures fairness despite network delay/jitter, while avoiding complex model-shape collision on the server.
 - If valid:
   - The projectile is removed.
-  - Effects are appended to the target’s effect queue (see Section 4).
+  - Effects are appended to the target’s effect queue (Section 5).
 
 ### Effect Application
 - Reducers append effect actions such as:
