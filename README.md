@@ -52,7 +52,8 @@ He is versatile and reliable, dangerous in duels and capable of swinging chaotic
 ---
 
 ## Roadmap
-- [ ] Spacetime DB Tutorial Game
+- [x] Spacetime DB Tutorial Game
+- [x] Systems Document Refinement
 - [ ] Initial Spacetime DB connection with Unity
 - [ ] Create simple rigged model with animations
 - [ ] Gameplay prototype with basic multiplayer sync, attack handling, and projectile registration.
