@@ -1,3 +1,5 @@
+# Capstone Game Systems Design
+
 ## 1. Game Initialization & Ownership
 
 ### GameManager responsibilities
