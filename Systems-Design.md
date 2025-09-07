@@ -20,7 +20,6 @@
 ---
 
 # 2. Character Instance Behavior (Local vs. Remote)
-
 ### Overview
 Each client renders one local instance (the player-controlled character) and N–1 remote instances (other players). All instances subscribe only to their own authoritative rows in the database. The distinction is purely about what each instance is permitted to do (read vs. write) and which code paths are enabled (input, reducers, effect processing).
 
