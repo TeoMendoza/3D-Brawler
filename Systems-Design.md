@@ -145,14 +145,10 @@ Certain actions must complete critical animation beats before the player regains
 - **Overlap-safe:** Multiple states may occupy the same permission; a permission unlocks only when its set becomes empty.
 
 ### Lifecycle (per locking state)
-1. **Enter**  
-Owner sends a single reducer adding this state to each targeted permission set. Animations/VFX are chosen by state; all clients render them identically.
-2. **Active**  
-Capability checks reference lock sets; disallowed actions are denied (no reducers sent).
-3. **Exit (natural)**  
-On local animation completion, owner invokes `OnAnimationFinished` and sends a single reducer removing this state from all sets it occupied.
-4. **Exit (interrupted)**  
-If an effect interrupts the state (e.g., stun/knockback), the owner processes the effect queue locally and triggers manual cleanup to remove this state from all occupied sets.
+1. **Enter:** Owner sends a single reducer adding this state to each targeted permission set. Animations/VFX are chosen by state; all clients render them identically.
+2. **Active:** Capability checks reference lock sets; disallowed actions are denied (no reducers sent).
+3. **Exit (natural):** On local animation completion, owner invokes `OnAnimationFinished` and sends a single reducer removing this state from all sets it occupied.
+4. **Exit (interrupted):** If an effect interrupts the state (e.g., stun/knockback), the owner processes the effect queue locally and triggers manual cleanup to remove this state from all occupied sets.
 
 ### Interactions with Duration/State Changes
 - On any state change, duration effects apply per design (resetting applied flags).
