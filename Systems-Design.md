@@ -1,4 +1,4 @@
-# 1. Game Initialization & Ownership
+## 1. Game Initialization & Ownership
 
 ### GameManager responsibilities
 - Subscribes to the player table and listens for new row entries (e.g., when a player joins).
@@ -19,7 +19,8 @@
 
 ---
 
-# 2. Character Instance Behavior (Local vs. Remote)
+## 2. Character Instance Behavior (Local vs. Remote)
+
 ### Overview
 Each client renders one local instance (the player-controlled character) and Nâ€“1 remote instances (other players). All instances subscribe only to their own authoritative rows in the database. The distinction is purely about what each instance is permitted to do (read vs. write) and which code paths are enabled (input, reducers, effect processing).
 
@@ -74,7 +75,7 @@ Each client renders one local instance (the player-controlled character) and Nâ€
 
 ---
 
-# 3. Projectile System
+## 3. Projectile System
 
 ### Lifecycle
 - When a player fires a projectile, their client inserts a new row into the projectiles table via a reducer.
@@ -123,7 +124,7 @@ Each client renders one local instance (the player-controlled character) and Nâ€
 
 ---
 
-# 4. Animation-Locked States
+## 4. Animation-Locked States
 
 ### Rationale
 Certain actions must complete critical animation beats before the player regains control (e.g., release frame of a throw, recovery of a heavy attack). Locking input via state-owned permissions ensures:
@@ -155,7 +156,7 @@ Certain actions must complete critical animation beats before the player regains
 
 ---
 
-# 5. Effect Queue & Duration Effects
+## 5. Effect Queue & Duration Effects
 
 ### Effect Queue System
 - Effects like `TakeDamage`, `Burn`, or `Blind` are appended to the targetâ€™s effect queue via validated reducers (e.g., after a server-validated hit).
