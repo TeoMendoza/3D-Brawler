@@ -1,10 +1,10 @@
 ## Overview
 
-3D Brawler is a fast paced, skill driven free-for-all brawler where up to 8-12 players clash in chaotic arenas. The game emphasizes mechanical precision and decision making, while remaining non-punishing thanks to rapid respawns. This balance encourages players to take risks, push aggressive plays, and create constant moments of excitement.
+3D Brawler is a fast-paced, skill-driven free-for-all arena fighter where up to 8–12 players collide in chaotic, ever-shifting battlegrounds. The game emphasizes mechanical precision and strategic decision making, while staying accessible and non-punishing through rapid respawns. This balance encourages bold plays, constant action, and high energy moments throughout every match.
 
-Matches are scored competitively, with each player’s rank determined by a blend of factors: kills, damage dealt, kill streaks, survival time, and more. This scoring system rewards diverse playstyles, whether dominating through raw eliminations, consistently applying pressure, or mastering survivability. Victory isn’t just about landing the final blow, but about excelling across multiple dimensions of combat.
+Progress is measured through a dynamic scoring system that tracks multiple performance factors, including kills, damage dealt, kill streaks, and survival time. This approach rewards diverse playstyles: dominating through eliminations, applying consistent pressure, or excelling in survivability. Victory comes not just from landing final blows, but from consistently performing across all aspects of combat.
 
-While the fighting is grounded in realistic physics, variety comes not only from abilities and movement options but also from the arenas themselves. Each environment shapes battles differently, creating new opportunities for positioning, improvisation, and surprising comebacks. Players must learn to outplay opponents while also adapting to the shifting dynamics of the stage, ensuring every match feels unpredictable, chaotic, and skillful.
+Though combat is grounded in realistic physics, variety emerges from both character abilities and the arenas themselves. Each stage introduces unique dynamics that shape fights in different ways, creating opportunities for creative positioning, improvisation, and dramatic comebacks. The result is gameplay that feels unpredictable, chaotic, and deeply skillful, ensuring no two matches ever play out the same.
 
 ---
 
