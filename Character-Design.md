@@ -1,4 +1,7 @@
 ## Characters
+3D Brawler features three unique fighters, each crafted with a distinct playstyle. Their designs are intentionally interwoven in a "rock–paper–scissors" inspired format; every character has particular strengths and vulnerabilities when facing each of the others. This creates a dynamic ecosystem where no fighter is universally dominant, and success depends on reading the matchup, mastering timing, and adapting to the opponent’s style.
+
+The variety of arena environments adds another strategic layer, shifting advantages and forcing players to adjust tactics on the fly. Combined with the ability to switch characters mid-match, battles naturally evolve in pace and tone, keeping gameplay skillful, original, and exciting from start to finish.
 
 ### The Magician
 A theatrical villain who manipulates the battlefield with mind games, illusions, and control effects.  
