@@ -1,3 +1,10 @@
+## Overview
+
+This document provides a technical overview of how 3D Brawler is architected and implemented using Unity and SpacetimeDB. It focuses on the major design decisions and backend systems that enable the game to function as a whole.
+
+Smaller-scale details and rapidly evolving subsystems are intentionally omitted to keep the document concise, clear, and focused on the core architecture.
+
+
 ## 1. Game Initialization & Ownership
 
 ### GameManager responsibilities
