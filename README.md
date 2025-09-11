@@ -1,5 +1,5 @@
 ## Game Premise
-A fast-paced, skill-based free-for-all brawler where up to 8–10 players clash in chaotic arenas.  
+A fast-paced, skill-based free-for-all brawler where up to 8–12 players clash in chaotic arenas.  
 The game emphasizes **mechanical skill and decision-making**, but remains **non-punishing** thanks to quick respawns.  
 This balance encourages players to take risks, push aggressive plays, and create constant moments of excitement.  
 
@@ -11,6 +11,7 @@ Players must learn not only how to outplay their opponents, but also how to adap
 ## Roadmap
 - [x] Spacetime DB Tutorial Game
 - [x] Systems Document Refinement
+- [ ] Character Design Refinement
 - [ ] Initial Spacetime DB connection with Unity
 - [ ] Create simple rigged model with animations
 - [ ] Gameplay prototype with basic multiplayer sync, attack handling, and projectile registration.
@@ -22,4 +23,5 @@ Players must learn not only how to outplay their opponents, but also how to adap
 ---
 
 ## Additional Documentation
+- [Character Design](Character-Design.md)
 - [Systems Design](Systems-Design.md)
