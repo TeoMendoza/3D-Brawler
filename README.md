@@ -1,4 +1,4 @@
-## Game Premise
+## Overview
 
 3D Brawler is a fast paced, skill driven free-for-all brawler where up to 8-12 players clash in chaotic arenas. The game emphasizes mechanical precision and decision making, while remaining non-punishing thanks to rapid respawns. This balance encourages players to take risks, push aggressive plays, and create constant moments of excitement.
 
