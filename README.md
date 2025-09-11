@@ -1,10 +1,10 @@
 ## Game Premise
-A fast-paced, skill-based free-for-all brawler where up to 8–12 players clash in chaotic arenas.  
-The game emphasizes **mechanical skill and decision-making**, but remains **non-punishing** thanks to quick respawns.  
-This balance encourages players to take risks, push aggressive plays, and create constant moments of excitement.  
 
-While combat is grounded in **realistic physics**, the variety of abilities and movement options ensures unpredictable and chaotic battles.  
-Players must learn not only how to outplay their opponents, but also how to adapt to the shifting pace of the arena.
+3D Brawler is a fast paced, skill driven free-for-all brawler where up to 8-12 players clash in chaotic arenas. The game emphasizes mechanical precision and decision making, while remaining non-punishing thanks to rapid respawns. This balance encourages players to take risks, push aggressive plays, and create constant moments of excitement.
+
+Matches are scored competitively, with each player’s rank determined by a blend of factors: kills, damage dealt, kill streaks, survival time, and more. This scoring system rewards diverse playstyles, whether dominating through raw eliminations, consistently applying pressure, or mastering survivability. Victory isn’t just about landing the final blow, but about excelling across multiple dimensions of combat.
+
+While the fighting is grounded in realistic physics, variety comes not only from abilities and movement options but also from the arenas themselves. Each environment shapes battles differently, creating new opportunities for positioning, improvisation, and surprising comebacks. Players must learn to outplay opponents while also adapting to the shifting dynamics of the stage, ensuring every match feels unpredictable, chaotic, and skillful.
 
 ---
 
