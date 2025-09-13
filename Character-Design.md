@@ -24,12 +24,11 @@ A calculated duelist who thrives on accuracy and controlling chokepoints. The Hu
 
 
 ### The Monk
-A disciplined warrior who embodies adaptability, flowing between offense and defense with ease.  
-The Monk excels at reactive play, using spiritual force to reposition, survive, or punish overextensions.  
-He is versatile and reliable, dangerous in duels and capable of swinging chaotic fights back in his favor.  
+A disciplined warrior who embodies adaptability, flowing between offense and defense with ease. The Monk excels at reactive play, using spiritual force to reposition, survive, or punish overextensions. He is versatile and reliable, dangerous in duels and capable of swinging chaotic fights back in his favor.  
 
-- **Base Attack – Spirit Beads**: Tosses floating beads in a rhythmic sequence, returning over time.  
-- **Ability 1 – Strengthen**: Briefly fortifies body and spirit, healing and reducing incoming damage.  
-- **Ability 2 – Air Palm**: A forceful blast of wind that knocks enemies back, dealing extra damage if they collide with walls.  
-- **Ability 3 – Cloud Step**: Launches upward and backward on a gust of spiritual energy, allowing quick escapes or aerial play.  
-- **Ultimate – Harmony Break**: Transfers current health to all enemies in range, and gains the health of the highest-health enemy in range.
+- **Base Attack – Spirit Beads**: Tosses floating beads in a rhythmic sequence. Ammo replenishes automatically over time, keeping the Monk in constant flow.  
+- **Ability 1 – Strengthen**: Restores health through spiritual focus. Heals instantly with a lingering effect over time, allowing him to endure and recover in the midst of battle.  
+- **Ability 2 – Air Palm**: Releases a forceful blast of wind that knocks enemies back and briefly stuns them. Deals extra damage if enemies collide with walls, making it especially dangerous in tight spaces.  
+- **Ability 3 – Cloud Step**: Launches upward on a gust of spiritual energy, gaining height and then steering freely while airborne. Can be used defensively to escape pressure or offensively for aerial positioning.  
+- **Ultimate – Harmony Break**: Swaps health across the field: all enemies in range have their health set to the Monk’s current value, and the Monk’s health becomes the highest among those affected.  
+
