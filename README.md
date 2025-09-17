@@ -11,7 +11,7 @@ Though combat is grounded in realistic physics, variety emerges from both charac
 ## Roadmap
 - [x] Spacetime DB Tutorial Game
 - [x] Systems Document Refinement
-- [ ] Character Design Refinement
+- [x] Character Design Refinement
 - [ ] Initial Spacetime DB connection with Unity
 - [ ] Create simple rigged model with animations
 - [ ] Gameplay prototype with basic multiplayer sync, attack handling, and projectile registration.
