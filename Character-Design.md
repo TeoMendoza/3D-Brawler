@@ -7,8 +7,6 @@ This interplay creates a balanced ecosystem where no fighter is universally domi
 ## Characters
 
 ### The Magician
-
-#### Concept & Role
 A theatrical villain who manipulates the battlefield with illusions, control effects, and deception. Once a beloved stage performer, he now twists his craft into a weapon. The Magician excels in close-range 1v1 duels, punishing overconfidence with tricks that disorient, misdirect, and shut down opponents. In free-for-all battles, he thrives on chaos, slipping in and out of sight while sowing confusion across the arena.  
 
 #### Ability Set
@@ -25,7 +23,6 @@ A theatrical villain who manipulates the battlefield with illusions, control eff
 
 ### The Hunter
 
-#### Concept & Role
 A calculated duelist who thrives on accuracy and controlling chokepoints. The Hunter is patient and deliberate, punishing poor movement with devastating follow-ups. While slower than most, his kit rewards precision and planning, making him dangerous in mid-range engagements.  
 
 #### Ability Set
@@ -42,7 +39,6 @@ A calculated duelist who thrives on accuracy and controlling chokepoints. The Hu
 
 ### The Monk
 
-#### Concept & Role
 A disciplined warrior who embodies adaptability, flowing between offense and defense with ease. The Monk excels at reactive play, using spiritual force to reposition, survive, or punish overextensions. He is versatile and reliable, dangerous in duels and capable of swinging chaotic fights back in his favor.  
 
 #### Ability Set
