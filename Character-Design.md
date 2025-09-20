@@ -17,11 +17,17 @@ A theatrical villain who manipulates the battlefield with illusions, control eff
 - **Ultimate - Final Act: Hypnotic Gaze**: Fixates on a single target with a hypnotic stare. If they keep him in sight while within his crosshair, they are stunned until they avert their gaze or he changes focus.  
 
 #### Design Reasoning
-- Strengths: Guerilla Tactics esq fighter, in and out, high pressure with good utility for gaining advantages close range. Very fast, mobile (non ability, just from a speed perspective), and tricky, high outplay potential. High punish capabilities & just very fast paced, does well in tricky map areas with fast movement speed and utility can be used to find space to use map for escapes/tricky plays.
-- Weaknesses: Close range fighter, so mid to long range utility is minimal. A bit squishy in terms of health & defensive capabilties. Needs to force 1 on 1's, does not to well in nonisolated enviornments with many players. Also high skill ceiling, needs to use utility well and accurately to capitalize on the kit. Open areas are struggles due to lack of mobility abilties, no easy escapes. Must play around kit well.
-- Design Intent: A high skilled, but extremeley powerful and aggresive duelist who tries to isolate 1 vs 1's and use his kit to create massive advantages and secure kills. Needs to have good game sense and map awareness/usage aswell, adding to the skill requirement. Additionally, a rewarding feeling for the high outplay potential and also the fun active chaotic feel the kit provides, paired with the fast paced nature of the game, feeling like an extremely active and action packed expirience/characfter
-- Matchup Goals: Against a mirror matchup, it is dependent heavily on better mechanical skill, both from an aim perspective and ability usage. There can be scenarios where mirror matchups can start with advantages depending on the place and circumstances a fight happens in, but from an objective standpoint, it is a game of intelligence and skill. A common scenario will be who can strike first and more accurately, but there is still chances to use the map to ones advantage, additionally, knowing how to take a fight, dependent on where other players are, can change this matchup. Against The Hunter, The Magician will not be able to challenge the long range advantages The Hunter has, and will have to manuever carefully, avoiding the open spaces where the hunter thrives. The Magician is best using his abilities and time finding a way to get closer to the hunter, and turning the fight close range, or sneak attacking and using the utility to get a fast kill. Against the Monk, The Magician still attempts to get close, but can still play more forgivingly in a mid range given that the Monk is a medium damage character that cannot punish bad map usage as heavily. The Magician wants to play in the close-mid range, using utility to get damage but addtionally trying to bait out Monk utility before making an agressive jump to finish the fight. The Magician can additionaly do a sneak attack aswell with utility to try and get a fast kill. The different matchups provide multiple scenarios and ways of having to use the magician, ensuring that each scenario can be played differently. Additionally, with their being many players at once, multiple of these scenarios may overlap, causing the player to have to adjust and choose combinations or best choices out of many options.
-*To be filled in — strengths, weaknesses, design intent, matchup goals.*  
+- **Strengths**: The Magician is a guerilla style fighter built for constant pressure and opportunistic play. He thrives in close quarters duels where his high movement speed, disruptive utility, and trick based gameplay allow him to punish overextensions. His kit is fast paced and rewards sharp timing, map awareness, and creativity. In the right hands, he can turn even small advantages into decisive kills and dominate chaotic fights by disorienting opponents.  
+
+- **Weaknesses**: His kit is heavily range restricted, mid to long distance engagements expose his lack of reach and defensive tools. With low durability and no instant escape options, The Magician must commit to fights carefully. He struggles in wide, open arenas where cover is sparse and cannot rely on raw stats to survive. His effectiveness depends on precision use of his abilities and a strong grasp of positioning, making him punishing for players who mismanage his tools.  
+
+- **Design Intent**: The Magician is meant to embody the “high skill, high reward” archetype. He is a fast, aggressive duelist who isolates enemies into 1v1 scenarios and overwhelms them with misdirection and control effects. Success with him requires both mechanical skill (aim and ability accuracy) and mental acuity (reading the map, anticipating movement, and timing attacks). Players who master his toolkit will feel rewarded with stylish, high impact outplays and an intensely active playstyle that complements the game’s frenetic pace.  
+
+- **Matchup Goals**:  
+  - Mirror Match: Outcomes hinge on pure mechanics and decision making, who strikes first, lands abilities, and uses terrain most effectively. Small situational advantages (such as high ground or surprise angles) can decide the fight, making the mirror matchup a test of intelligence and execution.  
+  - The Hunter: The Magician cannot win in open, long range duels. His goal is to close the gap through stealth and map maneuvering, using abilities to create windows for ambushes and force close-range engagements where he shines.  
+  - The Monk: The Magician plays more flexibly at mid range, since Monk’s punish potential is lower than Hunter’s. He can bait Monk abilities and then commit aggressively once cooldowns are burned, or exploit stealth for sudden, decisive strikes.  
+  - Free For All Context: With multiple players, The Magician must dynamically switch between targets and adapt his tricks to shifting scenarios. His toolkit ensures that no two fights play out the same way, making him unpredictable and highly versatile in chaotic skirmishes.  
 
 ---
 
@@ -38,7 +44,7 @@ A calculated duelist who thrives on accuracy and controlling chokepoints. The Hu
 
 #### Design Reasoning
 
-*To be filled in — strengths, weaknesses, design intent, matchup goals.*  
+*To be filled in  strengths, weaknesses, design intent, matchup goals.*  
 
 ---
 
@@ -54,4 +60,4 @@ A disciplined warrior who embodies adaptability, flowing between offense and def
 - **Ultimate - Harmony Break**: Swaps health across the field: all enemies in range have their health set to the Monk’s current value, and the Monk’s health becomes the highest among those affected.  
 
 #### Design Reasoning
-*To be filled in — strengths, weaknesses, design intent, matchup goals.*  
+*To be filled in  strengths, weaknesses, design intent, matchup goals.*  
