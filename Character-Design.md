@@ -7,7 +7,7 @@ This interplay creates a balanced ecosystem where no fighter is universally domi
 ## Characters
 
 ### The Magician
-A theatrical villain who manipulates the battlefield with illusions, control effects, and deception. Once a beloved stage performer, he now twists his craft into a weapon. The Magician excels in close range 1v1 duels, punishing overconfidence with tricks that disorient, misdirect, and shut down opponents. In free-for-all battles, he thrives on chaos, slipping in and out of sight while sowing confusion across the arena.  
+A theatrical villain who manipulates the battlefield with illusions, control effects, and deception. Once a beloved stage performer, he now twists his craft into a weapon. The Magician excels in close range 1v1 duels, punishing overconfidence with tricks that disorient, misdirect, and shut down opponents. In free for all battles, he thrives on chaos, slipping in and out of sight while sowing confusion across the arena.  
 
 #### Ability Set
 - **Base Attack - Card Toss**: Throws razor sharp playing cards one at a time in rapid succession, with eight cards per reload cycle.  
@@ -24,10 +24,10 @@ A theatrical villain who manipulates the battlefield with illusions, control eff
 - **Design Intent**: The Magician is meant to embody the “high skill, high reward” archetype. He is a fast, aggressive duelist who isolates enemies into 1v1 scenarios and overwhelms them with misdirection and control effects. Success with him requires both mechanical skill (aim and ability accuracy) and mental acuity (reading the map, anticipating movement, and timing attacks). Players who master his toolkit will feel rewarded with stylish, high impact outplays and an intensely active playstyle that complements the game’s frenetic pace.  
 
 - **Matchup Goals**:  
-   - **Mirror Match - Skill vs. Skill:** Whoever uses terrain, timing, and accuracy better wins. Situational advantages like high ground or surprise angles often decide the fight.  
-  - **Versus The Hunter - Close The Gap:** The Magician can’t contest long range firepower; he must use stealth, map cover, and sudden bursts to ambush and finish quickly.  
-  - **Versus The Monk - Bait Then Strike:** The Monk’s mid range toolkit is less punishing, so The Magician can pressure, bait cooldowns, and commit once openings appear.  
-  - **Free For All Context - Adapt To Chaos:** With multiple enemies, he must constantly shift targets and weave tricks into the arena’s disorder, ensuring no two fights play out the same.
+   - **Mirror Match - Skill Decides:** A battle of timing and positioning; whoever uses terrain and accuracy better takes the edge.  
+  - **Versus The Hunter - Close The Gap:** The Magician can’t contest long range, so he must rely on stealth, cover, and sudden bursts to ambush quickly.  
+  - **Versus The Monk - Bait Then Strike:** The Monk’s steady toolkit is less punishing up close, letting the Magician pressure, bait cooldowns, and commit when openings appear.  
+  - **Free For All Context - Adapt To Chaos:** He thrives in disorder, weaving tricks into the fray and turning scattered moments into sudden 1v1 opportunities.
     
 ---
 
@@ -50,10 +50,10 @@ A calculated duelist who thrives on accuracy and controlling chokepoints. The Hu
 - **Design Intent**: The Hunter represents the “precision and patience” archetype. He is less about flashy outplays and more about disciplined positioning, controlled aim, and smart decision making. His goal is to stay at range, control key areas of the map, and punish reckless movement. In the right hands, he embodies the satisfaction of the “sniper fantasy,” rewarding accuracy and foresight with crushing impact. Players who master him feel empowered by dominating the battlefield through control, timing, and perfect shots.  
 
 - **Matchup Goals**:  
-  - **Mirror Match - Aim Decides The Duel:** With both Hunters playing at range, the outcome comes down to accuracy and positioning. Whoever minimizes openings while creating cleaner sightlines will gain the edge.  
-  - **Versus The Magician - Keep Him At Bay:** The Hunter must punish Magician’s attempts to close distance, anticipating stealth approaches and repositioning to maintain range. He can also exploit chokepoints, baiting aggression and countering with Scatter Shot to punish Magician’s low health if forced into close quarters.  
-  - **Versus The Monk - Control Space, Deny Pressure:** Monk has more tools for mid range play and fewer situational weaknesses, giving him answers in nearly every scenario. The Hunter must play smart, capitalizing on utility (like Net Shot) to lock Monk down. Unlike other matchups, Monk’s timed reload mechanic denies natural “windows” to punish, so success requires reading attack rhythms and striking at opportune moments.  
-  - **Free For All Context - Pick From Safety:** The Hunter thrives when staying out of the central chaos, instead racking up damage and kills from safe vantage points. Awareness is key: he must punish overextensions while knowing when to disengage and reposition to avoid being collapsed on.  
+   - **Mirror Match - Aim Decides:** Precision and positioning decide the duel; cleaner shots and tighter angles tip the fight.  
+  - **Versus The Magician - Keep Him At Bay:** The Hunter must punish approaches, using range and sightlines to shut him down. Close fights are possible but always risky.
+  - **Versus The Monk - Control Space:** The Monk’s versatility leaves few openings, so the Hunter must maintain distance and capitalize on rare mistakes.
+  - **Free For All Context - Pick From Safety:** He shapes chaotic fights by pressuring from afar, capitalizing on disorder while avoiding direct entanglement.
 
 ---
 
@@ -69,4 +69,16 @@ A disciplined warrior who embodies adaptability, flowing between offense and def
 - **Ultimate - Harmony Break**: Swaps health across the field: all enemies in range have their health set to the Monk’s current value, and the Monk’s health becomes the highest among those affected.  
 
 #### Design Reasoning
-*To be filled in  strengths, weaknesses, design intent, matchup goals.*  
+- **Strengths**: The Monk is a well rounded fighter with tools for nearly every scenario. His kit provides answers both offensively and defensively, making him difficult to pin down or leave at a major disadvantage. His auto-replenishing attack rhythm allows him to apply consistent pressure from different ranges, while his mobility options let him reposition or engage as needed. The Monk is highly reactive, able to punish overextensions while maintaining steady presence across the map.  
+
+- **Weaknesses**: While reliable, the Monk does not excel in any single category. Players must use strong fundamentals and creativity to fully capitalize on his balanced kit. His effectiveness relies on experience, quick reactions, and situational awareness, since his abilities are strongest when used in response to enemy actions. Mastery of the Monk demands versatility and discipline, as he lacks the raw extremes of more specialized characters.  
+
+- **Design Intent**: The Monk embodies the “balanced archetype”, a character who feels adaptable and consistent rather than specialized or extreme. He offers players a forgiving yet demanding playstyle: not overwhelmingly strong in any one area, but capable of holding his own in all situations. His design emphasizes game sense, timing, and measured responses, rewarding players who can blend offense and defense seamlessly. For those who enjoy a mix of pressure, survivability, and mobility without relying on gimmicks, the Monk provides a high skill ceiling within a simple, accessible framework.  
+
+- **Matchup Goals**:  
+  - **Mirror Match - Experience Decides:** With no inherent advantages, the winner is whoever manages aim, positioning, and balance more effectively.  
+  - **Versus The Magician - Stay Grounded:** The Monk can counter close pressure by conserving tools and mixing defense with well-timed offense.
+  - **Versus The Hunter - Apply Careful Pressure:** Chipping away while avoiding sightlines lets the Monk survive high damage and punish immobility. 
+  - **Free For All Context - Balance In Chaos:** His adaptable kit lets him flex between offense and defense, finding impact without overcommitting.
+
+
