@@ -24,11 +24,11 @@ A theatrical villain who manipulates the battlefield with illusions, control eff
 - **Design Intent**: The Magician is meant to embody the “high skill, high reward” archetype. He is a fast, aggressive duelist who isolates enemies into 1v1 scenarios and overwhelms them with misdirection and control effects. Success with him requires both mechanical skill (aim and ability accuracy) and mental acuity (reading the map, anticipating movement, and timing attacks). Players who master his toolkit will feel rewarded with stylish, high impact outplays and an intensely active playstyle that complements the game’s frenetic pace.  
 
 - **Matchup Goals**:  
-  - Mirror Match: Outcomes hinge on pure mechanics and decision making, who strikes first, lands abilities, and uses terrain most effectively. Small situational advantages (such as high ground or surprise angles) can decide the fight, making the mirror matchup a test of intelligence and execution.  
-  - The Hunter: The Magician cannot win in open, long range duels. His goal is to close the gap through stealth and map maneuvering, using abilities to create windows for ambushes and force close-range engagements where he shines.  
-  - The Monk: The Magician plays more flexibly at mid range, since Monk’s punish potential is lower than Hunter’s. He can bait Monk abilities and then commit aggressively once cooldowns are burned, or exploit stealth for sudden, decisive strikes.  
-  - Free For All Context: With multiple players, The Magician must dynamically switch between targets and adapt his tricks to shifting scenarios. His toolkit ensures that no two fights play out the same way, making him unpredictable and highly versatile in chaotic skirmishes.  
-
+   - **Mirror Match - Skill vs. Skill:** Whoever uses terrain, timing, and accuracy better wins. Situational advantages like high ground or surprise angles often decide the fight.  
+  - **Versus The Hunter - Close The Gap:** The Magician can’t contest long-range firepower; he must use stealth, map cover, and sudden bursts to ambush and finish quickly.  
+  - **Versus The Monk - Bait Then Strike:** The Monk’s mid-range toolkit is less punishing, so The Magician can pressure, bait cooldowns, and commit once openings appear.  
+  - **Free For All Context - Adapt To Chaos:** With multiple enemies, he must constantly shift targets and weave tricks into the arena’s disorder, ensuring no two fights play out the same.
+    
 ---
 
 ### The Hunter
