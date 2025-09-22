@@ -8,7 +8,7 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     const string SERVER_URL = "http://127.0.0.1:3000";
-    const string MODULE_NAME = "blackholio";
+    const string MODULE_NAME = "3dbrawler";
 
     public static event Action OnConnected;
     public static event Action OnSubscriptionApplied;
