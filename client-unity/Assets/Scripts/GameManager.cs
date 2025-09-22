@@ -19,7 +19,8 @@ public class GameManager : MonoBehaviour
 	public static GameManager Instance { get; private set; }
     public static Identity LocalIdentity { get; private set; }
     public static DbConnection Conn { get; private set; }
-
+    public MatchManager MatchManager;
+    
     private void Start()
     {
         Instance = this;

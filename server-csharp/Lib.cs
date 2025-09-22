@@ -95,7 +95,7 @@ public static partial class Module
         {
             var match = Match.Value;
             match.currentPlayers += 1;
-            ctx.Db.Matches.Update(match);
+            ctx.Db.Matches.Id.Update(match);
         }
     }
 
@@ -107,11 +107,12 @@ public static partial class Module
         var character = ctx.Db.Prototype_Characters.identity.Find(ctx.Sender);
         if (character != null)
         {
-            var match = ctx.Db.Matches.Id.Find(character.Value.MatchId);
-            if (match != null && match.Value.currentPlayers > 0)
+            var Match = ctx.Db.Matches.Id.Find(character.Value.MatchId);
+            if (Match != null && Match.Value.currentPlayers > 0)
             {
-                match.Value.currentPlayers -= 1;
-                ctx.Db.Matches.Update(match.Value);
+                var match = Match.Value;
+                match.currentPlayers -= 1;
+                ctx.Db.Matches.Id.Update(match);
             }
             ctx.Db.Prototype_Characters.identity.Delete(ctx.Sender);
         }
