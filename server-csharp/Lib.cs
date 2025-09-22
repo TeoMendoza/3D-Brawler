@@ -21,10 +21,10 @@ public static partial class Module
         Log.Info($"Inserted {player.Name} under #{player.Id}");
     }
     
-    [Reducer]
-    public static void Debug(ReducerContext ctx)
+    [Reducer(ReducerKind.ClientConnected)]
+    public static void Connect(ReducerContext ctx)
     {
-        Log.Info($"This reducer was called by {ctx.Sender}");	  
+        Log.Info($"{ctx.Sender} just connected.");
     }
 
 }
