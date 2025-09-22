@@ -13,29 +13,32 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class Player
+    public sealed partial class Match
     {
-        [DataMember(Name = "identity")]
-        public SpacetimeDB.Identity Identity;
         [DataMember(Name = "Id")]
         public uint Id;
-        [DataMember(Name = "Name")]
-        public string Name;
+        [DataMember(Name = "maxPlayers")]
+        public uint MaxPlayers;
+        [DataMember(Name = "currentPlayers")]
+        public uint CurrentPlayers;
+        [DataMember(Name = "inProgress")]
+        public bool InProgress;
 
-        public Player(
-            SpacetimeDB.Identity Identity,
+        public Match(
             uint Id,
-            string Name
+            uint MaxPlayers,
+            uint CurrentPlayers,
+            bool InProgress
         )
         {
-            this.Identity = Identity;
             this.Id = Id;
-            this.Name = Name;
+            this.MaxPlayers = MaxPlayers;
+            this.CurrentPlayers = CurrentPlayers;
+            this.InProgress = InProgress;
         }
 
-        public Player()
+        public Match()
         {
-            this.Name = "";
         }
     }
 }

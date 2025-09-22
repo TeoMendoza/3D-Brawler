@@ -19,7 +19,6 @@ public class GameManager : MonoBehaviour
 	public static GameManager Instance { get; private set; }
     public static Identity LocalIdentity { get; private set; }
     public static DbConnection Conn { get; private set; }
-    public MatchManager MatchManager;
     
     private void Start()
     {
@@ -45,17 +44,20 @@ public class GameManager : MonoBehaviour
         // Building the connection will establish a connection to the SpacetimeDB
         // server.
         Conn = builder.Build();
+        
     }
 
     // Called when we connect to SpacetimeDB and receive our client identity
-    void HandleConnect(DbConnection _conn, Identity identity, string token)
+    void HandleConnect(DbConnection conn, Identity identity, string token)
     {
         Debug.Log("Connected.");
         AuthToken.SaveToken(token);
         LocalIdentity = identity;
 
+        
         OnConnected?.Invoke();
 
+        //conn.Db.Players.OnInsert()
         // Request all tables
         Conn.SubscriptionBuilder()
             .OnApplied(HandleSubscriptionApplied)

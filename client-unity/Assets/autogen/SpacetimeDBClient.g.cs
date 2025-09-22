@@ -23,7 +23,10 @@ namespace SpacetimeDB.Types
     {
         public RemoteTables(DbConnection conn)
         {
-            AddTable(Players = new(conn));
+            AddTable(LoggedOutPlayers = new(conn));
+            AddTable(Match = new(conn));
+            AddTable(PlayableCharacter = new(conn));
+            AddTable(Player = new(conn));
         }
     }
 
@@ -467,8 +470,8 @@ namespace SpacetimeDB.Types
             var encodedArgs = update.ReducerCall.Args;
             return update.ReducerCall.ReducerName switch
             {
-                "Add" => BSATNHelpers.Decode<Reducer.Add>(encodedArgs),
                 "Connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
+                "Disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }
@@ -490,8 +493,8 @@ namespace SpacetimeDB.Types
             var eventContext = (ReducerEventContext)context;
             return reducer switch
             {
-                Reducer.Add args => Reducers.InvokeAdd(eventContext, args),
                 Reducer.Connect args => Reducers.InvokeConnect(eventContext, args),
+                Reducer.Disconnect args => Reducers.InvokeDisconnect(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }

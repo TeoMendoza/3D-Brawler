@@ -13,7 +13,7 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class Player
+    public sealed partial class PlayableCharacter
     {
         [DataMember(Name = "identity")]
         public SpacetimeDB.Identity Identity;
@@ -21,21 +21,40 @@ namespace SpacetimeDB.Types
         public uint Id;
         [DataMember(Name = "Name")]
         public string Name;
+        [DataMember(Name = "MatchId")]
+        public uint MatchId;
+        [DataMember(Name = "position")]
+        public DbVector3 Position;
+        [DataMember(Name = "rotation")]
+        public DbRotation2 Rotation;
+        [DataMember(Name = "velocity")]
+        public DbVelocity3 Velocity;
 
-        public Player(
+        public PlayableCharacter(
             SpacetimeDB.Identity Identity,
             uint Id,
-            string Name
+            string Name,
+            uint MatchId,
+            DbVector3 Position,
+            DbRotation2 Rotation,
+            DbVelocity3 Velocity
         )
         {
             this.Identity = Identity;
             this.Id = Id;
             this.Name = Name;
+            this.MatchId = MatchId;
+            this.Position = Position;
+            this.Rotation = Rotation;
+            this.Velocity = Velocity;
         }
 
-        public Player()
+        public PlayableCharacter()
         {
             this.Name = "";
+            this.Position = new();
+            this.Rotation = new();
+            this.Velocity = new();
         }
     }
 }

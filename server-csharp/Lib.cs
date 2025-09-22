@@ -4,8 +4,8 @@ public static partial class Module
 {
     // Tables
 
-    [Table(Name = "Players", Public = true)]
-    [Table(Name = "Logged_Out_Players")]
+    [Table(Name = "player", Public = true)]
+    [Table(Name = "logged_out_players")]
     public partial struct Player
     {
         [PrimaryKey]
@@ -16,7 +16,7 @@ public static partial class Module
         public string Name;
     }
 
-    [Table(Name = "Matches", Public = true)]
+    [Table(Name = "match", Public = true)]
     public partial struct Match
     {
         [PrimaryKey, Unique, AutoInc]
@@ -30,8 +30,8 @@ public static partial class Module
     }
 
 
-    [Table(Name = "Prototype_Characters", Public = true)]
-    public partial struct Character
+    [Table(Name = "playable_character", Public = true)]
+    public partial struct Playable_Character
     {
         [PrimaryKey]
         public Identity identity;
@@ -54,32 +54,32 @@ public static partial class Module
     public static void Init(ReducerContext ctx)
     {
         Log.Info($"Initializing...");
-        ctx.Db.Matches.Insert(new Match { maxPlayers = 12, currentPlayers = 0, inProgress = false });
+        ctx.Db.match.Insert(new Match { maxPlayers = 12, currentPlayers = 0, inProgress = false });
     }
 
     [Reducer(ReducerKind.ClientConnected)]
     public static void Connect(ReducerContext ctx)
     {
         Log.Info($"{ctx.Sender} just connected.");
-        var player = ctx.Db.Logged_Out_Players.identity.Find(ctx.Sender);
+        var player = ctx.Db.logged_out_players.identity.Find(ctx.Sender);
         if (player != null)
         {
-            ctx.Db.Players.Insert(player.Value);
-            ctx.Db.Logged_Out_Players.identity.Delete(player.Value.identity);
+            ctx.Db.player.Insert(player.Value);
+            ctx.Db.logged_out_players.identity.Delete(player.Value.identity);
         }
         else
         {
-            ctx.Db.Players.Insert(new Player
+            ctx.Db.player.Insert(new Player
             {
                 identity = ctx.Sender,
                 Name = "Test Player"
             });
         }
 
-        var Player = ctx.Db.Players.identity.Find(ctx.Sender) ?? throw new Exception("Player not found after insert/restore");
+        var Player = ctx.Db.player.identity.Find(ctx.Sender) ?? throw new Exception("Player not found after insert/restore");
 
-        ctx.Db.Prototype_Characters.Insert(
-            new Character
+        ctx.Db.playable_character.Insert(
+            new Playable_Character
             {
                 identity = Player.identity,
                 Id = Player.Id,
@@ -89,36 +89,36 @@ public static partial class Module
                 rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
                 velocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 }
             });
-        
-        var Match = ctx.Db.Matches.Id.Find(1);
+
+        var Match = ctx.Db.match.Id.Find(1);
         if (Match != null)
         {
             var match = Match.Value;
             match.currentPlayers += 1;
-            ctx.Db.Matches.Id.Update(match);
+            ctx.Db.match.Id.Update(match);
         }
     }
 
     [Reducer(ReducerKind.ClientDisconnected)]
     public static void Disconnect(ReducerContext ctx)
     {
-        var player = ctx.Db.Players.identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
+        var player = ctx.Db.player.identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
 
-        var character = ctx.Db.Prototype_Characters.identity.Find(ctx.Sender);
+        var character = ctx.Db.playable_character.identity.Find(ctx.Sender);
         if (character != null)
         {
-            var Match = ctx.Db.Matches.Id.Find(character.Value.MatchId);
+            var Match = ctx.Db.match.Id.Find(character.Value.MatchId);
             if (Match != null && Match.Value.currentPlayers > 0)
             {
                 var match = Match.Value;
                 match.currentPlayers -= 1;
-                ctx.Db.Matches.Id.Update(match);
+                ctx.Db.match.Id.Update(match);
             }
-            ctx.Db.Prototype_Characters.identity.Delete(ctx.Sender);
+            ctx.Db.playable_character.identity.Delete(ctx.Sender);
         }
 
-        ctx.Db.Logged_Out_Players.Insert(player);
-        ctx.Db.Players.identity.Delete(player.identity);
+        ctx.Db.logged_out_players.Insert(player);
+        ctx.Db.player.identity.Delete(player.identity);
     }
 
     // Types
