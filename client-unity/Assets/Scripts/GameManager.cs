@@ -1,13 +1,14 @@
-using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using SpacetimeDB;
 using SpacetimeDB.Types;
+using UnityEngine;
+
 public class GameManager : MonoBehaviour
 {
     const string SERVER_URL = "http://127.0.0.1:3000";
-    const string MODULE_NAME = "3dbrawler";
+    const string MODULE_NAME = "blackholio";
 
     public static event Action OnConnected;
     public static event Action OnSubscriptionApplied;
