@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using SpacetimeDB;
 using SpacetimeDB.Types;
+using System.Linq;
 
 #nullable enable
 public class MatchManager : MonoBehaviour
@@ -31,7 +32,10 @@ public class MatchManager : MonoBehaviour
         Conn = GameManager.Conn;
         Conn.Db.PlayableCharacter.OnInsert += AddNewCharacter;
         Conn.Db.PlayableCharacter.OnDelete += RemoveCharacter;
-
+        foreach (PlayableCharacter character in Conn.Db.PlayableCharacter.Iter())
+        {
+            
+        }
         // Next Step Is To Load Already Joined Players When Initialize Match Is Called. 
     }
 

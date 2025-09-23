@@ -121,6 +121,12 @@ public static partial class Module
         ctx.Db.player.identity.Delete(player.identity);
     }
 
+    [Reducer]
+    public static void Test(ReducerContext ctx)
+    {
+        Log.Info("Test Reducer Called");
+    }
+
     // Types
 
     [SpacetimeDB.Type]
