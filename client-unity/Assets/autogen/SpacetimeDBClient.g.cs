@@ -472,6 +472,7 @@ namespace SpacetimeDB.Types
             {
                 "Connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
                 "Disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
+                "Test" => BSATNHelpers.Decode<Reducer.Test>(encodedArgs),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }
@@ -495,6 +496,7 @@ namespace SpacetimeDB.Types
             {
                 Reducer.Connect args => Reducers.InvokeConnect(eventContext, args),
                 Reducer.Disconnect args => Reducers.InvokeDisconnect(eventContext, args),
+                Reducer.Test args => Reducers.InvokeTest(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }

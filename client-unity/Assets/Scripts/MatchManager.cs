@@ -32,9 +32,13 @@ public class MatchManager : MonoBehaviour
         Conn = GameManager.Conn;
         Conn.Db.PlayableCharacter.OnInsert += AddNewCharacter;
         Conn.Db.PlayableCharacter.OnDelete += RemoveCharacter;
-        foreach (PlayableCharacter character in Conn.Db.PlayableCharacter.Iter())
+        foreach (PlayableCharacter Character in Conn.Db.PlayableCharacter.Iter())
         {
-            
+            if (Character.MatchId == MatchId)
+            {
+                var prefab = Instantiate(PlayableCharacterPrefab);
+                Players.Add(Character.Identity, prefab);   
+            }
         }
         // Next Step Is To Load Already Joined Players When Initialize Match Is Called. 
     }
@@ -50,7 +54,7 @@ public class MatchManager : MonoBehaviour
         {
             var prefab = Instantiate(PlayableCharacterPrefab);
             Players.Add(Character.Identity, prefab);
-            
+            Conn.Reducers.Test();
         }
             
     }
