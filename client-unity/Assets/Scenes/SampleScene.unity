@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87e10196f6cae41f9888eb74336c873a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GameManager: {fileID: 1218510310}
+  PlayableCharacterPrefab: {fileID: 2608645888762272316, guid: c33192d84c49846b7ac8b86a8b28226b, type: 3}
 --- !u!4 &156625267
 Transform:
   m_ObjectHideFlags: 0
@@ -515,7 +515,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   borderThickness: 2
   borderMaterial: {fileID: 0}
-  MatchManager: {fileID: 156625266}
 --- !u!4 &1218510311
 Transform:
   m_ObjectHideFlags: 0

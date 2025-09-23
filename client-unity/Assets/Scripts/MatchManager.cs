@@ -9,16 +9,15 @@ using SpacetimeDB.Types;
 public class MatchManager : MonoBehaviour
 {
     public static MatchManager Instance { get; private set; }
-    public uint? MatchId;
+    public uint? MatchId = 1;
     public DbConnection Conn;
-    public Dictionary<Identity, string> Players = new(); // Change to Player Unity Made Script Class, Should be a unity copy of the spacetime DB class, same data just defined in unity
+    public Dictionary<Identity, PlayableCharacterController> Players = new();
+    public PlayableCharacterController PlayableCharacterPrefab;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         Instance = this;
-        Conn = GameManager.Conn;
-        
     }
 
     // Update is called once per frame
@@ -29,13 +28,38 @@ public class MatchManager : MonoBehaviour
 
     public void InitializeMatch(uint MatchId)
     {
-        //
-
-    // Example: subscribe by Identity (you have unique indices Id and Identity)
+        Conn = GameManager.Conn;
+        Conn.Db.PlayableCharacter.OnInsert += AddNewCharacter;
+        Conn.Db.PlayableCharacter.OnDelete += RemoveCharacter;
     }
-    
+
     public void EndMatch()
     {
-        
+
+    }
+
+    public void AddNewCharacter(EventContext context, PlayableCharacter Character)
+    {
+        if (MatchId is not null && Character.MatchId == MatchId)
+        {
+            var prefab = Instantiate(PlayableCharacterPrefab);
+            Players.Add(Character.Identity, prefab);
+            
+        }
+            
+    }
+    
+    public void RemoveCharacter(EventContext context, PlayableCharacter Character)
+    {
+        if (MatchId is not null && Character.MatchId == MatchId)
+        {
+            Players.TryGetValue(Character.Identity, out var prefab);
+            if (prefab != null)
+            {
+                Destroy(prefab);
+                Players.Remove(Character.Identity);
+            }
+        }
+            
     }
 }

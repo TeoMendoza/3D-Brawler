@@ -44,7 +44,7 @@ public class GameManager : MonoBehaviour
         // Building the connection will establish a connection to the SpacetimeDB
         // server.
         Conn = builder.Build();
-        
+        MatchManager.Instance.InitializeMatch(MatchId: 1);
     }
 
     // Called when we connect to SpacetimeDB and receive our client identity
@@ -57,7 +57,6 @@ public class GameManager : MonoBehaviour
         
         OnConnected?.Invoke();
 
-        //conn.Db.Players.OnInsert()
         // Request all tables
         Conn.SubscriptionBuilder()
             .OnApplied(HandleSubscriptionApplied)
