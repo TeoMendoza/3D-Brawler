@@ -1,21 +1,28 @@
 using SpacetimeDB;
 using UnityEngine;
 using System.Collections.Generic;
-using SpacetimeDB;
 using SpacetimeDB.Types;
+using UnityEngine.Playables;
 
 public class PlayableCharacterController : MonoBehaviour
 {
     public Identity Identity;
     public uint Id;
+    public string Name;
     public uint MatchId;
-    public DbVector3 position;
-    public DbRotation2 rotation;
-    public DbVelocity3 velocity;
+    public Vector3 Position;
+    public Vector3 Rotation;
+    public Vector3 Velocity;
 
-    public PlayableCharacterController(Identity identity)
+    public void Initalize(PlayableCharacter Character)
     {
-        Identity = identity;
+        Identity = Character.Identity;
+        Id = Character.Id;
+        Name = Character.Name;
+        MatchId = Character.MatchId;
+        Position = (Vector3)Character.Position;
+        Rotation = (Vector3)Character.Rotation;
+        Velocity = (Vector3)Character.Velocity;
     }
 
     // Next Step Is To Translate Actual Data Of Spacetime DB PlayableCharacter Class Into Data For This Prefab/Controller.

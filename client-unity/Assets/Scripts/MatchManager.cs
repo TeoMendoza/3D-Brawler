@@ -37,6 +37,7 @@ public class MatchManager : MonoBehaviour
             if (Character.MatchId == MatchId)
             {
                 var prefab = Instantiate(PlayableCharacterPrefab);
+                prefab.Initalize(Character);                
                 Players.Add(Character.Identity, prefab);   
             }
         }
@@ -53,6 +54,7 @@ public class MatchManager : MonoBehaviour
         if (MatchId is not null && Character.MatchId == MatchId)
         {
             var prefab = Instantiate(PlayableCharacterPrefab);
+            prefab.Initalize(Character);     
             Players.Add(Character.Identity, prefab);
             Conn.Reducers.Test();
         }
