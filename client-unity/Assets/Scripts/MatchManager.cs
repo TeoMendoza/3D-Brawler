@@ -31,11 +31,13 @@ public class MatchManager : MonoBehaviour
         Conn = GameManager.Conn;
         Conn.Db.PlayableCharacter.OnInsert += AddNewCharacter;
         Conn.Db.PlayableCharacter.OnDelete += RemoveCharacter;
+
+        // Next Step Is To Load Already Joined Players When Initialize Match Is Called. 
     }
 
     public void EndMatch()
     {
-
+        // Next Step Is To Destroy All Game Objects In Dictionary And Reset Values And Unsubscribe from DB Stuff
     }
 
     public void AddNewCharacter(EventContext context, PlayableCharacter Character)
