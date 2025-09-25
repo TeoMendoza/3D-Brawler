@@ -3,9 +3,10 @@ using UnityEngine;
 using System.Collections.Generic;
 using SpacetimeDB.Types;
 using UnityEngine.Playables;
-
+using Cinemachine;
 public class PlayableCharacterController : MonoBehaviour
 {
+    //[SerializeField] private Cinemachine thirdPersonCam;
     public Identity Identity;
     public uint Id;
     public string Name;
@@ -36,7 +37,7 @@ public class PlayableCharacterController : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        GameManager.Conn.Db.PlayableCharacter.OnUpdate += HandlePlayerUpdate;
     }
 
     // Update is called once per frame
@@ -50,5 +51,11 @@ public class PlayableCharacterController : MonoBehaviour
         if (Input.GetKey(KeyCode.A)) v.x -= 5;
 
         GameManager.Conn.Reducers.HandleMovementRequest((DbVelocity3)v);
+    }
+
+    public void HandlePlayerUpdate(EventContext context, PlayableCharacter _oldChar, PlayableCharacter newChar)
+    {
+        if (Identity == newChar.Identity)
+            transform.position = newChar.Position;
     }
 }
