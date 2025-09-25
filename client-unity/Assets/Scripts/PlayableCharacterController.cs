@@ -42,6 +42,13 @@ public class PlayableCharacterController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        var v = new Vector3(0, 0, 0);
+
+        if (Input.GetKey(KeyCode.W)) v.z += 5;
+        if (Input.GetKey(KeyCode.S)) v.z -= 5;
+        if (Input.GetKey(KeyCode.D)) v.x += 5;
+        if (Input.GetKey(KeyCode.A)) v.x -= 5;
+
+        GameManager.Conn.Reducers.HandleMovementRequest((DbVelocity3)v);
     }
 }

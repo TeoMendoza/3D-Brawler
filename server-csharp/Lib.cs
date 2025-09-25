@@ -1,3 +1,4 @@
+using System.Numerics;
 using SpacetimeDB;
 
 public static partial class Module
@@ -45,17 +46,32 @@ public static partial class Module
         public DbVelocity3 velocity;
     }
 
+    [Table(Name = "move_all_players", Scheduled = nameof(MovePlayers), ScheduledAt = nameof(scheduled_at))]
+    public partial struct Move_All_Players_Timer
+    {
+        [PrimaryKey, AutoInc] public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+        public float tick_rate;
+    }
+
+
     // Reducers
 
     // Note the `init` parameter passed to the reducer macro.
     // That indicates to SpacetimeDB that it should be called
     // once upon database creation.
+
     [Reducer(ReducerKind.Init)]
     public static void Init(ReducerContext ctx)
     {
         Log.Info($"Initializing...");
         ctx.Db.match.Insert(new Match { maxPlayers = 12, currentPlayers = 0, inProgress = false });
+        ctx.Db.move_all_players.Insert(new Move_All_Players_Timer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 30.0)), tick_rate = 1.0f / 30.0f
+        });
     }
+    
 
     [Reducer(ReducerKind.ClientConnected)]
     public static void Connect(ReducerContext ctx)
@@ -99,6 +115,7 @@ public static partial class Module
         }
     }
 
+
     [Reducer(ReducerKind.ClientDisconnected)]
     public static void Disconnect(ReducerContext ctx)
     {
@@ -125,6 +142,37 @@ public static partial class Module
     public static void Test(ReducerContext ctx)
     {
         Log.Info("Test Reducer Called");
+    }
+
+    [Reducer]
+    public static void HandleMovementRequest(ReducerContext ctx, DbVelocity3 vel)
+    {
+        Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");
+        
+        // Keep existing vy (gravity/jumps are server-owned)
+        character.velocity = new DbVelocity3(vel.vx, character.velocity.vy, vel.vz);
+
+        ctx.Db.playable_character.identity.Update(character);
+
+        //Log.Info("HandleMovementRequest Called");
+    }
+
+    [Reducer]
+    public static void MovePlayers(ReducerContext ctx, Move_All_Players_Timer timer)
+    {
+        var time = timer.tick_rate;
+        foreach (var charac in ctx.Db.playable_character.Iter())
+        {
+            var character = charac;
+            character.position = new DbVector3(
+            character.position.x + character.velocity.vx * time,
+            character.position.y + character.velocity.vy * time,
+            character.position.z + character.velocity.vz * time
+            );
+            ctx.Db.playable_character.identity.Update(character);
+            Log.Info($"Position: {character.position}. Velocity: {character.velocity}");
+        }
+        
     }
 
     // Types
