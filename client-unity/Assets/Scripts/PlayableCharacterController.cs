@@ -1,19 +1,21 @@
 using SpacetimeDB;
 using UnityEngine;
-using System.Collections.Generic;
+using System.Collections;
 using SpacetimeDB.Types;
 using UnityEngine.Playables;
-using Cinemachine;
+using Unity.Cinemachine;
 public class PlayableCharacterController : MonoBehaviour
 {
-    //[SerializeField] private Cinemachine thirdPersonCam;
+    [SerializeField] private CinemachineCamera thirdPersonCam;
     public Identity Identity;
     public uint Id;
     public string Name;
     public uint MatchId;
-    public Vector3 Position;
-    public Vector3 Rotation;
-    public Vector3 Velocity;
+    public Vector3 TargetPosition;
+    [SerializeField] float snapDist = 0.02f;
+
+
+    Coroutine lerpRoutine;
 
     public void Initalize(PlayableCharacter Character)
     {
@@ -21,9 +23,11 @@ public class PlayableCharacterController : MonoBehaviour
         Id = Character.Id;
         Name = Character.Name;
         MatchId = Character.MatchId;
-        Position = (Vector3)Character.Position;
-        Rotation = (Vector3)Character.Rotation;
-        Velocity = (Vector3)Character.Velocity;
+
+
+        if (thirdPersonCam != null && Identity.Equals(GameManager.Conn.Identity))
+            thirdPersonCam.gameObject.SetActive(true);
+        
     }
 
     // Next Step Is To Translate Actual Data Of Spacetime DB PlayableCharacter Class Into Data For This Prefab/Controller.
@@ -45,17 +49,31 @@ public class PlayableCharacterController : MonoBehaviour
     {
         var v = new Vector3(0, 0, 0);
 
-        if (Input.GetKey(KeyCode.W)) v.z += 5;
-        if (Input.GetKey(KeyCode.S)) v.z -= 5;
-        if (Input.GetKey(KeyCode.D)) v.x += 5;
-        if (Input.GetKey(KeyCode.A)) v.x -= 5;
+        if (Input.GetKey(KeyCode.W)) v.z += 2;
+        if (Input.GetKey(KeyCode.S)) v.z -= 2;
+        if (Input.GetKey(KeyCode.D)) v.x += 2;
+        if (Input.GetKey(KeyCode.A)) v.x -= 2;
 
         GameManager.Conn.Reducers.HandleMovementRequest((DbVelocity3)v);
+
+        // approachRate ≈ how fast you catch up (bigger = snappier)
+        float approachRate = 12f;
+
+        // k will be ~0.2 for 60 fps with approachRate=12
+        float k = 1f - Mathf.Exp(-approachRate * Time.deltaTime);
+
+        transform.position = Vector3.Lerp(transform.position, TargetPosition, k);
+        if (Vector3.Distance(transform.position, TargetPosition) < snapDist)
+            transform.position = TargetPosition; // snap when close enough
     }
 
     public void HandlePlayerUpdate(EventContext context, PlayableCharacter _oldChar, PlayableCharacter newChar)
     {
-        if (Identity == newChar.Identity)
-            transform.position = newChar.Position;
+        if (Identity != newChar.Identity) return;
+        TargetPosition = newChar.Position;
+        
     }
+
+
+    
 }

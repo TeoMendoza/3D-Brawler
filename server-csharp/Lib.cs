@@ -68,7 +68,7 @@ public static partial class Module
         ctx.Db.match.Insert(new Match { maxPlayers = 12, currentPlayers = 0, inProgress = false });
         ctx.Db.move_all_players.Insert(new Move_All_Players_Timer
         {
-            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 30.0)), tick_rate = 1.0f / 30.0f
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)), tick_rate = 1.0f / 60.0f
         });
     }
     
