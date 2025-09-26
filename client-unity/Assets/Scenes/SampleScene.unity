@@ -251,8 +251,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.07980658, y: -0.052045964, z: 0.00023461349, w: 0.99545074}
-  m_LocalPosition: {x: 0.42431042, y: 1.7265126, z: -1.1478951}
+  m_LocalRotation: {x: 0.07959928, y: -0.05236246, z: 0.0041870996, w: 0.9954419}
+  m_LocalPosition: {x: 0.50132954, y: 2.075152, z: -1.8779597}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -319,7 +319,7 @@ MonoBehaviour:
   IgnoreTimeScale: 0
   WorldUpOverride: {fileID: 0}
   ChannelMask: -1
-  UpdateMethod: 1
+  UpdateMethod: 2
   BlendUpdateMethod: 1
   LensModeOverride:
     Enabled: 0
