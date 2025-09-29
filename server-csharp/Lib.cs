@@ -85,7 +85,9 @@ public static partial class Module
         
         ctx.Db.gravity.Insert(new Gravity_Timer
         {
-            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)), tick_rate = 1.0f / 60.0f, gravity = 10
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
+            tick_rate = 1.0f / 60.0f,
+            gravity = 30
         });
     }
     
@@ -179,16 +181,16 @@ public static partial class Module
         {
             character.velocity = new DbVelocity3(Request.Velocity.vx, character.velocity.vy, Request.Velocity.vz);
         }
-        if (character.PlayerPermissionConfig[1].Subscribers.Count == 0 && Request.Sprint)
+        if (character.PlayerPermissionConfig[1].Subscribers.Count == 0 && Request.Sprint && Request.Velocity.vz > 0)
         {
             character.velocity.vz *= 2;
         }
         
         if (character.PlayerPermissionConfig[2].Subscribers.Count == 0 && Request.Jump)
         {
-            character.velocity.vy = 10;
-            AddReasonUnique(character.PlayerPermissionConfig[2].Subscribers, "Jump");
-            AddReasonUnique(character.PlayerPermissionConfig[1].Subscribers, "Jump");
+            character.velocity.vy = 5;
+            AddSubscriberUnique(character.PlayerPermissionConfig[2].Subscribers, "Jump");
+            AddSubscriberUnique(character.PlayerPermissionConfig[1].Subscribers, "Jump");
         }
         
         ctx.Db.playable_character.identity.Update(character);
@@ -212,7 +214,12 @@ public static partial class Module
             character.position.y + character.velocity.vy * time,
             character.position.z + character.velocity.vz * time
             );
-            if (character.position.y < 0) character.position.y = 0;
+            if (character.position.y < 0) {
+                character.position.y = 0;
+                RemoveSubscriber(character.PlayerPermissionConfig[2].Subscribers, "Jump");
+                RemoveSubscriber(character.PlayerPermissionConfig[1].Subscribers, "Jump");
+            }
+            
             ctx.Db.playable_character.identity.Update(character);
         }
 
@@ -280,12 +287,12 @@ public static partial class Module
 
     // Funcs
 
-    static void AddReasonUnique(List<string> subscribers, string reason) {
+    static void AddSubscriberUnique(List<string> subscribers, string reason) {
         if (subscribers.Contains(reason)) return;
         subscribers.Add(reason);
     }
 
-    static void RemoveReason(List<string> subscribers, string reason) {
+    static void RemoveSubscriber(List<string> subscribers, string reason) {
         for (int i = subscribers.Count - 1; i >= 0; i--)
             if (subscribers[i] == reason) { subscribers.RemoveAt(i); break; }
     }

@@ -285,8 +285,14 @@ MonoBehaviour:
   MatchId: 0
   TargetPosition: {x: 0, y: 0, z: 0}
   snapDist: 0.02
+  Animator: {fileID: 8066434146639933306}
 --- !u!4 &4112234832362222848 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c439653e57ffc4669aae397cbd972335, type: 3}
+  m_PrefabInstance: {fileID: 4511250817961775851}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &8066434146639933306 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: c439653e57ffc4669aae397cbd972335, type: 3}
   m_PrefabInstance: {fileID: 4511250817961775851}
   m_PrefabAsset: {fileID: 0}

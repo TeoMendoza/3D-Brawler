@@ -14,7 +14,8 @@ public class PlayableCharacterController : MonoBehaviour
     public string Name;
     public uint MatchId;
     public Vector3 TargetPosition;
-    [SerializeField] float snapDist = 0.02f;
+    public float snapDist = 0.02f;
+    public Animator Animator;
 
     public void Initalize(PlayableCharacter Character)
     {
@@ -54,7 +55,7 @@ public class PlayableCharacterController : MonoBehaviour
         if (Input.GetKey(KeyCode.A)) req.Velocity.Vx -= 2;
         if (Input.GetKey(KeyCode.LeftShift)) req.Sprint = true;
         if (Input.GetKeyDown(KeyCode.Space)) req.Jump = true;
-        
+
         GameManager.Conn.Reducers.HandleMovementRequest(req);
 
         // Begin State Machine Implementation With Attacking
@@ -73,10 +74,24 @@ public class PlayableCharacterController : MonoBehaviour
             transform.position = TargetPosition;
     }
 
-    public void HandlePlayerUpdate(EventContext context, PlayableCharacter _oldChar, PlayableCharacter newChar)
+    public void HandlePlayerUpdate(EventContext context, PlayableCharacter oldChar, PlayableCharacter newChar)
     {
         if (Identity != newChar.Identity) return;
         TargetPosition = newChar.Position;
+
+        if (oldChar.Position.Y <= 0 && newChar.Position.Y > 0) Animator.SetTrigger("Jump");
+        if (newChar.Velocity.Vy < 0 && newChar.Position.Y > 0) Animator.SetBool("Falling", true);
+        
+        if (newChar.Position.Y > 0)  Animator.SetBool("IsGrounded", false);
+        
+        if (newChar.Position.Y <= 0) {
+            Animator.SetBool("IsGrounded", true);
+            Animator.SetBool("Falling", false);
+        }
+        
+        
+         
+        Animator.SetFloat("Speed", newChar.Velocity.Vz);
         
     }
 
