@@ -14,17 +14,17 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void HandleMovementRequestHandler(ReducerEventContext ctx, MovementRequest request);
-        public event HandleMovementRequestHandler? OnHandleMovementRequest;
+        public delegate void ApplyGravityHandler(ReducerEventContext ctx, GravityTimer timer);
+        public event ApplyGravityHandler? OnApplyGravity;
 
-        public void HandleMovementRequest(MovementRequest request)
+        public void ApplyGravity(GravityTimer timer)
         {
-            conn.InternalCallReducer(new Reducer.HandleMovementRequest(request), this.SetCallReducerFlags.HandleMovementRequestFlags);
+            conn.InternalCallReducer(new Reducer.ApplyGravity(timer), this.SetCallReducerFlags.ApplyGravityFlags);
         }
 
-        public bool InvokeHandleMovementRequest(ReducerEventContext ctx, Reducer.HandleMovementRequest args)
+        public bool InvokeApplyGravity(ReducerEventContext ctx, Reducer.ApplyGravity args)
         {
-            if (OnHandleMovementRequest == null)
+            if (OnApplyGravity == null)
             {
                 if (InternalOnUnhandledReducerError != null)
                 {
@@ -36,9 +36,9 @@ namespace SpacetimeDB.Types
                 }
                 return false;
             }
-            OnHandleMovementRequest(
+            OnApplyGravity(
                 ctx,
-                args.Request
+                args.Timer
             );
             return true;
         }
@@ -48,28 +48,28 @@ namespace SpacetimeDB.Types
     {
         [SpacetimeDB.Type]
         [DataContract]
-        public sealed partial class HandleMovementRequest : Reducer, IReducerArgs
+        public sealed partial class ApplyGravity : Reducer, IReducerArgs
         {
-            [DataMember(Name = "Request")]
-            public MovementRequest Request;
+            [DataMember(Name = "timer")]
+            public GravityTimer Timer;
 
-            public HandleMovementRequest(MovementRequest Request)
+            public ApplyGravity(GravityTimer Timer)
             {
-                this.Request = Request;
+                this.Timer = Timer;
             }
 
-            public HandleMovementRequest()
+            public ApplyGravity()
             {
-                this.Request = new();
+                this.Timer = new();
             }
 
-            string IReducerArgs.ReducerName => "HandleMovementRequest";
+            string IReducerArgs.ReducerName => "ApplyGravity";
         }
     }
 
     public sealed partial class SetReducerFlags
     {
-        internal CallReducerFlags HandleMovementRequestFlags;
-        public void HandleMovementRequest(CallReducerFlags flags) => HandleMovementRequestFlags = flags;
+        internal CallReducerFlags ApplyGravityFlags;
+        public void ApplyGravity(CallReducerFlags flags) => ApplyGravityFlags = flags;
     }
 }

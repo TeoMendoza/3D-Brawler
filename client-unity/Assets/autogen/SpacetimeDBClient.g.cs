@@ -23,6 +23,7 @@ namespace SpacetimeDB.Types
     {
         public RemoteTables(DbConnection conn)
         {
+            AddTable(Gravity = new(conn));
             AddTable(LoggedOutPlayers = new(conn));
             AddTable(Match = new(conn));
             AddTable(MoveAllPlayers = new(conn));
@@ -471,8 +472,10 @@ namespace SpacetimeDB.Types
             var encodedArgs = update.ReducerCall.Args;
             return update.ReducerCall.ReducerName switch
             {
+                "ApplyGravity" => BSATNHelpers.Decode<Reducer.ApplyGravity>(encodedArgs),
                 "Connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
                 "Disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
+                "HandleActionRequest" => BSATNHelpers.Decode<Reducer.HandleActionRequest>(encodedArgs),
                 "HandleMovementRequest" => BSATNHelpers.Decode<Reducer.HandleMovementRequest>(encodedArgs),
                 "MovePlayers" => BSATNHelpers.Decode<Reducer.MovePlayers>(encodedArgs),
                 "Test" => BSATNHelpers.Decode<Reducer.Test>(encodedArgs),
@@ -497,8 +500,10 @@ namespace SpacetimeDB.Types
             var eventContext = (ReducerEventContext)context;
             return reducer switch
             {
+                Reducer.ApplyGravity args => Reducers.InvokeApplyGravity(eventContext, args),
                 Reducer.Connect args => Reducers.InvokeConnect(eventContext, args),
                 Reducer.Disconnect args => Reducers.InvokeDisconnect(eventContext, args),
+                Reducer.HandleActionRequest args => Reducers.InvokeHandleActionRequest(eventContext, args),
                 Reducer.HandleMovementRequest args => Reducers.InvokeHandleMovementRequest(eventContext, args),
                 Reducer.MovePlayers args => Reducers.InvokeMovePlayers(eventContext, args),
                 Reducer.Test args => Reducers.InvokeTest(eventContext, args),

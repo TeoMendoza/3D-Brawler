@@ -4,6 +4,8 @@ using System.Collections;
 using SpacetimeDB.Types;
 using UnityEngine.Playables;
 using Unity.Cinemachine;
+using Unity.VisualScripting;
+using UnityEngine.InputSystem;
 public class PlayableCharacterController : MonoBehaviour
 {
     [SerializeField] private CinemachineCamera thirdPersonCam;
@@ -13,9 +15,6 @@ public class PlayableCharacterController : MonoBehaviour
     public uint MatchId;
     public Vector3 TargetPosition;
     [SerializeField] float snapDist = 0.02f;
-
-
-    Coroutine lerpRoutine;
 
     public void Initalize(PlayableCharacter Character)
     {
@@ -47,24 +46,31 @@ public class PlayableCharacterController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        var v = new Vector3(0, 0, 0);
+        MovementRequest req = new (Velocity: new DbVelocity3(0, 0, 0), Sprint: false, Jump: false);
 
-        if (Input.GetKey(KeyCode.W)) v.z += 2;
-        if (Input.GetKey(KeyCode.S)) v.z -= 2;
-        if (Input.GetKey(KeyCode.D)) v.x += 2;
-        if (Input.GetKey(KeyCode.A)) v.x -= 2;
+        if (Input.GetKey(KeyCode.W)) req.Velocity.Vz += 2;
+        if (Input.GetKey(KeyCode.S)) req.Velocity.Vz -= 2;
+        if (Input.GetKey(KeyCode.D)) req.Velocity.Vx += 2;
+        if (Input.GetKey(KeyCode.A)) req.Velocity.Vx -= 2;
+        if (Input.GetKey(KeyCode.LeftShift)) req.Sprint = true;
+        if (Input.GetKeyDown(KeyCode.Space)) req.Jump = true;
+        
+        GameManager.Conn.Reducers.HandleMovementRequest(req);
 
-        GameManager.Conn.Reducers.HandleMovementRequest((DbVelocity3)v);
+        // Begin State Machine Implementation With Attacking
+        if (Input.GetMouseButtonDown(0))
+        { // Left Mouse Button
+            //GameManager.Conn.Reducers.HandleActionRequest("Attack");
+        }
 
-        // approachRate ≈ how fast you catch up (bigger = snappier)
+
+        // Jitter Handling
+        // ApproachRate ≈ how fast you catch up (bigger = snappier)
         float approachRate = 12f;
-
-        // k will be ~0.2 for 60 fps with approachRate=12
         float k = 1f - Mathf.Exp(-approachRate * Time.deltaTime);
-
         transform.position = Vector3.Lerp(transform.position, TargetPosition, k);
         if (Vector3.Distance(transform.position, TargetPosition) < snapDist)
-            transform.position = TargetPosition; // snap when close enough
+            transform.position = TargetPosition;
     }
 
     public void HandlePlayerUpdate(EventContext context, PlayableCharacter _oldChar, PlayableCharacter newChar)

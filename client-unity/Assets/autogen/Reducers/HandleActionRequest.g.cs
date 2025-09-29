@@ -14,17 +14,17 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void HandleMovementRequestHandler(ReducerEventContext ctx, MovementRequest request);
-        public event HandleMovementRequestHandler? OnHandleMovementRequest;
+        public delegate void HandleActionRequestHandler(ReducerEventContext ctx, string key);
+        public event HandleActionRequestHandler? OnHandleActionRequest;
 
-        public void HandleMovementRequest(MovementRequest request)
+        public void HandleActionRequest(string key)
         {
-            conn.InternalCallReducer(new Reducer.HandleMovementRequest(request), this.SetCallReducerFlags.HandleMovementRequestFlags);
+            conn.InternalCallReducer(new Reducer.HandleActionRequest(key), this.SetCallReducerFlags.HandleActionRequestFlags);
         }
 
-        public bool InvokeHandleMovementRequest(ReducerEventContext ctx, Reducer.HandleMovementRequest args)
+        public bool InvokeHandleActionRequest(ReducerEventContext ctx, Reducer.HandleActionRequest args)
         {
-            if (OnHandleMovementRequest == null)
+            if (OnHandleActionRequest == null)
             {
                 if (InternalOnUnhandledReducerError != null)
                 {
@@ -36,9 +36,9 @@ namespace SpacetimeDB.Types
                 }
                 return false;
             }
-            OnHandleMovementRequest(
+            OnHandleActionRequest(
                 ctx,
-                args.Request
+                args.Key
             );
             return true;
         }
@@ -48,28 +48,28 @@ namespace SpacetimeDB.Types
     {
         [SpacetimeDB.Type]
         [DataContract]
-        public sealed partial class HandleMovementRequest : Reducer, IReducerArgs
+        public sealed partial class HandleActionRequest : Reducer, IReducerArgs
         {
-            [DataMember(Name = "Request")]
-            public MovementRequest Request;
+            [DataMember(Name = "Key")]
+            public string Key;
 
-            public HandleMovementRequest(MovementRequest Request)
+            public HandleActionRequest(string Key)
             {
-                this.Request = Request;
+                this.Key = Key;
             }
 
-            public HandleMovementRequest()
+            public HandleActionRequest()
             {
-                this.Request = new();
+                this.Key = "";
             }
 
-            string IReducerArgs.ReducerName => "HandleMovementRequest";
+            string IReducerArgs.ReducerName => "HandleActionRequest";
         }
     }
 
     public sealed partial class SetReducerFlags
     {
-        internal CallReducerFlags HandleMovementRequestFlags;
-        public void HandleMovementRequest(CallReducerFlags flags) => HandleMovementRequestFlags = flags;
+        internal CallReducerFlags HandleActionRequestFlags;
+        public void HandleActionRequest(CallReducerFlags flags) => HandleActionRequestFlags = flags;
     }
 }

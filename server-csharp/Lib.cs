@@ -44,6 +44,8 @@ public static partial class Module
         public DbVector3 position;
         public DbRotation2 rotation;
         public DbVelocity3 velocity;
+        public PlayerState state;
+        public List<PermissionEntry> PlayerPermissionConfig;
     }
 
     [Table(Name = "move_all_players", Scheduled = nameof(MovePlayers), ScheduledAt = nameof(scheduled_at))]
@@ -52,6 +54,15 @@ public static partial class Module
         [PrimaryKey, AutoInc] public ulong scheduled_id;
         public ScheduleAt scheduled_at;
         public float tick_rate;
+    }
+
+    [Table(Name = "gravity", Scheduled = nameof(ApplyGravity), ScheduledAt = nameof(scheduled_at))]
+    public partial struct Gravity_Timer
+    {
+        [PrimaryKey, AutoInc] public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+        public float tick_rate;
+        public float gravity;
     }
 
 
@@ -68,7 +79,13 @@ public static partial class Module
         ctx.Db.match.Insert(new Match { maxPlayers = 12, currentPlayers = 0, inProgress = false });
         ctx.Db.move_all_players.Insert(new Move_All_Players_Timer
         {
-            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)), tick_rate = 1.0f / 60.0f
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
+            tick_rate = 1.0f / 60.0f
+        });
+        
+        ctx.Db.gravity.Insert(new Gravity_Timer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)), tick_rate = 1.0f / 60.0f, gravity = 10
         });
     }
     
@@ -103,7 +120,15 @@ public static partial class Module
                 MatchId = 1,
                 position = new DbVector3 { x = 0, y = 0, z = 0 },
                 rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
-                velocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 }
+                velocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 },
+                state = PlayerState.Default,
+                PlayerPermissionConfig =
+                [
+                    new("CanWalk", []),
+                    new("CanRun", []),
+                    new("CanJump", [])
+                ]
+
             });
 
         var Match = ctx.Db.match.Id.Find(1);
@@ -145,16 +170,34 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void HandleMovementRequest(ReducerContext ctx, DbVelocity3 vel)
+    public static void HandleMovementRequest(ReducerContext ctx, MovementRequest Request)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");
+
+        // Switch Out Magic Numbers At Some Point
+        if (character.PlayerPermissionConfig[0].Subscribers.Count == 0)
+        {
+            character.velocity = new DbVelocity3(Request.Velocity.vx, character.velocity.vy, Request.Velocity.vz);
+        }
+        if (character.PlayerPermissionConfig[1].Subscribers.Count == 0 && Request.Sprint)
+        {
+            character.velocity.vz *= 2;
+        }
         
-        // Keep existing vy (gravity/jumps are server-owned)
-        character.velocity = new DbVelocity3(vel.vx, character.velocity.vy, vel.vz);
-
+        if (character.PlayerPermissionConfig[2].Subscribers.Count == 0 && Request.Jump)
+        {
+            character.velocity.vy = 10;
+            AddReasonUnique(character.PlayerPermissionConfig[2].Subscribers, "Jump");
+            AddReasonUnique(character.PlayerPermissionConfig[1].Subscribers, "Jump");
+        }
+        
         ctx.Db.playable_character.identity.Update(character);
+    }
 
-        //Log.Info("HandleMovementRequest Called");
+    [Reducer]
+    public static void HandleActionRequest(ReducerContext ctx, string Key)
+    {
+
     }
 
     [Reducer]
@@ -169,8 +212,21 @@ public static partial class Module
             character.position.y + character.velocity.vy * time,
             character.position.z + character.velocity.vz * time
             );
+            if (character.position.y < 0) character.position.y = 0;
             ctx.Db.playable_character.identity.Update(character);
-            Log.Info($"Position: {character.position}. Velocity: {character.velocity}");
+        }
+
+    }
+    
+    [Reducer]
+    public static void ApplyGravity(ReducerContext ctx, Gravity_Timer timer)
+    {
+        var time = timer.tick_rate;
+        foreach (var charac in ctx.Db.playable_character.Iter())
+        {
+            var character = charac;
+            character.velocity.vy -= timer.gravity * time;
+            ctx.Db.playable_character.identity.Update(character);
         }
         
     }
@@ -199,5 +255,43 @@ public static partial class Module
         public float vy = vy; // Y axis, up/down
         public float vz = vz; // Z axis, forward/back
     }
+
+    [SpacetimeDB.Type]
+    public enum PlayerState
+    {
+        Default
+    }
+
+    [SpacetimeDB.Type]
+    public partial struct MovementRequest(DbVelocity3 velocity, bool sprint, bool jump)
+    {
+        public DbVelocity3 Velocity = velocity;
+        public bool Sprint = sprint;
+        public bool Jump = jump;
+    }
+
+    [SpacetimeDB.Type]
+    public partial struct PermissionEntry(string key, List<string> subscribers)
+    {
+        public string Key = key;
+        public List<string> Subscribers = subscribers;
+    }
+
+
+    // Funcs
+
+    static void AddReasonUnique(List<string> subscribers, string reason) {
+        if (subscribers.Contains(reason)) return;
+        subscribers.Add(reason);
+    }
+
+    static void RemoveReason(List<string> subscribers, string reason) {
+        for (int i = subscribers.Count - 1; i >= 0; i--)
+            if (subscribers[i] == reason) { subscribers.RemoveAt(i); break; }
+    }
+
+
+
+
 
 }

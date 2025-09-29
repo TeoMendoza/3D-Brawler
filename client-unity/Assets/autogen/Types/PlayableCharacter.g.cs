@@ -29,6 +29,10 @@ namespace SpacetimeDB.Types
         public DbRotation2 Rotation;
         [DataMember(Name = "velocity")]
         public DbVelocity3 Velocity;
+        [DataMember(Name = "state")]
+        public PlayerState State;
+        [DataMember(Name = "PlayerPermissionConfig")]
+        public System.Collections.Generic.List<PermissionEntry> PlayerPermissionConfig;
 
         public PlayableCharacter(
             SpacetimeDB.Identity Identity,
@@ -37,7 +41,9 @@ namespace SpacetimeDB.Types
             uint MatchId,
             DbVector3 Position,
             DbRotation2 Rotation,
-            DbVelocity3 Velocity
+            DbVelocity3 Velocity,
+            PlayerState State,
+            System.Collections.Generic.List<PermissionEntry> PlayerPermissionConfig
         )
         {
             this.Identity = Identity;
@@ -47,6 +53,8 @@ namespace SpacetimeDB.Types
             this.Position = Position;
             this.Rotation = Rotation;
             this.Velocity = Velocity;
+            this.State = State;
+            this.PlayerPermissionConfig = PlayerPermissionConfig;
         }
 
         public PlayableCharacter()
@@ -55,6 +63,7 @@ namespace SpacetimeDB.Types
             this.Position = new();
             this.Rotation = new();
             this.Velocity = new();
+            this.PlayerPermissionConfig = new();
         }
     }
 }
