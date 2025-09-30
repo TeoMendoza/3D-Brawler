@@ -16,6 +16,7 @@ public class PlayableCharacterController : MonoBehaviour
     public Vector3 TargetPosition;
     public float snapDist = 0.02f;
     public Animator Animator;
+    public bool PrevGrounded = true;
 
     public void Initalize(PlayableCharacter Character)
     {
@@ -79,19 +80,35 @@ public class PlayableCharacterController : MonoBehaviour
         if (Identity != newChar.Identity) return;
         TargetPosition = newChar.Position;
 
-        if (oldChar.Position.Y <= 0 && newChar.Position.Y > 0) Animator.SetTrigger("Jump");
-        if (newChar.Velocity.Vy < 0 && newChar.Position.Y > 0) Animator.SetBool("Falling", true);
+        bool wasGrounded = PrevGrounded;
+        float vy = newChar.Velocity.Vy;
+        bool grounded = newChar.Position.Y <= 0.001f && vy <= 0;
         
-        if (newChar.Position.Y > 0)  Animator.SetBool("IsGrounded", false);
+
+        if (wasGrounded && !grounded && vy > 0f)
+            Animator.SetTrigger("Jump");
+
+        Animator.SetBool("IsGrounded", grounded);
         
-        if (newChar.Position.Y <= 0) {
-            Animator.SetBool("IsGrounded", true);
-            Animator.SetBool("Falling", false);
-        }
+
+        float horizSpeed = Mathf.Sqrt(newChar.Velocity.Vx*newChar.Velocity.Vx + newChar.Velocity.Vz*newChar.Velocity.Vz);
+        Animator.SetFloat("Speed", horizSpeed);
+        Animator.SetFloat("VerticleSpeed", vy);
+
+        PrevGrounded = grounded;
+
+        // if (oldChar.Position.Y <= 0 && newChar.Position.Y > 0) Animator.SetTrigger("Jump");
+
+        // if (newChar.Velocity.Vy < 0 && newChar.Position.Y > 0) Animator.SetBool("Falling", true);
         
+        // if (newChar.Position.Y > 0)  Animator.SetBool("IsGrounded", false);
         
-         
-        Animator.SetFloat("Speed", newChar.Velocity.Vz);
+        // if (newChar.Position.Y <= 0) {
+        //     Animator.SetBool("IsGrounded", true);
+        //     Animator.SetBool("Falling", false);
+        // }
+
+        // Animator.SetFloat("Speed", newChar.Velocity.Vz);
         
     }
 

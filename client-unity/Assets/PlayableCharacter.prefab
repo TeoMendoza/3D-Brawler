@@ -27,13 +27,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3191044479256309481}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.079599276, y: -0.05236244, z: 0.0041870973, w: 0.9954419}
-  m_LocalPosition: {x: 0.5531202, y: 2.1546075, z: -2.368882}
+  m_LocalRotation: {x: 0.07959928, y: -0.05236244, z: 0.004187098, w: 0.9954419}
+  m_LocalPosition: {x: 0.5531202, y: 2.1046076, z: -2.368882}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4112234832362222848}
-  m_LocalEulerAnglesHint: {x: -8.455, y: 0, z: 10}
+  m_LocalEulerAnglesHint: {x: 38.059, y: -6.022, z: 0}
 --- !u!114 &8345429420894154530
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -58,7 +58,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 60
+    FieldOfView: 75
     OrthographicSize: 5
     NearClipPlane: 0.3
     FarClipPlane: 1000
@@ -90,7 +90,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Damping: {x: 0.18, y: 0.18, z: 0.18}
-  ShoulderOffset: {x: 0.5, y: -0.25, z: 0.5}
+  ShoulderOffset: {x: 0.5, y: -0.3, z: 0.5}
   VerticalArmLength: 0.4
   CameraSide: 0.8
   CameraDistance: 3

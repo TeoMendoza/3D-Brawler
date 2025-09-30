@@ -87,7 +87,7 @@ public static partial class Module
         {
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
             tick_rate = 1.0f / 60.0f,
-            gravity = 30
+            gravity = 20
         });
     }
     
