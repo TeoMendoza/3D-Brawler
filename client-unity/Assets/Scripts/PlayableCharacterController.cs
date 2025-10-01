@@ -30,6 +30,8 @@ public class PlayableCharacterController : MonoBehaviour
 
     public void Initalize(PlayableCharacter Character)
     {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible   = false;
         Identity = Character.Identity;
         Id = Character.Id;
         Name = Character.Name;
