@@ -27,8 +27,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3191044479256309481}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.07959928, y: -0.05236244, z: 0.004187098, w: 0.9954419}
-  m_LocalPosition: {x: 0.5531202, y: 2.1046076, z: -2.368882}
+  m_LocalRotation: {x: 0.079599276, y: -0.052362435, z: 0.0041870973, w: 0.9954419}
+  m_LocalPosition: {x: 0.59235287, y: 2.1046076, z: -2.2641883}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -90,9 +90,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Damping: {x: 0.18, y: 0.18, z: 0.18}
-  ShoulderOffset: {x: 0.5, y: -0.3, z: 0.5}
+  ShoulderOffset: {x: 0.5, y: -0.3, z: 0.6}
   VerticalArmLength: 0.4
-  CameraSide: 0.8
+  CameraSide: 0.85
   CameraDistance: 3
   AvoidObstacles:
     Enabled: 1
@@ -289,9 +289,9 @@ MonoBehaviour:
   Animator: {fileID: 8066434146639933306}
   PrevGrounded: 1
   sensX: 200
-  sensY: 200
-  minPitch: -60
-  maxPitch: 60
+  sensY: 100
+  minPitch: -30
+  maxPitch: 30
   pitchSmooth: 0.08
 --- !u!4 &4112234832362222848 stripped
 Transform:

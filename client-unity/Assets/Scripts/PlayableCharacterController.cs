@@ -23,7 +23,7 @@ public class PlayableCharacterController : MonoBehaviour
     float yaw = 0f; 
     float pitch = 0f;
     [SerializeField] float sensX = 200f, sensY = 100f;   // deg/sec at mouse = 1.0
-    [SerializeField] float minPitch = -30f, maxPitch = 30f;
+    [SerializeField] float minPitch = -15f, maxPitch = 15f;
     [SerializeField] float pitchSmooth = 0.08f; // seconds
     float pitchCurrent; 
     float pitchVel;
@@ -42,14 +42,6 @@ public class PlayableCharacterController : MonoBehaviour
             thirdPersonCam.gameObject.SetActive(true);
         
     }
-
-    // Next Step Is To Translate Actual Data Of Spacetime DB PlayableCharacter Class Into Data For This Prefab/Controller.
-    // Next Step Afterwards Is To Handle Input That Invoke Reducers To Make Changes To Playable Character Row That This Obj Owns (ONLY IF PERMISSION ALLOWS - Use Identity Or Something To Check)
-    // Next Step Afterwards Is To Listen For Updates (Only For Row That This Obj Owns), And Reflect Those In The Game Object.
-    // Afterwards, Confirm Everything Is Working As A Whole & Then Begin Figuring Out Basic Animations With Basic State Machine Behavior (Permission Config + Attacking States Come After, Projectiles Can Be Added Once The Permissions + Animation States Are Working, Since They Are Seperate Objects)
-
-
-
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -71,7 +63,7 @@ public class PlayableCharacterController : MonoBehaviour
 
         float mx = Input.GetAxis("Mouse X");
         float my = Input.GetAxis("Mouse Y");
-        //Debug.Log(Input.GetAxis("Mouse Y"));
+        
         yaw = Mathf.Repeat(yaw + mx * sensX * Time.deltaTime, 360f);
         pitch = Mathf.Clamp(pitch - my * sensY * Time.deltaTime, minPitch, maxPitch);
 
