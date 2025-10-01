@@ -478,7 +478,6 @@ namespace SpacetimeDB.Types
                 "HandleActionRequest" => BSATNHelpers.Decode<Reducer.HandleActionRequest>(encodedArgs),
                 "HandleMovementRequest" => BSATNHelpers.Decode<Reducer.HandleMovementRequest>(encodedArgs),
                 "MovePlayers" => BSATNHelpers.Decode<Reducer.MovePlayers>(encodedArgs),
-                "Test" => BSATNHelpers.Decode<Reducer.Test>(encodedArgs),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }
@@ -506,7 +505,6 @@ namespace SpacetimeDB.Types
                 Reducer.HandleActionRequest args => Reducers.InvokeHandleActionRequest(eventContext, args),
                 Reducer.HandleMovementRequest args => Reducers.InvokeHandleMovementRequest(eventContext, args),
                 Reducer.MovePlayers args => Reducers.InvokeMovePlayers(eventContext, args),
-                Reducer.Test args => Reducers.InvokeTest(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }

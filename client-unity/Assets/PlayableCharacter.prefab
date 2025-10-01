@@ -18,7 +18,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &4396109249353281109
 Transform:
   m_ObjectHideFlags: 0
@@ -33,7 +33,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4112234832362222848}
-  m_LocalEulerAnglesHint: {x: 38.059, y: -6.022, z: 0}
+  m_LocalEulerAnglesHint: {x: 9.144, y: -7, z: 0}
 --- !u!114 &8345429420894154530
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -280,12 +280,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   thirdPersonCam: {fileID: 8345429420894154530}
+  thirdPersonCamPivot: {fileID: 9159270690308197457}
   Id: 0
   Name: 
   MatchId: 0
   TargetPosition: {x: 0, y: 0, z: 0}
   snapDist: 0.02
   Animator: {fileID: 8066434146639933306}
+  PrevGrounded: 1
+  sensX: 200
+  sensY: 200
+  minPitch: -60
+  maxPitch: 60
+  pitchSmooth: 0.08
 --- !u!4 &4112234832362222848 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c439653e57ffc4669aae397cbd972335, type: 3}

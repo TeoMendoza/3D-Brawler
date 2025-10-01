@@ -56,7 +56,6 @@ public class MatchManager : MonoBehaviour
             var prefab = Instantiate(PlayableCharacterPrefab);
             prefab.Initalize(Character);     
             Players.Add(Character.Identity, prefab);
-            Conn.Reducers.Test();
         }
             
     }

@@ -21,21 +21,26 @@ namespace SpacetimeDB.Types
         public bool Sprint;
         [DataMember(Name = "Jump")]
         public bool Jump;
+        [DataMember(Name = "Aim")]
+        public DbRotation2 Aim;
 
         public MovementRequest(
             DbVelocity3 Velocity,
             bool Sprint,
-            bool Jump
+            bool Jump,
+            DbRotation2 Aim
         )
         {
             this.Velocity = Velocity;
             this.Sprint = Sprint;
             this.Jump = Jump;
+            this.Aim = Aim;
         }
 
         public MovementRequest()
         {
             this.Velocity = new();
+            this.Aim = new();
         }
     }
 }

@@ -1,6 +1,7 @@
 using System.Numerics;
 using SpacetimeDB;
 
+
 public static partial class Module
 {
     // Tables
@@ -166,29 +167,28 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void Test(ReducerContext ctx)
-    {
-        Log.Info("Test Reducer Called");
-    }
-
-    [Reducer]
     public static void HandleMovementRequest(ReducerContext ctx, MovementRequest Request)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");
 
+        character.rotation = Request.Aim;
+        Log.Info($"Yaw: {Request.Aim.Yaw}, Pitch: {Request.Aim.Pitch}");
+
         // Switch Out Magic Numbers At Some Point
         if (character.PlayerPermissionConfig[0].Subscribers.Count == 0)
         {
-            character.velocity = new DbVelocity3(Request.Velocity.vx, character.velocity.vy, Request.Velocity.vz);
-        }
-        if (character.PlayerPermissionConfig[1].Subscribers.Count == 0 && Request.Sprint && Request.Velocity.vz > 0)
-        {
-            character.velocity.vz *= 2;
+            float YawRotation = (float)(Math.PI / 180.0) * character.rotation.Yaw;
+            float SprintMultiplier = (character.PlayerPermissionConfig[1].Subscribers.Count == 0 && Request.Sprint && Request.Velocity.vz > 0f) ? 2f : 1f;
+
+            character.velocity = new DbVelocity3((MathF.Cos(YawRotation) * Request.Velocity.vx + MathF.Sin(YawRotation) * Request.Velocity.vz) * SprintMultiplier,
+                character.velocity.vy, (-MathF.Sin(YawRotation) * Request.Velocity.vx + MathF.Cos(YawRotation) * Request.Velocity.vz) * SprintMultiplier);
+                
+            //character.velocity = new DbVelocity3(Request.Velocity.vx, character.velocity.vy, Request.Velocity.vz);
         }
         
         if (character.PlayerPermissionConfig[2].Subscribers.Count == 0 && Request.Jump)
         {
-            character.velocity.vy = 5;
+            character.velocity.vy = 7.5f;
             AddSubscriberUnique(character.PlayerPermissionConfig[2].Subscribers, "Jump");
             AddSubscriberUnique(character.PlayerPermissionConfig[1].Subscribers, "Jump");
         }
@@ -270,11 +270,12 @@ public static partial class Module
     }
 
     [SpacetimeDB.Type]
-    public partial struct MovementRequest(DbVelocity3 velocity, bool sprint, bool jump)
+    public partial struct MovementRequest(DbVelocity3 velocity, bool sprint, bool jump, DbRotation2 aim)
     {
         public DbVelocity3 Velocity = velocity;
         public bool Sprint = sprint;
         public bool Jump = jump;
+        public DbRotation2 Aim = aim;
     }
 
     [SpacetimeDB.Type]
