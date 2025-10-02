@@ -68,10 +68,10 @@ public class PlayableCharacterController : MonoBehaviour
         req.Aim = new DbRotation2(yaw, pitch);
         GameManager.Conn.Reducers.HandleMovementRequest(req);
 
-        // Begin State Machine Implementation With Attacking
-        if (Input.GetMouseButtonDown(0))
-        { // Left Mouse Button
-            //GameManager.Conn.Reducers.HandleActionRequest("Attack");
+        // Action Requests (States)
+        if (Input.GetMouseButtonDown(0)) // Left Mouse Button
+        {  
+            GameManager.Conn.Reducers.HandleActionRequest(request: new ActionRequest (PlayerState: PlayerState.Attack));
         }
         
     }
@@ -100,21 +100,31 @@ public class PlayableCharacterController : MonoBehaviour
         bool wasGrounded = PrevGrounded;
         float vy = newChar.Velocity.Vy;
         bool grounded = newChar.Position.Y <= 0.001f && vy <= 0;
-        
+        bool attack = oldChar.State is PlayerState.Default && newChar.State is PlayerState.Attack;
+
+        if (attack)
+            Animator.SetTrigger("Attack");
+
         if (wasGrounded && !grounded && vy > 0f)
             Animator.SetTrigger("Jump");
 
         Animator.SetBool("IsGrounded", grounded);
-        
 
-        float horizSpeed = Mathf.Sqrt(newChar.Velocity.Vx*newChar.Velocity.Vx + newChar.Velocity.Vz*newChar.Velocity.Vz);
+
+        float horizSpeed = Mathf.Sqrt(newChar.Velocity.Vx * newChar.Velocity.Vx + newChar.Velocity.Vz * newChar.Velocity.Vz);
         Animator.SetFloat("Speed", horizSpeed);
         Animator.SetFloat("VerticleSpeed", vy);
 
         PrevGrounded = grounded;
 
-        
-        
+        if (oldChar.State != newChar.State)
+            GameManager.Conn.Reducers.HandleStateChange(oldChar.State);
+    }
+    
+    public void OnAttackFinished()
+    {
+        Debug.Log("Attack Finished Called");
+        GameManager.Conn.Reducers.HandleActionFinished(playerState: PlayerState.Attack);
     }
 
 

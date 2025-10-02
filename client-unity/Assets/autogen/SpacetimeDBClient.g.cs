@@ -475,8 +475,10 @@ namespace SpacetimeDB.Types
                 "ApplyGravity" => BSATNHelpers.Decode<Reducer.ApplyGravity>(encodedArgs),
                 "Connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
                 "Disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
+                "HandleActionFinished" => BSATNHelpers.Decode<Reducer.HandleActionFinished>(encodedArgs),
                 "HandleActionRequest" => BSATNHelpers.Decode<Reducer.HandleActionRequest>(encodedArgs),
                 "HandleMovementRequest" => BSATNHelpers.Decode<Reducer.HandleMovementRequest>(encodedArgs),
+                "HandleStateChange" => BSATNHelpers.Decode<Reducer.HandleStateChange>(encodedArgs),
                 "MovePlayers" => BSATNHelpers.Decode<Reducer.MovePlayers>(encodedArgs),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
@@ -502,8 +504,10 @@ namespace SpacetimeDB.Types
                 Reducer.ApplyGravity args => Reducers.InvokeApplyGravity(eventContext, args),
                 Reducer.Connect args => Reducers.InvokeConnect(eventContext, args),
                 Reducer.Disconnect args => Reducers.InvokeDisconnect(eventContext, args),
+                Reducer.HandleActionFinished args => Reducers.InvokeHandleActionFinished(eventContext, args),
                 Reducer.HandleActionRequest args => Reducers.InvokeHandleActionRequest(eventContext, args),
                 Reducer.HandleMovementRequest args => Reducers.InvokeHandleMovementRequest(eventContext, args),
+                Reducer.HandleStateChange args => Reducers.InvokeHandleStateChange(eventContext, args),
                 Reducer.MovePlayers args => Reducers.InvokeMovePlayers(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };

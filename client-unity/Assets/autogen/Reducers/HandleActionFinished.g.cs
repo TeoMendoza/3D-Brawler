@@ -14,17 +14,17 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void HandleActionRequestHandler(ReducerEventContext ctx, ActionRequest request);
-        public event HandleActionRequestHandler? OnHandleActionRequest;
+        public delegate void HandleActionFinishedHandler(ReducerEventContext ctx, PlayerState playerState);
+        public event HandleActionFinishedHandler? OnHandleActionFinished;
 
-        public void HandleActionRequest(ActionRequest request)
+        public void HandleActionFinished(PlayerState playerState)
         {
-            conn.InternalCallReducer(new Reducer.HandleActionRequest(request), this.SetCallReducerFlags.HandleActionRequestFlags);
+            conn.InternalCallReducer(new Reducer.HandleActionFinished(playerState), this.SetCallReducerFlags.HandleActionFinishedFlags);
         }
 
-        public bool InvokeHandleActionRequest(ReducerEventContext ctx, Reducer.HandleActionRequest args)
+        public bool InvokeHandleActionFinished(ReducerEventContext ctx, Reducer.HandleActionFinished args)
         {
-            if (OnHandleActionRequest == null)
+            if (OnHandleActionFinished == null)
             {
                 if (InternalOnUnhandledReducerError != null)
                 {
@@ -36,9 +36,9 @@ namespace SpacetimeDB.Types
                 }
                 return false;
             }
-            OnHandleActionRequest(
+            OnHandleActionFinished(
                 ctx,
-                args.Request
+                args.PlayerState
             );
             return true;
         }
@@ -48,28 +48,27 @@ namespace SpacetimeDB.Types
     {
         [SpacetimeDB.Type]
         [DataContract]
-        public sealed partial class HandleActionRequest : Reducer, IReducerArgs
+        public sealed partial class HandleActionFinished : Reducer, IReducerArgs
         {
-            [DataMember(Name = "request")]
-            public ActionRequest Request;
+            [DataMember(Name = "playerState")]
+            public PlayerState PlayerState;
 
-            public HandleActionRequest(ActionRequest Request)
+            public HandleActionFinished(PlayerState PlayerState)
             {
-                this.Request = Request;
+                this.PlayerState = PlayerState;
             }
 
-            public HandleActionRequest()
+            public HandleActionFinished()
             {
-                this.Request = new();
             }
 
-            string IReducerArgs.ReducerName => "HandleActionRequest";
+            string IReducerArgs.ReducerName => "HandleActionFinished";
         }
     }
 
     public sealed partial class SetReducerFlags
     {
-        internal CallReducerFlags HandleActionRequestFlags;
-        public void HandleActionRequest(CallReducerFlags flags) => HandleActionRequestFlags = flags;
+        internal CallReducerFlags HandleActionFinishedFlags;
+        public void HandleActionFinished(CallReducerFlags flags) => HandleActionFinishedFlags = flags;
     }
 }

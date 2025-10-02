@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    const string SERVER_URL = "http://127.0.0.1:3000";
+    const string SERVER_URL = "http://127.0.0.1:3000"; // For Maincloud Milestone Playable Version Release: "https://maincloud.spacetimedb.com"; 
     const string MODULE_NAME = "3dbrawler";
 
     public static event Action OnConnected;
@@ -22,6 +22,7 @@ public class GameManager : MonoBehaviour
     
     private void Start()
     {
+        PlayerPrefs.DeleteAll();
         Instance = this;
         Application.targetFrameRate = 60;
 

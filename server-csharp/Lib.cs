@@ -129,7 +129,8 @@ public static partial class Module
                 [
                     new("CanWalk", []),
                     new("CanRun", []),
-                    new("CanJump", [])
+                    new("CanJump", []),
+                    new("CanAttack", [])
                 ]
 
             });
@@ -170,36 +171,67 @@ public static partial class Module
     public static void HandleMovementRequest(ReducerContext ctx, MovementRequest Request)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");
-
         character.rotation = Request.Aim;
-        Log.Info($"Yaw: {Request.Aim.Yaw}, Pitch: {Request.Aim.Pitch}");
 
-        // Switch Out Magic Numbers At Some Point
-        if (character.PlayerPermissionConfig[0].Subscribers.Count == 0)
+        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanWalk").Subscribers.Count == 0)
         {
             float YawRotation = (float)(Math.PI / 180.0) * character.rotation.Yaw;
-            float SprintMultiplier = (character.PlayerPermissionConfig[1].Subscribers.Count == 0 && Request.Sprint && Request.Velocity.vz > 0f) ? 2f : 1f;
+            float SprintMultiplier = (GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint && Request.Velocity.vz > 0f) ? 2f : 1f;
 
             character.velocity = new DbVelocity3((MathF.Cos(YawRotation) * Request.Velocity.vx + MathF.Sin(YawRotation) * Request.Velocity.vz) * SprintMultiplier,
                 character.velocity.vy, (-MathF.Sin(YawRotation) * Request.Velocity.vx + MathF.Cos(YawRotation) * Request.Velocity.vz) * SprintMultiplier);
-                
-            //character.velocity = new DbVelocity3(Request.Velocity.vx, character.velocity.vy, Request.Velocity.vz);
         }
         
-        if (character.PlayerPermissionConfig[2].Subscribers.Count == 0 && Request.Jump)
+        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers.Count == 0 && Request.Jump)
         {
             character.velocity.vy = 7.5f;
-            AddSubscriberUnique(character.PlayerPermissionConfig[2].Subscribers, "Jump");
-            AddSubscriberUnique(character.PlayerPermissionConfig[1].Subscribers, "Jump");
+            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
+            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
         }
         
         ctx.Db.playable_character.identity.Update(character);
     }
 
     [Reducer]
-    public static void HandleActionRequest(ReducerContext ctx, string Key)
+    public static void HandleActionRequest(ReducerContext ctx, ActionRequest request)
     {
+        Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");
+        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers.Count == 0 && request.PlayerState == PlayerState.Attack)
+        {
+            character.state = PlayerState.Attack;
+            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Attack");
+            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
+        }
 
+        ctx.Db.playable_character.identity.Update(character);
+    }
+
+    [Reducer]
+    public static void HandleActionFinished(ReducerContext ctx, PlayerState playerState)
+    {
+        Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");
+
+        // Might be more complex logic like mini transition states but for now just back to default is fine
+        character.state = PlayerState.Default;
+        ctx.Db.playable_character.identity.Update(character);
+        
+    }
+
+    [Reducer]
+    public static void HandleStateChange(ReducerContext ctx, PlayerState oldPlayerState)
+    {
+        // State Switched To Is Irrelavent, just revert any changes made to perm config from old state
+        Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");
+        switch (oldPlayerState)
+        {
+            case PlayerState.Attack:
+                RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Attack");
+                RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
+                break;
+            case PlayerState.Default:
+                break;
+        }
+        ctx.Db.playable_character.identity.Update(character);
     }
 
     [Reducer]
@@ -266,7 +298,8 @@ public static partial class Module
     [SpacetimeDB.Type]
     public enum PlayerState
     {
-        Default
+        Default,
+        Attack
     }
 
     [SpacetimeDB.Type]
@@ -276,6 +309,12 @@ public static partial class Module
         public bool Sprint = sprint;
         public bool Jump = jump;
         public DbRotation2 Aim = aim;
+    }
+
+    [SpacetimeDB.Type]
+    public partial struct ActionRequest(PlayerState playerState)
+    {
+        public PlayerState PlayerState = playerState;
     }
 
     [SpacetimeDB.Type]
@@ -293,9 +332,20 @@ public static partial class Module
         subscribers.Add(reason);
     }
 
-    static void RemoveSubscriber(List<string> subscribers, string reason) {
+    static void RemoveSubscriber(List<string> subscribers, string reason)
+    {
         for (int i = subscribers.Count - 1; i >= 0; i--)
             if (subscribers[i] == reason) { subscribers.RemoveAt(i); break; }
+    }
+    
+    private static PermissionEntry GetPermissionEntry(List<PermissionEntry> entries, string key)
+    {
+        foreach (var entry in entries)
+        {
+            if (entry.Key == key)
+                return entry;
+        }
+        return entries[0];
     }
 
 

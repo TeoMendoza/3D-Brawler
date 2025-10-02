@@ -13,5 +13,6 @@ namespace SpacetimeDB.Types
     public enum PlayerState
     {
         Default,
+        Attack,
     }
 }
