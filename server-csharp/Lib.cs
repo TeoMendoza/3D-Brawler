@@ -47,6 +47,23 @@ public static partial class Module
         public DbVelocity3 velocity;
         public PlayerState state;
         public List<PermissionEntry> PlayerPermissionConfig;
+        // Add Internal Capsule Class To Keep Track Of Collision Box
+    }
+
+    [Table(Name = "projectiles", Public = true)]
+    public partial struct Projectile
+    {
+        [PrimaryKey]
+        public Identity OwnerIdentity;
+
+        [Unique, AutoInc]
+        public uint Id;
+        public DbVector3 position;
+        public DbVelocity3 velocity;
+        public ProjectileType ProjectileType;
+        // Add Internal Capsule Class To Keep Track Of Collision Box Once Collisions Are Being Implemented
+
+        // public List<Effect> Effects; // Add once effects are being implemented
     }
 
     [Table(Name = "move_all_players", Scheduled = nameof(MovePlayers), ScheduledAt = nameof(scheduled_at))]
@@ -201,10 +218,16 @@ public static partial class Module
             character.state = PlayerState.Attack;
             AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Attack");
             AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
+
+            // Add A New Bullet To DB, the position is both related to the player and crosshair. Like 
         }
 
         ctx.Db.playable_character.identity.Update(character);
     }
+
+    [Reducer]
+    public static void SpawnProjectile(ReducerContext ctx)
+    {}
 
     [Reducer]
     public static void HandleActionExitRequest(ReducerContext ctx, PlayerState newPlayerState)
@@ -247,7 +270,7 @@ public static partial class Module
         }
 
     }
-    
+
     [Reducer]
     public static void ApplyGravity(ReducerContext ctx, Gravity_Timer timer)
     {
@@ -258,6 +281,12 @@ public static partial class Module
             character.velocity.vy -= timer.gravity * time;
             ctx.Db.playable_character.identity.Update(character);
         }
+
+    }
+
+    [Reducer]
+    public static void MoveProjectilesAndCheckCollisions(ReducerContext ctx) // Maybe Seperate Move Proj And The Collision Check Into Seperate Timed Reducers
+    {
         
     }
 
@@ -291,6 +320,12 @@ public static partial class Module
     {
         Default,
         Attack
+    }
+
+    [SpacetimeDB.Type]
+    public enum ProjectileType
+    {
+        Bullet,
     }
 
     [SpacetimeDB.Type]
