@@ -14,12 +14,12 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void HandleStateChangeHandler(ReducerEventContext ctx, PlayerState oldPlayerState);
+        public delegate void HandleStateChangeHandler(ReducerEventContext ctx, PlayerState oldPlayerState, PlayerState newPlayerState);
         public event HandleStateChangeHandler? OnHandleStateChange;
 
-        public void HandleStateChange(PlayerState oldPlayerState)
+        public void HandleStateChange(PlayerState oldPlayerState, PlayerState newPlayerState)
         {
-            conn.InternalCallReducer(new Reducer.HandleStateChange(oldPlayerState), this.SetCallReducerFlags.HandleStateChangeFlags);
+            conn.InternalCallReducer(new Reducer.HandleStateChange(oldPlayerState, newPlayerState), this.SetCallReducerFlags.HandleStateChangeFlags);
         }
 
         public bool InvokeHandleStateChange(ReducerEventContext ctx, Reducer.HandleStateChange args)
@@ -38,7 +38,8 @@ namespace SpacetimeDB.Types
             }
             OnHandleStateChange(
                 ctx,
-                args.OldPlayerState
+                args.OldPlayerState,
+                args.NewPlayerState
             );
             return true;
         }
@@ -52,10 +53,16 @@ namespace SpacetimeDB.Types
         {
             [DataMember(Name = "oldPlayerState")]
             public PlayerState OldPlayerState;
+            [DataMember(Name = "newPlayerState")]
+            public PlayerState NewPlayerState;
 
-            public HandleStateChange(PlayerState OldPlayerState)
+            public HandleStateChange(
+                PlayerState OldPlayerState,
+                PlayerState NewPlayerState
+            )
             {
                 this.OldPlayerState = OldPlayerState;
+                this.NewPlayerState = NewPlayerState;
             }
 
             public HandleStateChange()

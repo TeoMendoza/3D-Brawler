@@ -206,21 +206,38 @@ public static partial class Module
         ctx.Db.playable_character.identity.Update(character);
     }
 
-    [Reducer]
-    public static void HandleActionFinished(ReducerContext ctx, PlayerState playerState)
-    {
-        Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");
+    // [Reducer]
+    // public static void HandleActionFinished(ReducerContext ctx, PlayerState playerState)
+    // {
+    //     Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");
 
-        // Might be more complex logic like mini transition states but for now just back to default is fine
-        character.state = PlayerState.Default;
-        ctx.Db.playable_character.identity.Update(character);
+    //     // Might be more complex logic like mini transition states but for now just back to default is fine
+    //     character.state = PlayerState.Default;
+    //     ctx.Db.playable_character.identity.Update(character);
         
-    }
+    // }
+
+    // [Reducer]
+    // public static void HandleStateChange(ReducerContext ctx, PlayerState oldPlayerState)
+    // {
+    //     // State Switched To Is Irrelavent, just revert any changes made to perm config from old state
+    //     Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");
+    //     switch (oldPlayerState)
+    //     {
+    //         case PlayerState.Attack:
+    //             RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Attack");
+    //             RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
+    //             break;
+    //         case PlayerState.Default:
+    //             break;
+    //     }
+    //     ctx.Db.playable_character.identity.Update(character);
+    // }
 
     [Reducer]
-    public static void HandleStateChange(ReducerContext ctx, PlayerState oldPlayerState)
+
+    public static void HandleStateChange(ReducerContext ctx, PlayerState oldPlayerState, PlayerState newPlayerState)
     {
-        // State Switched To Is Irrelavent, just revert any changes made to perm config from old state
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");
         switch (oldPlayerState)
         {
@@ -231,6 +248,7 @@ public static partial class Module
             case PlayerState.Default:
                 break;
         }
+        character.state = newPlayerState;
         ctx.Db.playable_character.identity.Update(character);
     }
 

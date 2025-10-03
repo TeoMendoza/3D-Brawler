@@ -117,14 +117,12 @@ public class PlayableCharacterController : MonoBehaviour
 
         PrevGrounded = grounded;
 
-        if (oldChar.State != newChar.State)
-            GameManager.Conn.Reducers.HandleStateChange(oldChar.State);
+        
     }
     
     public void OnAttackFinished()
     {
-        Debug.Log("Attack Finished Called");
-        GameManager.Conn.Reducers.HandleActionFinished(playerState: PlayerState.Attack);
+        GameManager.Conn.Reducers.HandleStateChange(oldPlayerState: PlayerState.Attack, newPlayerState: PlayerState.Default);
     }
 
 
