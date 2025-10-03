@@ -71,7 +71,7 @@ public class PlayableCharacterController : MonoBehaviour
         // Action Requests (States)
         if (Input.GetMouseButtonDown(0)) // Left Mouse Button
         {  
-            GameManager.Conn.Reducers.HandleActionRequest(request: new ActionRequest (PlayerState: PlayerState.Attack));
+            GameManager.Conn.Reducers.HandleActionEnterRequest(request: new ActionRequest (PlayerState: PlayerState.Attack));
         }
         
     }
@@ -122,7 +122,7 @@ public class PlayableCharacterController : MonoBehaviour
     
     public void OnAttackFinished()
     {
-        GameManager.Conn.Reducers.HandleStateChange(oldPlayerState: PlayerState.Attack, newPlayerState: PlayerState.Default);
+        GameManager.Conn.Reducers.HandleActionExitRequest(newPlayerState: PlayerState.Default);
     }
 
 
