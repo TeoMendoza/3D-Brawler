@@ -6,6 +6,7 @@ using UnityEngine.Playables;
 using Unity.Cinemachine;
 using Unity.VisualScripting;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 public class PlayableCharacterController : MonoBehaviour
 {
     [SerializeField] private CinemachineCamera thirdPersonCam;
@@ -19,6 +20,9 @@ public class PlayableCharacterController : MonoBehaviour
     public float snapDist = 0.02f;
     public Animator Animator;
     public bool PrevGrounded = true;
+
+    private Camera mainCamera;
+    public RectTransform crosshairRect;  
 
     float yaw = 0f; 
     float pitch = 0f;
@@ -38,7 +42,9 @@ public class PlayableCharacterController : MonoBehaviour
 
         if (thirdPersonCam != null && Identity.Equals(GameManager.Conn.Identity))
             thirdPersonCam.gameObject.SetActive(true);
-        
+
+        mainCamera = FindFirstObjectByType<CinemachineBrain>().OutputCamera ?? throw new System.Exception("No Main Camera Brain");
+        crosshairRect = GameObject.FindWithTag("Crosshair").GetComponent<Image>().rectTransform ?? throw new System.Exception("No crosshair");
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -119,10 +125,31 @@ public class PlayableCharacterController : MonoBehaviour
 
         
     }
-    
+
     public void OnAttackFinished()
     {
         GameManager.Conn.Reducers.HandleActionExitRequest(newPlayerState: PlayerState.Default);
+    }
+    
+    public void OnAttackAnimation() // Triggers when the hand is at correct position to emulate bullet spawning where we want
+    {
+        
+            // Ray aimRay = mainCamera.ScreenPointToRay(crosshairRect.position);
+            // Vector3 dir;
+
+            // if (Physics.Raycast(aimRay, out var hit, 100f, ~0, QueryTriggerInteraction.Ignore))
+            // {
+            //     // We hit something near the crosshair → use that exact point
+            //     Vector3 aimPoint = hit.point;
+            //     dir = (aimPoint - attackHand.position).normalized;
+            // }
+            // else
+            // {
+            //     // No hit → just use camera forward (same as “very far” aim point)
+            //     dir = mainCamera.forward;
+            // }
+        
+       
     }
 
 

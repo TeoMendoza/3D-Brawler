@@ -698,6 +698,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Crosshair 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2142353264155040993, guid: 2ad1135147bb74beabb80e8edcf37998, type: 3}
+      propertyPath: m_TagString
+      value: Crosshair
+      objectReference: {fileID: 0}
     - target: {fileID: 4954287112669601420, guid: 2ad1135147bb74beabb80e8edcf37998, type: 3}
       propertyPath: m_Camera
       value: 
