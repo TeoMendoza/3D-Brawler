@@ -53,11 +53,9 @@ public static partial class Module
     [Table(Name = "projectiles", Public = true)]
     public partial struct Projectile
     {
-        [PrimaryKey]
-        public Identity OwnerIdentity;
-
-        [Unique, AutoInc]
+        [PrimaryKey, AutoInc]
         public uint Id;
+        public Identity OwnerIdentity;
         public DbVector3 position;
         public DbVelocity3 velocity;
         public ProjectileType ProjectileType;
@@ -83,6 +81,14 @@ public static partial class Module
         public float gravity;
     }
 
+    [Table(Name = "move_projectiles_and_check_collisions", Scheduled = nameof(MoveProjectilesAndCheckCollisions), ScheduledAt = nameof(scheduled_at))]
+    public partial struct Move_Projectiles_And_Check_Collisions_Timer
+    {
+        [PrimaryKey, AutoInc] public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+        public float tick_rate;
+    }
+
 
     // Reducers
 
@@ -100,12 +106,18 @@ public static partial class Module
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
             tick_rate = 1.0f / 60.0f
         });
-        
+
         ctx.Db.gravity.Insert(new Gravity_Timer
         {
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
             tick_rate = 1.0f / 60.0f,
             gravity = 20
+        });
+        
+        ctx.Db.move_projectiles_and_check_collisions.Insert(new Move_Projectiles_And_Check_Collisions_Timer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
+            tick_rate = 1.0f / 60.0f
         });
     }
     
@@ -166,10 +178,11 @@ public static partial class Module
     public static void Disconnect(ReducerContext ctx)
     {
         var player = ctx.Db.player.identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
-
         var character = ctx.Db.playable_character.identity.Find(ctx.Sender);
+
         if (character != null)
         {
+            // Removes Player From Match
             var Match = ctx.Db.match.Id.Find(character.Value.MatchId);
             if (Match != null && Match.Value.currentPlayers > 0)
             {
@@ -178,6 +191,13 @@ public static partial class Module
                 ctx.Db.match.Id.Update(match);
             }
             ctx.Db.playable_character.identity.Delete(ctx.Sender);
+            
+            // Removes Player Projectiles
+            foreach (Projectile projectile in ctx.Db.projectiles.Iter())
+            {
+                if (projectile.OwnerIdentity == character.Value.identity) 
+                    ctx.Db.projectiles.Id.Delete(projectile.Id);         
+            }
         }
 
         ctx.Db.logged_out_players.Insert(player);
@@ -226,8 +246,21 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void SpawnProjectile(ReducerContext ctx)
-    {}
+    public static void SpawnProjectile(ReducerContext ctx, DbVector3 direction, DbVector3 spawnPoint)
+    {
+        Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Projectile Owner Not Found");
+        DbVelocity3 velocity = new DbVelocity3(direction.x * 20f, direction.y * 20f, direction.z * 20f);
+        Projectile projectile = new() 
+        {
+            OwnerIdentity = character.identity,
+            position = spawnPoint,
+            velocity = velocity, // direction is normalized (unit vector) so we multiply by 20 (proj speed)
+            ProjectileType = ProjectileType.Bullet
+        };
+
+        ctx.Db.projectiles.Insert(projectile);
+
+    }
 
     [Reducer]
     public static void HandleActionExitRequest(ReducerContext ctx, PlayerState newPlayerState)
@@ -285,7 +318,7 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void MoveProjectilesAndCheckCollisions(ReducerContext ctx) // Maybe Seperate Move Proj And The Collision Check Into Seperate Timed Reducers
+    public static void MoveProjectilesAndCheckCollisions(ReducerContext ctx, Move_Projectiles_And_Check_Collisions_Timer timer) // Maybe Seperate Move Proj And The Collision Check Into Seperate Timed Reducers
     {
         
     }

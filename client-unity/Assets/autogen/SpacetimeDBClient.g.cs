@@ -27,8 +27,10 @@ namespace SpacetimeDB.Types
             AddTable(LoggedOutPlayers = new(conn));
             AddTable(Match = new(conn));
             AddTable(MoveAllPlayers = new(conn));
+            AddTable(MoveProjectilesAndCheckCollisions = new(conn));
             AddTable(PlayableCharacter = new(conn));
             AddTable(Player = new(conn));
+            AddTable(Projectiles = new(conn));
         }
     }
 
@@ -479,6 +481,8 @@ namespace SpacetimeDB.Types
                 "HandleActionExitRequest" => BSATNHelpers.Decode<Reducer.HandleActionExitRequest>(encodedArgs),
                 "HandleMovementRequest" => BSATNHelpers.Decode<Reducer.HandleMovementRequest>(encodedArgs),
                 "MovePlayers" => BSATNHelpers.Decode<Reducer.MovePlayers>(encodedArgs),
+                "MoveProjectilesAndCheckCollisions" => BSATNHelpers.Decode<Reducer.MoveProjectilesAndCheckCollisions>(encodedArgs),
+                "SpawnProjectile" => BSATNHelpers.Decode<Reducer.SpawnProjectile>(encodedArgs),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }
@@ -507,6 +511,8 @@ namespace SpacetimeDB.Types
                 Reducer.HandleActionExitRequest args => Reducers.InvokeHandleActionExitRequest(eventContext, args),
                 Reducer.HandleMovementRequest args => Reducers.InvokeHandleMovementRequest(eventContext, args),
                 Reducer.MovePlayers args => Reducers.InvokeMovePlayers(eventContext, args),
+                Reducer.MoveProjectilesAndCheckCollisions args => Reducers.InvokeMoveProjectilesAndCheckCollisions(eventContext, args),
+                Reducer.SpawnProjectile args => Reducers.InvokeSpawnProjectile(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }

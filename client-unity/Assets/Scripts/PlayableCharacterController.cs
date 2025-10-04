@@ -7,6 +7,7 @@ using Unity.Cinemachine;
 using Unity.VisualScripting;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using UnityEditor.Experimental.GraphView;
 public class PlayableCharacterController : MonoBehaviour
 {
     [SerializeField] private CinemachineCamera thirdPersonCam;
@@ -22,7 +23,7 @@ public class PlayableCharacterController : MonoBehaviour
     public bool PrevGrounded = true;
 
     private Camera mainCamera;
-    public RectTransform crosshairRect;  
+    public Transform attackHand;
 
     float yaw = 0f; 
     float pitch = 0f;
@@ -44,7 +45,6 @@ public class PlayableCharacterController : MonoBehaviour
             thirdPersonCam.gameObject.SetActive(true);
 
         mainCamera = FindFirstObjectByType<CinemachineBrain>().OutputCamera ?? throw new System.Exception("No Main Camera Brain");
-        crosshairRect = GameObject.FindWithTag("Crosshair").GetComponent<Image>().rectTransform ?? throw new System.Exception("No crosshair");
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -122,8 +122,6 @@ public class PlayableCharacterController : MonoBehaviour
         Animator.SetFloat("VerticleSpeed", vy);
 
         PrevGrounded = grounded;
-
-        
     }
 
     public void OnAttackFinished()
@@ -133,25 +131,10 @@ public class PlayableCharacterController : MonoBehaviour
     
     public void OnAttackAnimation() // Triggers when the hand is at correct position to emulate bullet spawning where we want
     {
-        
-            // Ray aimRay = mainCamera.ScreenPointToRay(crosshairRect.position);
-            // Vector3 dir;
-
-            // if (Physics.Raycast(aimRay, out var hit, 100f, ~0, QueryTriggerInteraction.Ignore))
-            // {
-            //     // We hit something near the crosshair → use that exact point
-            //     Vector3 aimPoint = hit.point;
-            //     dir = (aimPoint - attackHand.position).normalized;
-            // }
-            // else
-            // {
-            //     // No hit → just use camera forward (same as “very far” aim point)
-            //     dir = mainCamera.forward;
-            // }
-        
-       
-    }
-
-
-    
+        Vector2 screenCenter = new(Screen.width * 0.5f, Screen.height * 0.5f);
+        Ray aimRay = mainCamera.ScreenPointToRay(screenCenter);
+        Vector3 aimPoint = aimRay.GetPoint(150f);
+        Vector3 projectileDirection = (aimPoint - attackHand.position).normalized;
+        GameManager.Conn.Reducers.SpawnProjectile(direction: (DbVector3)projectileDirection, spawnPoint: (DbVector3)attackHand.position);
+    }    
 }
