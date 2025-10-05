@@ -18,7 +18,6 @@ public class PlayableCharacterController : MonoBehaviour
     public uint MatchId;
     public Vector3 TargetPosition;
     public DbRotation2 TargetRotation = new(0,0);
-    public float snapDist = 0.02f;
     public Animator Animator;
     public bool PrevGrounded = true;
 
@@ -39,7 +38,7 @@ public class PlayableCharacterController : MonoBehaviour
         Id = Character.Id;
         Name = Character.Name;
         MatchId = Character.MatchId;
-
+        transform.position = Character.Position;
 
         if (thirdPersonCam != null && Identity.Equals(GameManager.Conn.Identity))
             thirdPersonCam.gameObject.SetActive(true);
@@ -133,7 +132,7 @@ public class PlayableCharacterController : MonoBehaviour
     {
         Vector2 screenCenter = new(Screen.width * 0.5f, Screen.height * 0.5f);
         Ray aimRay = mainCamera.ScreenPointToRay(screenCenter);
-        Vector3 aimPoint = aimRay.GetPoint(150f);
+        Vector3 aimPoint = aimRay.GetPoint(2000f);
         Vector3 projectileDirection = (aimPoint - attackHand.position).normalized;
         GameManager.Conn.Reducers.SpawnProjectile(direction: (DbVector3)projectileDirection, spawnPoint: (DbVector3)attackHand.position);
     }    

@@ -56,6 +56,7 @@ public static partial class Module
         [PrimaryKey, AutoInc]
         public uint Id;
         public Identity OwnerIdentity;
+        public uint MatchId;
         public DbVector3 position;
         public DbVelocity3 velocity;
         public ProjectileType ProjectileType;
@@ -247,10 +248,11 @@ public static partial class Module
     public static void SpawnProjectile(ReducerContext ctx, DbVector3 direction, DbVector3 spawnPoint)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Projectile Owner Not Found");
-        DbVelocity3 velocity = new DbVelocity3(direction.x * 20f, direction.y * 20f, direction.z * 20f); // Direction - Unit Vector
-        Projectile projectile = new() 
+        DbVelocity3 velocity = new DbVelocity3(direction.x * 0f, direction.y * 0f, direction.z * 0f); // Direction - Unit Vector
+        Projectile projectile = new()
         {
             OwnerIdentity = character.identity,
+            MatchId = character.MatchId,
             position = spawnPoint,
             velocity = velocity,
             ProjectileType = ProjectileType.Bullet
@@ -318,7 +320,18 @@ public static partial class Module
     [Reducer]
     public static void MoveProjectilesAndCheckCollisions(ReducerContext ctx, Move_Projectiles_And_Check_Collisions_Timer timer) // Maybe Seperate Move Proj And The Collision Check Into Seperate Timed Reducers
     {
-        
+        var time = timer.tick_rate;
+        foreach (Projectile projectile in ctx.Db.projectiles.Iter())
+        {
+            var Projectile = projectile;
+            Projectile.position = new DbVector3(
+            Projectile.position.x + Projectile.velocity.vx * time,
+            Projectile.position.y + Projectile.velocity.vy * time,
+            Projectile.position.z + Projectile.velocity.vz * time
+            );
+
+            ctx.Db.projectiles.Id.Update(Projectile);
+        }
     }
 
     // Types

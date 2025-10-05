@@ -149,6 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PlayableCharacterPrefab: {fileID: 2608645888762272316, guid: c33192d84c49846b7ac8b86a8b28226b, type: 3}
+  ProjectilePrefab: {fileID: -6938544144073055576, guid: 8865bb78ddc4b46a7b2aa0c7491ac1db, type: 3}
 --- !u!4 &156625267
 Transform:
   m_ObjectHideFlags: 0
@@ -697,6 +698,10 @@ PrefabInstance:
     - target: {fileID: 2142353264155040993, guid: 2ad1135147bb74beabb80e8edcf37998, type: 3}
       propertyPath: m_Name
       value: Crosshair 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2142353264155040993, guid: 2ad1135147bb74beabb80e8edcf37998, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2142353264155040993, guid: 2ad1135147bb74beabb80e8edcf37998, type: 3}
       propertyPath: m_TagString

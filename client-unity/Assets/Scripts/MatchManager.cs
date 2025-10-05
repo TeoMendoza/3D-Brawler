@@ -14,6 +14,9 @@ public class MatchManager : MonoBehaviour
     public DbConnection Conn;
     public Dictionary<Identity, PlayableCharacterController> Players = new();
     public PlayableCharacterController PlayableCharacterPrefab;
+    public Dictionary<uint, ProjectileController> Projectiles = new();
+    public ProjectileController ProjectilePrefab;
+        
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -32,16 +35,28 @@ public class MatchManager : MonoBehaviour
         Conn = GameManager.Conn;
         Conn.Db.PlayableCharacter.OnInsert += AddNewCharacter;
         Conn.Db.PlayableCharacter.OnDelete += RemoveCharacter;
+        Conn.Db.Projectiles.OnInsert += AddNewProjectile;
+        Conn.Db.Projectiles.OnDelete += RemoveProjectile;
+        
         foreach (PlayableCharacter Character in Conn.Db.PlayableCharacter.Iter())
         {
             if (Character.MatchId == MatchId)
             {
                 var prefab = Instantiate(PlayableCharacterPrefab);
-                prefab.Initalize(Character);                
-                Players.Add(Character.Identity, prefab);   
+                prefab.Initalize(Character);
+                Players.Add(Character.Identity, prefab);
             }
         }
-        // Next Step Is To Load Already Joined Players When Initialize Match Is Called. 
+        
+        foreach (Projectile Projectile in Conn.Db.Projectiles.Iter())
+        {
+            if (Projectile.MatchId == MatchId)
+            {
+                var prefab = Instantiate(ProjectilePrefab);
+                prefab.Initalize(Projectile);
+                Projectiles.Add(Projectile.Id, prefab);
+            }
+        }
     }
 
     public void EndMatch()
@@ -59,7 +74,7 @@ public class MatchManager : MonoBehaviour
         }
             
     }
-    
+
     public void RemoveCharacter(EventContext context, PlayableCharacter Character)
     {
         if (MatchId is not null && Character.MatchId == MatchId)
@@ -69,6 +84,31 @@ public class MatchManager : MonoBehaviour
             {
                 Destroy(prefab);
                 Players.Remove(Character.Identity);
+            }
+        }
+
+    }
+    
+    public void AddNewProjectile(EventContext context, Projectile Projectile)
+    {
+        if (MatchId is not null && Projectile.MatchId == MatchId)
+        {
+            var prefab = Instantiate(ProjectilePrefab);
+            prefab.Initalize(Projectile);     
+            Projectiles.Add(Projectile.Id, prefab);
+        }
+            
+    }
+    
+    public void RemoveProjectile(EventContext context, Projectile Projectile)
+    {
+        if (MatchId is not null && Projectile.MatchId == MatchId)
+        {
+            Projectiles.TryGetValue(Projectile.Id, out var prefab);
+            if (prefab != null)
+            {
+                Destroy(prefab);
+                Projectiles.Remove(Projectile.Id);
             }
         }
             
