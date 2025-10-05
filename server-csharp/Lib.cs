@@ -238,8 +238,6 @@ public static partial class Module
             character.state = PlayerState.Attack;
             AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Attack");
             AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
-
-            // Add A New Bullet To DB, the position is both related to the player and crosshair. Like 
         }
 
         ctx.Db.playable_character.identity.Update(character);
@@ -249,12 +247,12 @@ public static partial class Module
     public static void SpawnProjectile(ReducerContext ctx, DbVector3 direction, DbVector3 spawnPoint)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Projectile Owner Not Found");
-        DbVelocity3 velocity = new DbVelocity3(direction.x * 20f, direction.y * 20f, direction.z * 20f);
+        DbVelocity3 velocity = new DbVelocity3(direction.x * 20f, direction.y * 20f, direction.z * 20f); // Direction - Unit Vector
         Projectile projectile = new() 
         {
             OwnerIdentity = character.identity,
             position = spawnPoint,
-            velocity = velocity, // direction is normalized (unit vector) so we multiply by 20 (proj speed)
+            velocity = velocity,
             ProjectileType = ProjectileType.Bullet
         };
 
