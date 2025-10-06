@@ -34,8 +34,8 @@ ModelImporter:
       name: mixamo.com
       takeName: mixamo.com
       internalID: -203655887218126122
-      firstFrame: 0
-      lastFrame: 35
+      firstFrame: 7
+      lastFrame: 18
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -51,18 +51,18 @@ ModelImporter:
       keepOriginalPositionY: 1
       keepOriginalPositionXZ: 0
       heightFromFeet: 0
-      mirror: 0
+      mirror: 1
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
       events:
-      - time: 0.41197184
+      - time: 0.74647886
         functionName: OnAttackAnimation
         data: 
         objectReferenceParameter: {fileID: 11500000, guid: 47752cd7b932e4adf916ddce3faaba16, type: 3}
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
-      - time: 1
+      - time: 0.9929578
         functionName: OnAttackFinished
         data: 
         objectReferenceParameter: {fileID: 11500000, guid: 47752cd7b932e4adf916ddce3faaba16, type: 3}

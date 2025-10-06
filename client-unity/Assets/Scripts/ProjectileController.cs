@@ -20,6 +20,8 @@ public class ProjectileController : MonoBehaviour
         MatchId = Projectile.MatchId;
         ProjectileType = Projectile.ProjectileType;
         transform.position = Projectile.Position;
+        TargetPosition = Projectile.Position;
+        transform.rotation = Quaternion.LookRotation(Projectile.Direction, Vector3.up) * Quaternion.Euler(90f, 0f, 0f);
     }
 
     void Start()

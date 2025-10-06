@@ -25,6 +25,8 @@ namespace SpacetimeDB.Types
         public DbVector3 Position;
         [DataMember(Name = "velocity")]
         public DbVelocity3 Velocity;
+        [DataMember(Name = "direction")]
+        public DbVector3 Direction;
         [DataMember(Name = "ProjectileType")]
         public ProjectileType ProjectileType;
 
@@ -34,6 +36,7 @@ namespace SpacetimeDB.Types
             uint MatchId,
             DbVector3 Position,
             DbVelocity3 Velocity,
+            DbVector3 Direction,
             ProjectileType ProjectileType
         )
         {
@@ -42,6 +45,7 @@ namespace SpacetimeDB.Types
             this.MatchId = MatchId;
             this.Position = Position;
             this.Velocity = Velocity;
+            this.Direction = Direction;
             this.ProjectileType = ProjectileType;
         }
 
@@ -49,6 +53,7 @@ namespace SpacetimeDB.Types
         {
             this.Position = new();
             this.Velocity = new();
+            this.Direction = new();
         }
     }
 }

@@ -262,11 +262,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 2608645888762272316}
   m_SourcePrefab: {fileID: 100100000, guid: c439653e57ffc4669aae397cbd972335, type: 3}
---- !u!4 &2823337493685251363 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 1852576806548013000, guid: c439653e57ffc4669aae397cbd972335, type: 3}
-  m_PrefabInstance: {fileID: 4511250817961775851}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &3628290954374442938 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c439653e57ffc4669aae397cbd972335, type: 3}
@@ -290,11 +285,9 @@ MonoBehaviour:
   Name: 
   MatchId: 0
   TargetPosition: {x: 0, y: 0, z: 0}
-  snapDist: 0.02
   Animator: {fileID: 8066434146639933306}
   PrevGrounded: 1
-  crosshairRect: {fileID: 0}
-  attackHand: {fileID: 2823337493685251363}
+  attackHand: {fileID: 7252847501440436008}
   sensX: 200
   sensY: 100
   minPitch: -30
@@ -303,6 +296,11 @@ MonoBehaviour:
 --- !u!4 &4112234832362222848 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c439653e57ffc4669aae397cbd972335, type: 3}
+  m_PrefabInstance: {fileID: 4511250817961775851}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7252847501440436008 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6502182839619065283, guid: c439653e57ffc4669aae397cbd972335, type: 3}
   m_PrefabInstance: {fileID: 4511250817961775851}
   m_PrefabAsset: {fileID: 0}
 --- !u!95 &8066434146639933306 stripped

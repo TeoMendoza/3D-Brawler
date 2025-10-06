@@ -59,6 +59,7 @@ public static partial class Module
         public uint MatchId;
         public DbVector3 position;
         public DbVelocity3 velocity;
+        public DbVector3 direction;
         public ProjectileType ProjectileType;
         // Add Internal Capsule Class To Keep Track Of Collision Box Once Collisions Are Being Implemented
 
@@ -248,13 +249,14 @@ public static partial class Module
     public static void SpawnProjectile(ReducerContext ctx, DbVector3 direction, DbVector3 spawnPoint)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Projectile Owner Not Found");
-        DbVelocity3 velocity = new DbVelocity3(direction.x * 0f, direction.y * 0f, direction.z * 0f); // Direction - Unit Vector
+        DbVelocity3 velocity = new DbVelocity3(direction.x * 20f, direction.y * 20f, direction.z * 20f); // Direction - Unit Vector
         Projectile projectile = new()
         {
             OwnerIdentity = character.identity,
             MatchId = character.MatchId,
             position = spawnPoint,
             velocity = velocity,
+            direction = direction,
             ProjectileType = ProjectileType.Bullet
         };
 

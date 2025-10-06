@@ -39,6 +39,7 @@ public class PlayableCharacterController : MonoBehaviour
         Name = Character.Name;
         MatchId = Character.MatchId;
         transform.position = Character.Position;
+        TargetPosition = Character.Position;
 
         if (thirdPersonCam != null && Identity.Equals(GameManager.Conn.Identity))
             thirdPersonCam.gameObject.SetActive(true);
@@ -130,6 +131,7 @@ public class PlayableCharacterController : MonoBehaviour
     
     public void OnAttackAnimation() // Triggers when the hand is at correct position to emulate bullet spawning where we want
     {
+        
         Vector2 screenCenter = new(Screen.width * 0.5f, Screen.height * 0.5f);
         Ray aimRay = mainCamera.ScreenPointToRay(screenCenter);
         Vector3 aimPoint = aimRay.GetPoint(2000f);
