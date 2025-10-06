@@ -396,6 +396,24 @@ public static partial class Module
         public List<string> Subscribers = subscribers;
     }
 
+    [SpacetimeDB.Type]
+    public partial abstract struct CollisionShape
+    {
+        public Shape Shape;
+    }
+    public partial struct Capsule : CollisionShape
+    {
+        
+    }
+
+    [SpacetimeDB.Type]
+    public enum Shape
+    {
+        Capsule,
+        Sphere,
+        Cube
+    }
+
 
     // Funcs
 
