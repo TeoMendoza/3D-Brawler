@@ -397,11 +397,19 @@ public static partial class Module
     }
 
     [SpacetimeDB.Type]
-    public partial abstract struct CollisionShape
+    public partial struct CapsuleCollider()
     {
-        public Shape Shape;
+
     }
-    public partial struct Capsule : CollisionShape
+
+    [SpacetimeDB.Type]
+    public partial struct SphereCollider()
+    {
+
+    }
+    
+    [SpacetimeDB.Type]
+    public partial struct BoxCollider()
     {
         
     }
@@ -411,13 +419,31 @@ public static partial class Module
     {
         Capsule,
         Sphere,
-        Cube
+        Box
     }
 
+    // public delegate bool OverlapFn(object a, object b, out Contact contact);
+
+    // static readonly Dictionary<(Shape,Shape), OverlapFn> Overlap = new() {
+    // { (Shape.Sphere,  Shape.Capsule), (a,b,out Contact c) => OverlapSphereCapsule((SphereCollider)a, (CapsuleCollider)b, out c) },
+    // { (Shape.Capsule, Shape.Sphere),  (a,b,out Contact c) => OverlapSphereCapsule((SphereCollider)b, (CapsuleCollider)a, out c) },
+    // { (Shape.Capsule, Shape.Capsule), (a,b,out Contact c) => OverlapCapsuleCapsule((CapsuleCollider)a, (CapsuleCollider)b, out c) },
+    // { (Shape.Sphere,  Shape.Box),     (a,b,out Contact c) => OverlapSphereBox((SphereCollider)a, (BoxCollider)b, out c) },
+    // };
+
+    // static bool TryOverlap(Shape sa, object ca, Shape sb, object cb, out Contact contact)
+    // {
+    //     if (Overlap.TryGetValue((sa, sb), out var fn))
+    //         return fn(ca, cb, out contact);
+
+    //     contact = default;
+    //     return false; // pair not implemented
+    // }
 
     // Funcs
 
-    static void AddSubscriberUnique(List<string> subscribers, string reason) {
+    static void AddSubscriberUnique(List<string> subscribers, string reason)
+    {
         if (subscribers.Contains(reason)) return;
         subscribers.Add(reason);
     }
