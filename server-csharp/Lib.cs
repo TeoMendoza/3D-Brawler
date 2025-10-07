@@ -441,25 +441,43 @@ public static partial class Module
         Box
     }
 
+    [SpacetimeDB.Type]
+    public partial struct Contact
+    {
+        
+    }
+
     // Funcs
 
     public delegate bool OverlapFn(object a, object b, out Contact contact);
 
-    static readonly Dictionary<(Shape,Shape), OverlapFn> Overlap = new() {
-    { (Shape.Sphere, Shape.Capsule), (a, b, out Contact contact) => OverlapSphereCapsule((SphereCollider)a, (CapsuleCollider)b, out contact) },
-    { (Shape.Capsule, Shape.Sphere), (a, b, out Contact contact) => OverlapSphereCapsule((SphereCollider)b, (CapsuleCollider)a, out contact) },
-    { (Shape.Capsule, Shape.Capsule), (a, b, out Contact contact) => OverlapCapsuleCapsule((CapsuleCollider)a, (CapsuleCollider)b, out contact) },
-    { (Shape.Sphere, Shape.Box), (a, b, out Contact contact) => OverlapSphereBox((SphereCollider)a, (BoxCollider)b, out contact) },
-    };
+    // static readonly Dictionary<(Shape,Shape), OverlapFn> Overlap = new() {
+    // { (Shape.Sphere, Shape.Capsule), (a, b, out c) => OverlapSphereCapsule((SphereCollider)a, (CapsuleCollider)b, out c) },
+    // { (Shape.Capsule, Shape.Sphere), (a, b, out c) => OverlapSphereCapsule((SphereCollider)b, (CapsuleCollider)a, out c) },
+    // { (Shape.Capsule, Shape.Capsule), (a, b, out c) => OverlapCapsuleCapsule((CapsuleCollider)a, (CapsuleCollider)b, out c) },
+    // { (Shape.Sphere, Shape.Box), (a, b, out c) => OverlapSphereBox((SphereCollider)a, (BoxCollider)b, out c) },
+    // };
 
-    static bool TryOverlap(Shape sa, object ca, Shape sb, object cb, out Contact contact)
-    {
-        if (Overlap.TryGetValue((sa, sb), out var fn))
-            return fn(ca, cb, out contact);
+    // static bool TryOverlap(Shape sa, object ca, Shape sb, object cb, out Contact contact)
+    // {
+    //     if (Overlap.TryGetValue((sa, sb), out var fn))
+    //         return fn(ca, cb, out contact);
 
-        contact = default;
-        return false;
-    }
+    //     contact = default;
+    //     return false;
+    // }
+    // static bool OverlapSphereBox(SphereCollider a, BoxCollider b, out Contact c)
+    // {
+
+    // }
+    // static bool OverlapSphereCapsule(SphereCollider a, CapsuleCollider b, out Contact c)
+    // {
+
+    // }
+    // static bool OverlapCapsuleCapsule(CapsuleCollider a, CapsuleCollider b, out Contact c)
+    // {
+        
+    // }
 
     static void AddSubscriberUnique(List<string> subscribers, string reason)
     {
