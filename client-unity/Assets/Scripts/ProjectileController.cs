@@ -21,7 +21,8 @@ public class ProjectileController : MonoBehaviour
         ProjectileType = Projectile.ProjectileType;
         transform.position = Projectile.Position;
         TargetPosition = Projectile.Position;
-        transform.rotation = Quaternion.LookRotation(Projectile.Direction, Vector3.up) * Quaternion.Euler(90f, 0f, 0f);
+
+        transform.rotation = Quaternion.FromToRotation(Vector3.up, Projectile.Direction);
     }
 
     void Start()

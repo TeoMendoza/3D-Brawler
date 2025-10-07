@@ -397,24 +397,22 @@ public static partial class Module
     }
 
     [SpacetimeDB.Type]
-    public partial struct SphereCollider(DbVector3 center, float radius)
+    public partial struct SphereCollider(DbVector3 center, float radius, Shape shape)
     {
         public DbVector3 Center = center;
         public float Radius = radius;
-        public readonly Shape Shape = Shape.Sphere;
     }
 
 
     [SpacetimeDB.Type]
-    public partial struct BoxCollider(DbVector3 center, DbVector3 size)
+    public partial struct BoxCollider(DbVector3 center, DbVector3 size, Shape shape)
     {
         public DbVector3 Center = center;
         public DbVector3 Size = size;   // width, height, length
-        public readonly Shape Shape = Shape.Box;
 
-        public readonly DbVector3 HalfExtents => new(Size.x * 0.5f, Size.y * 0.5f, Size.z * 0.5f);
-        public readonly DbVector3 Min => Center - HalfExtents;
-        public readonly DbVector3 Max => Center + HalfExtents;
+        // public readonly DbVector3 HalfExtents => new(Size.x * 0.5f, Size.y * 0.5f, Size.z * 0.5f);
+        // public readonly DbVector3 Min => Center - HalfExtents;
+        // public readonly DbVector3 Max => Center + HalfExtents;
     }
 
 
@@ -425,11 +423,10 @@ public static partial class Module
         public DbVector3 Center = center;
         public float HeightEndToEnd = heightEndToEnd;
         public float Radius = radius;
-        public readonly Shape Shape = Shape.Capsule;
 
-        public readonly float HalfSegmentLength => (HeightEndToEnd - 2f * Radius) * 0.5f;
-        public readonly DbVector3 TopCenter => new(Center.x, Center.y + HalfSegmentLength, Center.z);
-        public readonly DbVector3 BottomCenter => new(Center.x, Center.y - HalfSegmentLength, Center.z);
+        // public readonly float HalfSegmentLength => (HeightEndToEnd - 2f * Radius) * 0.5f;
+        // public readonly DbVector3 TopCenter => new(Center.x, Center.y + HalfSegmentLength, Center.z);
+        // public readonly DbVector3 BottomCenter => new(Center.x, Center.y - HalfSegmentLength, Center.z);
     }
 
 
@@ -444,40 +441,42 @@ public static partial class Module
     [SpacetimeDB.Type]
     public partial struct Contact
     {
-        
+
     }
 
     // Funcs
 
+    public static Shape GetColliderShape(object collider)
+    {
+        return collider switch
+        {
+            SphereCollider => Shape.Sphere,
+            CapsuleCollider => Shape.Capsule,
+            BoxCollider => Shape.Box,
+            _ => throw new ArgumentOutOfRangeException(nameof(collider), collider, "Unknown collider type")
+        };
+    }
+    
     public delegate bool OverlapFn(object a, object b, out Contact contact);
 
-    // static readonly Dictionary<(Shape,Shape), OverlapFn> Overlap = new() {
-    // { (Shape.Sphere, Shape.Capsule), (a, b, out c) => OverlapSphereCapsule((SphereCollider)a, (CapsuleCollider)b, out c) },
-    // { (Shape.Capsule, Shape.Sphere), (a, b, out c) => OverlapSphereCapsule((SphereCollider)b, (CapsuleCollider)a, out c) },
-    // { (Shape.Capsule, Shape.Capsule), (a, b, out c) => OverlapCapsuleCapsule((CapsuleCollider)a, (CapsuleCollider)b, out c) },
-    // { (Shape.Sphere, Shape.Box), (a, b, out c) => OverlapSphereBox((SphereCollider)a, (BoxCollider)b, out c) },
-    // };
+    static readonly Dictionary<(Shape, Shape), OverlapFn> Overlap = new() 
+    {
+        { (Shape.Capsule, Shape.Capsule), (object a, object b, out Contact c) => OverlapCapsuleCapsule((CapsuleCollider)a, (CapsuleCollider)b, out c) },
+    };
 
-    // static bool TryOverlap(Shape sa, object ca, Shape sb, object cb, out Contact contact)
-    // {
-    //     if (Overlap.TryGetValue((sa, sb), out var fn))
-    //         return fn(ca, cb, out contact);
+    static bool TryOverlap(Shape sa, object ca, Shape sb, object cb, out Contact contact)
+    {
+        if (Overlap.TryGetValue((sa, sb), out var fn))
+            return fn(ca, cb, out contact);
 
-    //     contact = default;
-    //     return false;
-    // }
-    // static bool OverlapSphereBox(SphereCollider a, BoxCollider b, out Contact c)
-    // {
+        contact = default;
+        return false;
+    }
 
-    // }
-    // static bool OverlapSphereCapsule(SphereCollider a, CapsuleCollider b, out Contact c)
-    // {
-
-    // }
-    // static bool OverlapCapsuleCapsule(CapsuleCollider a, CapsuleCollider b, out Contact c)
-    // {
-        
-    // }
+    static bool OverlapCapsuleCapsule(CapsuleCollider a, CapsuleCollider b, out Contact c)
+    {
+        return true;
+    }
 
     static void AddSubscriberUnique(List<string> subscribers, string reason)
     {
