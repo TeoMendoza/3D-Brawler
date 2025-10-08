@@ -40,10 +40,18 @@ public class ProjectileController : MonoBehaviour
         float k = 1f - Mathf.Exp(-12f * Time.deltaTime);
         transform.position = Vector3.Lerp(transform.position, TargetPosition, k);
     }
-    
+
     public void HandleProjectileUpdate(EventContext context, Projectile oldProjectile, Projectile newProjectile)
     {
         if (Id != newProjectile.Id) return;
         TargetPosition = newProjectile.Position;
+    }
+    
+    public void OnTriggerEnter(Collider other)
+    {
+        // Check eventually whetehr other is differnt type of character, map, etc
+        var Player = other.gameObject.GetComponent<PlayableCharacterController>();
+        var PlayerIdentity = Player.Identity;
+        GameManager.Conn.Reducers.HandleBulletPlayerCollision(playerIdentity: PlayerIdentity, bulletId: Id);
     }
 }

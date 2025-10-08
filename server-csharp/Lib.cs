@@ -46,6 +46,7 @@ public static partial class Module
         public DbRotation2 rotation;
         public DbVelocity3 velocity;
         public PlayerState state;
+        public CapsuleCollider Collider;
         public List<PermissionEntry> PlayerPermissionConfig;
         // Add Internal Capsule Class To Keep Track Of Collision Box
     }
@@ -60,8 +61,8 @@ public static partial class Module
         public DbVector3 position;
         public DbVelocity3 velocity;
         public DbVector3 direction;
+        public CapsuleCollider Collider;
         public ProjectileType ProjectileType;
-        // Add Internal Capsule Class To Keep Track Of Collision Box Once Collisions Are Being Implemented
 
         // public List<Effect> Effects; // Add once effects are being implemented
     }
@@ -145,6 +146,7 @@ public static partial class Module
 
         var Player = ctx.Db.player.identity.Find(ctx.Sender) ?? throw new Exception("Player not found after insert/restore");
 
+
         ctx.Db.playable_character.Insert(
             new Playable_Character
             {
@@ -156,6 +158,7 @@ public static partial class Module
                 rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
                 velocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 },
                 state = PlayerState.Default,
+                Collider = new CapsuleCollider {Center = new DbVector3 { x = 0, y = 0, z = 0 }, Direction = new DbVector3 {x = 0, y = 1, z = 0}, HeightEndToEnd = 2f, Radius = 0.2f}, // Height & Radius Are Manual For Now, Have To Change If Collider Changes
                 PlayerPermissionConfig =
                 [
                     new("CanWalk", []),
@@ -257,6 +260,7 @@ public static partial class Module
             position = spawnPoint,
             velocity = velocity,
             direction = direction,
+            Collider = new CapsuleCollider {Center = spawnPoint, Direction = direction, HeightEndToEnd = 0.1f, Radius = 0.025f}, // 0.05 Is Accounting For Object Scale
             ProjectileType = ProjectileType.Bullet
         };
 
@@ -336,6 +340,22 @@ public static partial class Module
         }
     }
 
+    [Reducer]
+
+    public static void HandleBulletPlayerCollision(ReducerContext ctx, Identity PlayerIdentity, uint BulletId)
+    {
+        Playable_Character character = ctx.Db.playable_character.identity.Find(PlayerIdentity) ?? throw new Exception("Player Hit By Bullet Not Found");
+        Projectile Bullet = ctx.Db.projectiles.Id.Find(BulletId) ?? throw new Exception("Bullet That Hit Player Not Found");
+
+        
+
+        if (TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Bullet.Collider), Bullet.Collider, out Contact contact))
+        {
+            
+        }
+
+    }
+
     // Types
 
     [SpacetimeDB.Type]
@@ -397,7 +417,7 @@ public static partial class Module
     }
 
     [SpacetimeDB.Type]
-    public partial struct SphereCollider(DbVector3 center, float radius, Shape shape)
+    public partial struct SphereCollider(DbVector3 center, float radius)
     {
         public DbVector3 Center = center;
         public float Radius = radius;
@@ -405,28 +425,23 @@ public static partial class Module
 
 
     [SpacetimeDB.Type]
-    public partial struct BoxCollider(DbVector3 center, DbVector3 size, Shape shape)
+    public partial struct BoxCollider(DbVector3 center, DbVector3 size, DbVector3 direction)
     {
         public DbVector3 Center = center;
         public DbVector3 Size = size;   // width, height, length
-
-        // public readonly DbVector3 HalfExtents => new(Size.x * 0.5f, Size.y * 0.5f, Size.z * 0.5f);
-        // public readonly DbVector3 Min => Center - HalfExtents;
-        // public readonly DbVector3 Max => Center + HalfExtents;
+        public DbVector3 Direction = direction;
     }
 
 
 
     [SpacetimeDB.Type]
-    public partial struct CapsuleCollider(DbVector3 center, float heightEndToEnd, float radius)
+    public partial struct CapsuleCollider(DbVector3 center, float heightEndToEnd, float radius, DbVector3 direction)
     {
         public DbVector3 Center = center;
         public float HeightEndToEnd = heightEndToEnd;
         public float Radius = radius;
+        public DbVector3 Direction = direction;
 
-        // public readonly float HalfSegmentLength => (HeightEndToEnd - 2f * Radius) * 0.5f;
-        // public readonly DbVector3 TopCenter => new(Center.x, Center.y + HalfSegmentLength, Center.z);
-        // public readonly DbVector3 BottomCenter => new(Center.x, Center.y - HalfSegmentLength, Center.z);
     }
 
 
@@ -438,11 +453,12 @@ public static partial class Module
         Box
     }
 
-    [SpacetimeDB.Type]
     public partial struct Contact
     {
-
+        public DbVector3 Normal; // Object A -> B
+        public float Depth; // Penetration (>= 0)
     }
+    
 
     // Funcs
 
@@ -473,7 +489,7 @@ public static partial class Module
         return false;
     }
 
-    static bool OverlapCapsuleCapsule(CapsuleCollider a, CapsuleCollider b, out Contact c)
+    bool OverlapCapsuleCapsule(CapsuleCollider a, CapsuleCollider b, out Contact c)
     {
         return true;
     }

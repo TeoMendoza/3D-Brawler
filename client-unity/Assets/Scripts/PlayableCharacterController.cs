@@ -128,14 +128,16 @@ public class PlayableCharacterController : MonoBehaviour
     {
         GameManager.Conn.Reducers.HandleActionExitRequest(newPlayerState: PlayerState.Default);
     }
-    
+
     public void OnAttackAnimation() // Triggers when the hand is at correct position to emulate bullet spawning where we want
     {
-        
+
         Vector2 screenCenter = new(Screen.width * 0.5f, Screen.height * 0.5f);
         Ray aimRay = mainCamera.ScreenPointToRay(screenCenter);
         Vector3 aimPoint = aimRay.GetPoint(2000f);
         Vector3 projectileDirection = (aimPoint - attackHand.position).normalized;
         GameManager.Conn.Reducers.SpawnProjectile(direction: (DbVector3)projectileDirection, spawnPoint: (DbVector3)attackHand.position);
-    }    
+    }
+
+    
 }

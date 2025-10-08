@@ -31,6 +31,8 @@ namespace SpacetimeDB.Types
         public DbVelocity3 Velocity;
         [DataMember(Name = "state")]
         public PlayerState State;
+        [DataMember(Name = "Collider")]
+        public CapsuleCollider Collider;
         [DataMember(Name = "PlayerPermissionConfig")]
         public System.Collections.Generic.List<PermissionEntry> PlayerPermissionConfig;
 
@@ -43,6 +45,7 @@ namespace SpacetimeDB.Types
             DbRotation2 Rotation,
             DbVelocity3 Velocity,
             PlayerState State,
+            CapsuleCollider Collider,
             System.Collections.Generic.List<PermissionEntry> PlayerPermissionConfig
         )
         {
@@ -54,6 +57,7 @@ namespace SpacetimeDB.Types
             this.Rotation = Rotation;
             this.Velocity = Velocity;
             this.State = State;
+            this.Collider = Collider;
             this.PlayerPermissionConfig = PlayerPermissionConfig;
         }
 
@@ -63,6 +67,7 @@ namespace SpacetimeDB.Types
             this.Position = new();
             this.Rotation = new();
             this.Velocity = new();
+            this.Collider = new();
             this.PlayerPermissionConfig = new();
         }
     }

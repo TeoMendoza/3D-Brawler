@@ -27,6 +27,8 @@ namespace SpacetimeDB.Types
         public DbVelocity3 Velocity;
         [DataMember(Name = "direction")]
         public DbVector3 Direction;
+        [DataMember(Name = "Collider")]
+        public CapsuleCollider Collider;
         [DataMember(Name = "ProjectileType")]
         public ProjectileType ProjectileType;
 
@@ -37,6 +39,7 @@ namespace SpacetimeDB.Types
             DbVector3 Position,
             DbVelocity3 Velocity,
             DbVector3 Direction,
+            CapsuleCollider Collider,
             ProjectileType ProjectileType
         )
         {
@@ -46,6 +49,7 @@ namespace SpacetimeDB.Types
             this.Position = Position;
             this.Velocity = Velocity;
             this.Direction = Direction;
+            this.Collider = Collider;
             this.ProjectileType = ProjectileType;
         }
 
@@ -54,6 +58,7 @@ namespace SpacetimeDB.Types
             this.Position = new();
             this.Velocity = new();
             this.Direction = new();
+            this.Collider = new();
         }
     }
 }
