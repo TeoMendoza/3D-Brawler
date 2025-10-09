@@ -116,14 +116,14 @@ public static partial class Module
             tick_rate = 1.0f / 60.0f,
             gravity = 20
         });
-        
+
         ctx.Db.move_projectiles_and_check_collisions.Insert(new Move_Projectiles_And_Check_Collisions_Timer
         {
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
             tick_rate = 1.0f / 60.0f
         });
     }
-    
+
 
     [Reducer(ReducerKind.ClientConnected)]
     public static void Connect(ReducerContext ctx)
@@ -158,7 +158,7 @@ public static partial class Module
                 rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
                 velocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 },
                 state = PlayerState.Default,
-                Collider = new CapsuleCollider {Center = new DbVector3 { x = 0, y = 0, z = 0 }, Direction = new DbVector3 {x = 0, y = 1, z = 0}, HeightEndToEnd = 2f, Radius = 0.2f}, // Height & Radius Are Manual For Now, Have To Change If Collider Changes
+                Collider = new CapsuleCollider { Center = new DbVector3 { x = 0, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f }, // Height & Radius Are Manual For Now, Have To Change If Collider Changes
                 PlayerPermissionConfig =
                 [
                     new("CanWalk", []),
@@ -196,12 +196,12 @@ public static partial class Module
                 ctx.Db.match.Id.Update(match);
             }
             ctx.Db.playable_character.identity.Delete(ctx.Sender);
-            
+
             // Removes Player Projectiles
             foreach (Projectile projectile in ctx.Db.projectiles.Iter())
             {
-                if (projectile.OwnerIdentity == character.Value.identity) 
-                    ctx.Db.projectiles.Id.Delete(projectile.Id);         
+                if (projectile.OwnerIdentity == character.Value.identity)
+                    ctx.Db.projectiles.Id.Delete(projectile.Id);
             }
         }
 
@@ -223,14 +223,14 @@ public static partial class Module
             character.velocity = new DbVelocity3((MathF.Cos(YawRotation) * Request.Velocity.vx + MathF.Sin(YawRotation) * Request.Velocity.vz) * SprintMultiplier,
                 character.velocity.vy, (-MathF.Sin(YawRotation) * Request.Velocity.vx + MathF.Cos(YawRotation) * Request.Velocity.vz) * SprintMultiplier);
         }
-        
+
         if (GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers.Count == 0 && Request.Jump)
         {
             character.velocity.vy = 7.5f;
             AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
             AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
         }
-        
+
         ctx.Db.playable_character.identity.Update(character);
     }
 
@@ -252,7 +252,7 @@ public static partial class Module
     public static void SpawnProjectile(ReducerContext ctx, DbVector3 direction, DbVector3 spawnPoint)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Projectile Owner Not Found");
-        DbVelocity3 velocity = new DbVelocity3(direction.x * 20f, direction.y * 20f, direction.z * 20f); // Direction - Unit Vector
+        DbVelocity3 velocity = new DbVelocity3(direction.x * 2f, direction.y * 2f, direction.z * 2f); // Direction - Unit Vector
         Projectile projectile = new()
         {
             OwnerIdentity = character.identity,
@@ -260,7 +260,7 @@ public static partial class Module
             position = spawnPoint,
             velocity = velocity,
             direction = direction,
-            Collider = new CapsuleCollider {Center = spawnPoint, Direction = direction, HeightEndToEnd = 0.1f, Radius = 0.025f}, // 0.05 Is Accounting For Object Scale
+            Collider = new CapsuleCollider { Center = spawnPoint, Direction = direction, HeightEndToEnd = 0.1f, Radius = 0.025f }, // 0.05 Is Accounting For Object Scale
             ProjectileType = ProjectileType.Bullet
         };
 
@@ -271,6 +271,7 @@ public static partial class Module
     [Reducer]
     public static void HandleActionExitRequest(ReducerContext ctx, PlayerState newPlayerState)
     {
+        Identity identity = ctx.Sender;
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");
         PlayerState oldPlayerState = character.state;
         switch (oldPlayerState)
@@ -299,12 +300,15 @@ public static partial class Module
             character.position.y + character.velocity.vy * time,
             character.position.z + character.velocity.vz * time
             );
-            if (character.position.y < 0) {
+
+            if (character.position.y < 0)
+            {
                 character.position.y = 0;
                 RemoveSubscriber(character.PlayerPermissionConfig[2].Subscribers, "Jump");
                 RemoveSubscriber(character.PlayerPermissionConfig[1].Subscribers, "Jump");
             }
-            
+
+            character.Collider.Center = Add(character.position, Mul(character.Collider.Direction, character.Collider.HeightEndToEnd * 0.5f));
             ctx.Db.playable_character.identity.Update(character);
         }
 
@@ -336,24 +340,21 @@ public static partial class Module
             Projectile.position.z + Projectile.velocity.vz * time
             );
 
+            Projectile.Collider.Center = Add(Projectile.position, Mul(Projectile.Collider.Direction, Projectile.Collider.HeightEndToEnd * 0.5f));
             ctx.Db.projectiles.Id.Update(Projectile);
         }
     }
 
     [Reducer]
-
     public static void HandleBulletPlayerCollision(ReducerContext ctx, Identity PlayerIdentity, uint BulletId)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(PlayerIdentity) ?? throw new Exception("Player Hit By Bullet Not Found");
         Projectile Bullet = ctx.Db.projectiles.Id.Find(BulletId) ?? throw new Exception("Bullet That Hit Player Not Found");
-
         
-
         if (TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Bullet.Collider), Bullet.Collider, out Contact contact))
         {
-            
+            ctx.Db.projectiles.Id.Delete(Bullet.Id);
         }
-
     }
 
     // Types
@@ -423,16 +424,14 @@ public static partial class Module
         public float Radius = radius;
     }
 
-
     [SpacetimeDB.Type]
     public partial struct BoxCollider(DbVector3 center, DbVector3 size, DbVector3 direction)
     {
         public DbVector3 Center = center;
         public DbVector3 Size = size;   // width, height, length
-        public DbVector3 Direction = direction;
+        public DbVector3 Direction = direction; // Normalized Already
+
     }
-
-
 
     [SpacetimeDB.Type]
     public partial struct CapsuleCollider(DbVector3 center, float heightEndToEnd, float radius, DbVector3 direction)
@@ -440,7 +439,7 @@ public static partial class Module
         public DbVector3 Center = center;
         public float HeightEndToEnd = heightEndToEnd;
         public float Radius = radius;
-        public DbVector3 Direction = direction;
+        public DbVector3 Direction = direction; // Normalized Already
 
     }
 
@@ -456,9 +455,8 @@ public static partial class Module
     public partial struct Contact
     {
         public DbVector3 Normal; // Object A -> B
-        public float Depth; // Penetration (>= 0)
+        public float Depth;
     }
-    
 
     // Funcs
 
@@ -472,10 +470,10 @@ public static partial class Module
             _ => throw new ArgumentOutOfRangeException(nameof(collider), collider, "Unknown collider type")
         };
     }
-    
+
     public delegate bool OverlapFn(object a, object b, out Contact contact);
 
-    static readonly Dictionary<(Shape, Shape), OverlapFn> Overlap = new() 
+    static readonly Dictionary<(Shape, Shape), OverlapFn> Overlap = new()
     {
         { (Shape.Capsule, Shape.Capsule), (object a, object b, out Contact c) => OverlapCapsuleCapsule((CapsuleCollider)a, (CapsuleCollider)b, out c) },
     };
@@ -489,10 +487,121 @@ public static partial class Module
         return false;
     }
 
-    bool OverlapCapsuleCapsule(CapsuleCollider a, CapsuleCollider b, out Contact c)
+    static bool OverlapCapsuleCapsule(CapsuleCollider a, CapsuleCollider b, out Contact contact)
     {
+        ComputeSegmentEndpoints(a, out var aBottom, out var aTop);
+        ComputeSegmentEndpoints(b, out var bBottom, out var bTop);
+
+        ClosestPointsOnSegments(aBottom, aTop, bBottom, bTop, out var closestOnA, out var closestOnB);
+
+        // Vector from B → A At Closest Point
+        var bToAAtClosest = Sub(closestOnA, closestOnB);
+        float distanceSq = LenSq(bToAAtClosest);
+        float combinedR = a.Radius + b.Radius;
+
+        if (distanceSq > combinedR * combinedR)
+        {
+            contact = default;
+            return false;
+        }
+
+        float distance = Sqrt(distanceSq);
+        DbVector3 contactNormal;
+
+        if (distance > 1e-6f) contactNormal = Mul(bToAAtClosest, 1f / distance);
+
+        else contactNormal = NormalizeSmallVector(Sub(a.Direction, b.Direction), AnyPerpendicularUnit(a.Direction));
+
+        contact = new Contact
+        {
+            Normal = contactNormal,
+            Depth = combinedR - distance
+        };
+
         return true;
     }
+
+    static void ComputeSegmentEndpoints(in CapsuleCollider capsule, out DbVector3 bottom, out DbVector3 top)
+    {
+        var axisUnit = capsule.Direction;
+        float cylinderLength = Math.Max(0f, capsule.HeightEndToEnd - 2f * capsule.Radius);
+        float halfSegment = 0.5f * cylinderLength;
+
+        var offset = Mul(axisUnit, halfSegment);
+        bottom = Sub(capsule.Center, offset);
+        top = Add(capsule.Center, offset);
+    }
+
+    static void ClosestPointsOnSegments(in DbVector3 a0, in DbVector3 a1, in DbVector3 b0, in DbVector3 b1, out DbVector3 closestOnA, out DbVector3 closestOnB)
+    {
+        var aDir = Sub(a1, a0);
+        var bDir = Sub(b1, b0);
+        var a0ToB0 = Sub(a0, b0);
+
+        float aa = Dot(aDir, aDir);
+        float ab = Dot(aDir, bDir);
+        float bb = Dot(bDir, bDir);
+        float ad = Dot(aDir, a0ToB0);
+        float bd = Dot(bDir, a0ToB0);
+
+        float denom = aa * bb - ab * ab;
+        float EPS = 1e-8f;
+
+        float s, t;
+
+        if (denom > EPS) {
+            s = (ab * bd - bb * ad) / denom;
+            t = (aa * bd - ab * ad) / denom;
+        }
+
+        else {
+
+            if (bb > EPS) {
+                s = 0.5f;
+                t = bd / bb;
+            }
+
+            else if (aa > EPS) {
+                t = 0f;
+                s = -ad / aa;
+            }
+
+            else {
+                s = 0f;
+                t = 0f;
+            }
+        }
+
+        s = Clamp01(s);
+        t = Clamp01(t);
+
+        closestOnA = Add(a0, Mul(aDir, s));
+        closestOnB = Add(b0, Mul(bDir, t));
+    }
+
+    static DbVector3 NormalizeSmallVector(in DbVector3 v, in DbVector3 fallback)
+    {
+        float magSq = LenSq(v);
+        if (magSq <= 1e-12f) return fallback;
+        float invMag = 1f / Sqrt(magSq);
+        return new DbVector3(v.x * invMag, v.y * invMag, v.z * invMag);
+    }
+
+    static DbVector3 AnyPerpendicularUnit(in DbVector3 unitAxis)
+    {
+        var refVec = Math.Abs(unitAxis.y) < 0.99f ? new DbVector3(0, 1, 0) : new DbVector3(1, 0, 0);
+        var perp = Cross(unitAxis, refVec);
+        return NormalizeSmallVector(perp, new DbVector3(1, 0, 0));
+    }
+
+    static DbVector3 Add(in DbVector3 x, in DbVector3 y) => new DbVector3(x.x + y.x, x.y + y.y, x.z + y.z);
+    static DbVector3 Sub(in DbVector3 x, in DbVector3 y) => new DbVector3(x.x - y.x, x.y - y.y, x.z - y.z);
+    static DbVector3 Mul(in DbVector3 x, float s) => new DbVector3(x.x * s, x.y * s, x.z * s);
+    static float Dot(in DbVector3 x, in DbVector3 y) => x.x * y.x + x.y * y.y + x.z * y.z;
+    static float LenSq(in DbVector3 x) => Dot(x, x);
+    static float Sqrt(float v) => (float)Math.Sqrt(v);
+    static float Clamp01(float t) => t < 0f ? 0f : (t > 1f ? 1f : t);
+    static DbVector3 Cross(in DbVector3 a, in DbVector3 b) => new(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
 
     static void AddSubscriberUnique(List<string> subscribers, string reason)
     {
@@ -505,7 +614,7 @@ public static partial class Module
         for (int i = subscribers.Count - 1; i >= 0; i--)
             if (subscribers[i] == reason) { subscribers.RemoveAt(i); break; }
     }
-    
+
     private static PermissionEntry GetPermissionEntry(List<PermissionEntry> entries, string key)
     {
         foreach (var entry in entries)
@@ -516,8 +625,5 @@ public static partial class Module
         return entries[0];
     }
 
-
-
-
-
 }
+

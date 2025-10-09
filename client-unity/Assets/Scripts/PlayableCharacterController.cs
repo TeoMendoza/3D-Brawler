@@ -139,5 +139,9 @@ public class PlayableCharacterController : MonoBehaviour
         GameManager.Conn.Reducers.SpawnProjectile(direction: (DbVector3)projectileDirection, spawnPoint: (DbVector3)attackHand.position);
     }
 
+    public void Delete(EventContext context)
+    {
+        Destroy(gameObject);
+    }
     
 }

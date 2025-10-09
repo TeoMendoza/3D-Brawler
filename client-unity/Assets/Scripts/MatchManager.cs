@@ -82,7 +82,7 @@ public class MatchManager : MonoBehaviour
             Players.TryGetValue(Character.Identity, out var prefab);
             if (prefab != null)
             {
-                Destroy(prefab);
+                prefab.Delete(context);
                 Players.Remove(Character.Identity);
             }
         }
@@ -107,7 +107,7 @@ public class MatchManager : MonoBehaviour
             Projectiles.TryGetValue(Projectile.Id, out var prefab);
             if (prefab != null)
             {
-                Destroy(prefab);
+                prefab.Delete(context);
                 Projectiles.Remove(Projectile.Id);
             }
         }

@@ -46,12 +46,17 @@ public class ProjectileController : MonoBehaviour
         if (Id != newProjectile.Id) return;
         TargetPosition = newProjectile.Position;
     }
-    
+
     public void OnTriggerEnter(Collider other)
     {
         // Check eventually whetehr other is differnt type of character, map, etc
         var Player = other.gameObject.GetComponent<PlayableCharacterController>();
         var PlayerIdentity = Player.Identity;
         GameManager.Conn.Reducers.HandleBulletPlayerCollision(playerIdentity: PlayerIdentity, bulletId: Id);
+    }
+    
+    public void Delete(EventContext context)
+    {
+        Destroy(gameObject);
     }
 }
