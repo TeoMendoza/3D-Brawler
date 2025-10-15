@@ -3,7 +3,7 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-    
+
     [SpacetimeDB.Type]
     public partial struct DbVector3(float x, float y, float z)
     {

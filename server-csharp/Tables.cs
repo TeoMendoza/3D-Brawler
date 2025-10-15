@@ -21,11 +21,8 @@ public static partial class Module
     {
         [PrimaryKey, Unique, AutoInc]
         public uint Id;
-
         public uint maxPlayers;
-
         public uint currentPlayers;
-
         public bool inProgress;
     }
 
@@ -46,7 +43,7 @@ public static partial class Module
         public PlayerState state;
         public CapsuleCollider Collider;
         public List<PermissionEntry> PlayerPermissionConfig;
-        // Add Internal Capsule Class To Keep Track Of Collision Box
+        public List<uint> CollidingIds; // Make Into Class At Some Point To Be Able To Differentiate Between Character Types & Enviornment Objects
     }
 
     [Table(Name = "projectiles", Public = true)]
@@ -89,5 +86,5 @@ public static partial class Module
         public ScheduleAt scheduled_at;
         public float tick_rate;
     }
-    
+
 }

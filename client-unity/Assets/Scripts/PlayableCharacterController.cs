@@ -134,7 +134,7 @@ public class PlayableCharacterController : MonoBehaviour
 
         Vector2 screenCenter = new(Screen.width * 0.5f, Screen.height * 0.5f);
         Ray aimRay = mainCamera.ScreenPointToRay(screenCenter);
-        Vector3 aimPoint = aimRay.GetPoint(2000f);
+        Vector3 aimPoint = aimRay.GetPoint(20f);
         Vector3 projectileDirection = (aimPoint - attackHand.position).normalized;
         GameManager.Conn.Reducers.SpawnProjectile(direction: (DbVector3)projectileDirection, spawnPoint: (DbVector3)attackHand.position);
     }
@@ -142,6 +142,18 @@ public class PlayableCharacterController : MonoBehaviour
     public void Delete(EventContext context)
     {
         Destroy(gameObject);
+    }
+
+    public void OnTriggerEnter(Collider other)
+    {
+        // Check eventually whetehr other is differnt type of character, map, etc
+        if (other.gameObject.CompareTag("PlayableCharacter"))
+        {
+            var Player = other.gameObject.GetComponent<PlayableCharacterController>();
+            var PlayerId = Player.Id;
+            GameManager.Conn.Reducers.HandlePlayerPlayerCollision(playerId: PlayerId);
+        }
+        
     }
     
 }

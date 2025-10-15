@@ -49,10 +49,12 @@ public class ProjectileController : MonoBehaviour
 
     public void OnTriggerEnter(Collider other)
     {
-        // Check eventually whetehr other is differnt type of character, map, etc
-        var Player = other.gameObject.GetComponent<PlayableCharacterController>();
-        var PlayerIdentity = Player.Identity;
-        GameManager.Conn.Reducers.HandleBulletPlayerCollision(playerIdentity: PlayerIdentity, bulletId: Id);
+        if (other.gameObject.CompareTag("PlayableCharacter"))
+        {
+            var Player = other.gameObject.GetComponent<PlayableCharacterController>();
+            var PlayerIdentity = Player.Identity;
+            GameManager.Conn.Reducers.HandleBulletPlayerCollision(playerIdentity: PlayerIdentity, bulletId: Id);
+        }
     }
     
     public void Delete(EventContext context)

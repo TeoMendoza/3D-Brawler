@@ -18,7 +18,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &4396109249353281109
 Transform:
   m_ObjectHideFlags: 0
@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 3191044479256309481}
   serializedVersion: 2
   m_LocalRotation: {x: 0.079599276, y: -0.052362435, z: 0.0041870973, w: 0.9954419}
-  m_LocalPosition: {x: -0.09972036, y: 1.5223039, z: -0.4914831}
+  m_LocalPosition: {x: 0.59235287, y: 2.1046076, z: -2.2641883}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -234,6 +234,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: c439653e57ffc4669aae397cbd972335, type: 3}
       propertyPath: m_Name
+      value: PlayableCharacter
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c439653e57ffc4669aae397cbd972335, type: 3}
+      propertyPath: m_TagString
       value: PlayableCharacter
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: c439653e57ffc4669aae397cbd972335, type: 3}

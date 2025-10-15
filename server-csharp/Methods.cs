@@ -3,7 +3,7 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-    
+
     public static Shape GetColliderShape(object collider)
     {
         return collider switch
@@ -33,15 +33,20 @@ public static partial class Module
 
     static bool OverlapCapsuleCapsule(CapsuleCollider a, CapsuleCollider b, out Contact contact)
     {
+        static float Length(DbVector3 v) => Sqrt(LenSq(v));
+
+        var aDir = a.Direction;
+        var bDir = b.Direction;
+
         ComputeSegmentEndpoints(a, out var aBottom, out var aTop);
         ComputeSegmentEndpoints(b, out var bBottom, out var bTop);
+        ClosestPointsOnSegments(aBottom, aTop, bBottom, bTop, out var pA, out var pB);
 
-        ClosestPointsOnSegments(aBottom, aTop, bBottom, bTop, out var closestOnA, out var closestOnB);
-
-        // Vector from B → A At Closest Point
-        var bToAAtClosest = Sub(closestOnA, closestOnB);
+        var bToAAtClosest = Sub(pA, pB);
         float distanceSq = LenSq(bToAAtClosest);
+        float distance = Sqrt(distanceSq);
         float combinedR = a.Radius + b.Radius;
+
 
         if (distanceSq > combinedR * combinedR)
         {
@@ -49,20 +54,24 @@ public static partial class Module
             return false;
         }
 
-        float distance = Sqrt(distanceSq);
         DbVector3 contactNormal;
-
-        if (distance > 1e-6f) contactNormal = Mul(bToAAtClosest, 1f / distance);
-
-        else contactNormal = NormalizeSmallVector(Sub(a.Direction, b.Direction), AnyPerpendicularUnit(a.Direction));
+        if (distance > 1e-6f)
+        {
+            contactNormal = Mul(bToAAtClosest, 1f / distance);
+        }
+        else
+        {
+            contactNormal = NormalizeSmallVector(Sub(aDir, bDir), AnyPerpendicularUnit(aDir));
+        }
 
         contact = new Contact
         {
-            Normal = contactNormal,
-            Depth = combinedR - distance
+            Normal = contactNormal, // B → A
+            Depth  = combinedR - distance
         };
 
         return true;
+    
     }
 
     static void ComputeSegmentEndpoints(in CapsuleCollider capsule, out DbVector3 bottom, out DbVector3 top)
@@ -87,34 +96,53 @@ public static partial class Module
         float bb = Dot(bDir, bDir);
         float ad = Dot(aDir, a0ToB0);
         float bd = Dot(bDir, a0ToB0);
+        float D  = aa * bb - ab * ab;
 
-        float denom = aa * bb - ab * ab;
-        float EPS = 1e-8f;
+        const float EPS = 1e-8f;
 
-        float s, t;
+        float sN, sD = D, tN, tD = D;
 
-        if (denom > EPS) {
-            s = (ab * bd - bb * ad) / denom;
-            t = (aa * bd - ab * ad) / denom;
+        if (D < EPS)
+        {
+            sN = 0f; sD = 1f;
+            tN = bd; tD = bb;
+        }
+        else
+        {
+            sN = ab * bd - bb * ad;
+            tN = aa * bd - ab * ad;
+
+            if (sN < 0f)
+            {
+                sN = 0f;
+                tN = bd;
+                tD = bb;
+            }
+            else if (sN > sD)
+            {
+                sN = sD;
+                tN = bd + ab;
+                tD = bb;
+            }
         }
 
-        else {
-
-            if (bb > EPS) {
-                s = 0.5f;
-                t = bd / bb;
-            }
-
-            else if (aa > EPS) {
-                t = 0f;
-                s = -ad / aa;
-            }
-
-            else {
-                s = 0f;
-                t = 0f;
-            }
+        if (tN < 0f)
+        {
+            tN = 0f;
+            if (-ad < 0f) { sN = 0f;  sD = 1f; }
+            else if (-ad > aa) { sN = sD; }
+            else { sN = -ad; sD = aa; }
         }
+        else if (tN > tD)
+        {
+            tN = tD;
+            if (-ad + ab < 0f) { sN = 0f;  sD = 1f; }
+            else if (-ad + ab > aa) { sN = sD; }
+            else { sN = -ad + ab; sD = aa; }
+        }
+
+        float s = MathF.Abs(sN) < EPS ? 0f : (sN / sD);
+        float t = MathF.Abs(tN) < EPS ? 0f : (tN / tD);
 
         s = Clamp01(s);
         t = Clamp01(t);
@@ -146,6 +174,7 @@ public static partial class Module
     static float Sqrt(float v) => (float)Math.Sqrt(v);
     static float Clamp01(float t) => t < 0f ? 0f : (t > 1f ? 1f : t);
     static DbVector3 Cross(in DbVector3 a, in DbVector3 b) => new(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+    static bool IsZero(DbVector3 v) => (v.x * v.x + v.y * v.y + v.z * v.z) < 1e-10f;
 
     static void AddSubscriberUnique(List<string> subscribers, string reason)
     {
@@ -168,5 +197,5 @@ public static partial class Module
         }
         return entries[0];
     }
-    
+
 }

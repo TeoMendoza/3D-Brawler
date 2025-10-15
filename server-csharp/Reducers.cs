@@ -9,6 +9,27 @@ public static partial class Module
     {
         Log.Info($"Initializing...");
         ctx.Db.match.Insert(new Match { maxPlayers = 12, currentPlayers = 0, inProgress = false });
+        ctx.Db.playable_character.Insert(new Playable_Character
+        {
+            identity = new Identity(),
+            Id = 10000,
+            Name = "Test Teo",
+            MatchId = 1,
+            position = new DbVector3 { x = 20, y = 0, z = 0 },
+            rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
+            velocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 },
+            state = PlayerState.Default,
+            Collider = new CapsuleCollider { Center = new DbVector3 { x = 20, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f },
+            PlayerPermissionConfig =
+                [
+                    new("CanWalk", []),
+                    new("CanRun", []),
+                    new("CanJump", []),
+                    new("CanAttack", [])
+                ],
+            CollidingIds = []
+        });
+
         ctx.Db.move_all_players.Insert(new Move_All_Players_Timer
         {
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
@@ -70,8 +91,8 @@ public static partial class Module
                     new("CanRun", []),
                     new("CanJump", []),
                     new("CanAttack", [])
-                ]
-
+                ],
+                CollidingIds = []
             });
 
         var Match = ctx.Db.match.Id.Find(1);
@@ -165,7 +186,7 @@ public static partial class Module
             position = spawnPoint,
             velocity = velocity,
             direction = direction,
-            Collider = new CapsuleCollider { Center = spawnPoint, Direction = direction, HeightEndToEnd = 0.1f, Radius = 0.025f }, // 0.05 Is Accounting For Object Scale
+            Collider = new CapsuleCollider { Center = spawnPoint, Direction = direction, HeightEndToEnd = 0.1f, Radius = 0.025f }, // Accounts For Prefab Scale
             ProjectileType = ProjectileType.Bullet
         };
 
@@ -197,27 +218,104 @@ public static partial class Module
     public static void MovePlayers(ReducerContext ctx, Move_All_Players_Timer timer)
     {
         var time = timer.tick_rate;
+
+        const float kSlop = 0.001f;
+        const float kShare = 0.5f;          // set to 0.5f when both players run correction
+        const float kMaxCorrPerTick = 1.0f; // >= radiiSum so we can fully escape in one tick
+
         foreach (var charac in ctx.Db.playable_character.Iter())
         {
             var character = charac;
-            character.position = new DbVector3(
-            character.position.x + character.velocity.vx * time,
-            character.position.y + character.velocity.vy * time,
-            character.position.z + character.velocity.vz * time
-            );
 
-            if (character.position.y < 0)
+            var desired = new DbVector3(character.velocity.vx * time,
+                                        character.velocity.vy * time,
+                                        character.velocity.vz * time);
+
+            if (character.CollidingIds != null && character.CollidingIds.Count > 0)
             {
-                character.position.y = 0;
+                foreach (var otherId in character.CollidingIds)
+                {
+                    var other = ctx.Db.playable_character.Id.Find(otherId) ?? throw new Exception("Other Not Found");
+
+                    if (TryOverlap(GetColliderShape(character.Collider), character.Collider,
+                                   GetColliderShape(other.Collider), other.Collider, out Contact c))
+                    {
+                        var n_me_to_other = Mul(c.Normal, -1f);
+                        float into = Dot(desired, n_me_to_other);
+                        if (into > 0f) desired = Sub(desired, Mul(n_me_to_other, into));
+                    }
+                }
+            }
+
+            character.position = Add(character.position, desired);
+
+            if (character.position.y < 0f)
+            {
+                character.position.y = 0f;
                 RemoveSubscriber(character.PlayerPermissionConfig[2].Subscribers, "Jump");
                 RemoveSubscriber(character.PlayerPermissionConfig[1].Subscribers, "Jump");
             }
 
             character.Collider.Center = Add(character.position, Mul(character.Collider.Direction, character.Collider.HeightEndToEnd * 0.5f));
+
+            var stillColliding = new List<uint>(character.CollidingIds?.Count ?? 0);
+            DbVector3 totalMTV = new DbVector3(0, 0, 0);
+
+            if (character.CollidingIds != null && character.CollidingIds.Count > 0)
+            {
+                foreach (var otherId in character.CollidingIds)
+                {
+                    var other = ctx.Db.playable_character.Id.Find(otherId) ?? throw new Exception("Other Not Found");
+
+                    if (TryOverlap(GetColliderShape(character.Collider), character.Collider,
+                                   GetColliderShape(other.Collider), other.Collider, out Contact c) && c.Depth > 0f)
+                    {
+                        float corr = MathF.Max(c.Depth - kSlop, 0f);
+                        if (corr > 0f)
+                        {
+                            totalMTV = Add(totalMTV, Mul(c.Normal, -corr * kShare));
+                            stillColliding.Add(otherId);
+                        }
+                    }
+                }
+            }
+
+            if (!IsZero(totalMTV))
+            {
+                float m2 = LenSq(totalMTV);
+                float cap2 = kMaxCorrPerTick * kMaxCorrPerTick;
+                if (m2 > cap2) totalMTV = Mul(totalMTV, kMaxCorrPerTick / Sqrt(m2));
+
+                character.position = Add(character.position, totalMTV);
+                if (character.position.y < 0f) character.position.y = 0f;
+                character.Collider.Center = Add(character.position, Mul(character.Collider.Direction, character.Collider.HeightEndToEnd * 0.5f));
+
+                var nOut = totalMTV; // push-out direction
+                float nLen2 = LenSq(nOut);
+                if (nLen2 > 1e-10f)
+                {
+                    nOut = Mul(nOut, 1f / Sqrt(nLen2));
+                    var v = new DbVector3(character.velocity.vx, character.velocity.vy, character.velocity.vz);
+                    float vn = Dot(v, nOut);
+                    if (vn < 0f)
+                    {
+                        v = Sub(v, Mul(nOut, vn)); // remove inward component
+                        character.velocity = FromVec3(v);
+                    }
+                }
+            }
+
+            character.CollidingIds = stillColliding;
+
             ctx.Db.playable_character.identity.Update(character);
         }
 
+
+
     }
+    
+    public static DbVelocity3 FromVec3(DbVector3 v)
+        => new DbVelocity3 { vx = v.x, vy = v.y, vz = v.z };
 
     [Reducer]
     public static void ApplyGravity(ReducerContext ctx, Gravity_Timer timer)
@@ -255,11 +353,20 @@ public static partial class Module
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(PlayerIdentity) ?? throw new Exception("Player Hit By Bullet Not Found");
         Projectile Bullet = ctx.Db.projectiles.Id.Find(BulletId) ?? throw new Exception("Bullet That Hit Player Not Found");
-        
+
         if (TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Bullet.Collider), Bullet.Collider, out Contact contact))
         {
             ctx.Db.projectiles.Id.Delete(Bullet.Id);
         }
+    }
+
+    [Reducer]
+    public static void HandlePlayerPlayerCollision(ReducerContext ctx, uint playerId)
+    {
+        Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player (Sender) Not Found");
+        if (playerId == character.Id) return;
+        if (character.CollidingIds.Contains(playerId) is false) character.CollidingIds.Add(playerId);
+        ctx.Db.playable_character.identity.Update(character);
     }
 
 }
