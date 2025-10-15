@@ -48,28 +48,34 @@ public static partial class Module
         float combinedR = a.Radius + b.Radius;
 
 
-        if (distanceSq > combinedR * combinedR) {
+        if (distanceSq > combinedR * combinedR)
+        {
             contact = default;
             return false;
         }
 
         DbVector3 contactNormal;
-        if (distance > 1e-6f) {
+        if (distance > 1e-6f)
+        {
             contactNormal = Mul(bToAAtClosest, 1f / distance);
         }
 
-        else {
+        else
+        {
             contactNormal = NormalizeSmallVector(Sub(aDir, bDir), AnyPerpendicularUnit(aDir));
         }
 
-        contact = new Contact {
+        contact = new Contact
+        {
             Normal = contactNormal, // B → A
-            Depth  = combinedR - distance
+            Depth = combinedR - distance
         };
 
         return true;
-    
+
     }
+    
+    
 
     static void ComputeSegmentEndpoints(in CapsuleCollider capsule, out DbVector3 bottom, out DbVector3 top)
     {
@@ -169,6 +175,7 @@ public static partial class Module
     static float Dot(in DbVector3 x, in DbVector3 y) => x.x * y.x + x.y * y.y + x.z * y.z;
     static float LenSq(in DbVector3 x) => Dot(x, x);
     static float Sqrt(float v) => (float)Math.Sqrt(v);
+    static float Magnitude(in DbVector3 x) => Sqrt(Dot(x, x));
     static float Clamp01(float t) => t < 0f ? 0f : (t > 1f ? 1f : t);
     static DbVector3 Cross(in DbVector3 a, in DbVector3 b) => new(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
     static bool IsZero(DbVector3 v) => (v.x * v.x + v.y * v.y + v.z * v.z) < 1e-10f;

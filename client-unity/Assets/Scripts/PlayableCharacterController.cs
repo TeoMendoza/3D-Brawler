@@ -21,9 +21,10 @@ public class PlayableCharacterController : MonoBehaviour
     public Animator Animator;
     public bool PrevGrounded = true;
 
+    public UnityEngine.CapsuleCollider Collider;
     private Camera mainCamera;
     public Transform attackHand;
-
+    public Bounds bounds;
     float yaw = 0f; 
     float pitch = 0f;
     [SerializeField] float sensX = 200f, sensY = 100f;   // deg/sec at mouse = 1.0
@@ -95,6 +96,9 @@ public class PlayableCharacterController : MonoBehaviour
 
         pitchCurrent = Mathf.SmoothDampAngle(pitchCurrent, TargetRotation.Pitch, ref pitchVel, pitchSmooth);
         thirdPersonCamPivot.transform.localRotation = Quaternion.Euler(pitchCurrent, 0f, 0f);
+
+        // bounds = Collider.bounds;
+        // bounds.Expand(-2 * skinWidth);
     }
 
     public void HandlePlayerUpdate(EventContext context, PlayableCharacter oldChar, PlayableCharacter newChar)
@@ -153,7 +157,30 @@ public class PlayableCharacterController : MonoBehaviour
             var PlayerId = Player.Id;
             GameManager.Conn.Reducers.HandlePlayerPlayerCollision(playerId: PlayerId);
         }
-        
+
     }
+    
+    // public float skinWidth = 0.015f;
+    // private UnityEngine.Vector3 CollideAndSlide(UnityEngine.Vector3 Vel, UnityEngine.Vector3 Pos, int Depth)
+    // {
+    //     if (Depth >= 5) return UnityEngine.Vector3.zero;
+
+    //     float distance = Vel.magnitude + skinWidth;
+
+    //     RaycastHit Hit; 
+    //     if (Physics.CapsuleCast(Pos, bounds.extents.x, Vel.normalized, out Hit, distance, layerMask))
+    //     {
+    //         Vector3 snapToSurface = Vel.normalized * (Hit.distance - skinWidth);
+    //         Vector3 leftover = Vel - snapToSurface;
+
+    //         float mag = leftover.magnitude;
+    //         leftover = Vector3.ProjectOnPlane(leftover, Hit.normal).normalized;
+    //         leftover *= mag;
+
+    //         return snapToSurface + CollideAndSlide(leftover, Pos + snapToSurface, Depth + 1);
+    //     }
+
+    //     return Vel;
+    // }
     
 }
