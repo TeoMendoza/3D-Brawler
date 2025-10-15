@@ -48,24 +48,21 @@ public static partial class Module
         float combinedR = a.Radius + b.Radius;
 
 
-        if (distanceSq > combinedR * combinedR)
-        {
+        if (distanceSq > combinedR * combinedR) {
             contact = default;
             return false;
         }
 
         DbVector3 contactNormal;
-        if (distance > 1e-6f)
-        {
+        if (distance > 1e-6f) {
             contactNormal = Mul(bToAAtClosest, 1f / distance);
         }
-        else
-        {
+
+        else {
             contactNormal = NormalizeSmallVector(Sub(aDir, bDir), AnyPerpendicularUnit(aDir));
         }
 
-        contact = new Contact
-        {
+        contact = new Contact {
             Normal = contactNormal, // B → A
             Depth  = combinedR - distance
         };

@@ -219,35 +219,15 @@ public static partial class Module
     {
         var time = timer.tick_rate;
 
-        const float kSlop = 0.001f;
-        const float kShare = 0.5f;          // set to 0.5f when both players run correction
-        const float kMaxCorrPerTick = 1.0f; // >= radiiSum so we can fully escape in one tick
-
         foreach (var charac in ctx.Db.playable_character.Iter())
         {
             var character = charac;
 
-            var desired = new DbVector3(character.velocity.vx * time,
-                                        character.velocity.vy * time,
-                                        character.velocity.vz * time);
-
-            if (character.CollidingIds != null && character.CollidingIds.Count > 0)
-            {
-                foreach (var otherId in character.CollidingIds)
-                {
-                    var other = ctx.Db.playable_character.Id.Find(otherId) ?? throw new Exception("Other Not Found");
-
-                    if (TryOverlap(GetColliderShape(character.Collider), character.Collider,
-                                   GetColliderShape(other.Collider), other.Collider, out Contact c))
-                    {
-                        var n_me_to_other = Mul(c.Normal, -1f);
-                        float into = Dot(desired, n_me_to_other);
-                        if (into > 0f) desired = Sub(desired, Mul(n_me_to_other, into));
-                    }
-                }
-            }
-
-            character.position = Add(character.position, desired);
+            character.position = new DbVector3(
+            character.position.x + character.velocity.vx * time,
+            character.position.y + character.velocity.vy * time,
+            character.position.z + character.velocity.vz * time
+            );
 
             if (character.position.y < 0f)
             {
@@ -257,65 +237,10 @@ public static partial class Module
             }
 
             character.Collider.Center = Add(character.position, Mul(character.Collider.Direction, character.Collider.HeightEndToEnd * 0.5f));
-
-            var stillColliding = new List<uint>(character.CollidingIds?.Count ?? 0);
-            DbVector3 totalMTV = new DbVector3(0, 0, 0);
-
-            if (character.CollidingIds != null && character.CollidingIds.Count > 0)
-            {
-                foreach (var otherId in character.CollidingIds)
-                {
-                    var other = ctx.Db.playable_character.Id.Find(otherId) ?? throw new Exception("Other Not Found");
-
-                    if (TryOverlap(GetColliderShape(character.Collider), character.Collider,
-                                   GetColliderShape(other.Collider), other.Collider, out Contact c) && c.Depth > 0f)
-                    {
-                        float corr = MathF.Max(c.Depth - kSlop, 0f);
-                        if (corr > 0f)
-                        {
-                            totalMTV = Add(totalMTV, Mul(c.Normal, -corr * kShare));
-                            stillColliding.Add(otherId);
-                        }
-                    }
-                }
-            }
-
-            if (!IsZero(totalMTV))
-            {
-                float m2 = LenSq(totalMTV);
-                float cap2 = kMaxCorrPerTick * kMaxCorrPerTick;
-                if (m2 > cap2) totalMTV = Mul(totalMTV, kMaxCorrPerTick / Sqrt(m2));
-
-                character.position = Add(character.position, totalMTV);
-                if (character.position.y < 0f) character.position.y = 0f;
-                character.Collider.Center = Add(character.position, Mul(character.Collider.Direction, character.Collider.HeightEndToEnd * 0.5f));
-
-                var nOut = totalMTV; // push-out direction
-                float nLen2 = LenSq(nOut);
-                if (nLen2 > 1e-10f)
-                {
-                    nOut = Mul(nOut, 1f / Sqrt(nLen2));
-                    var v = new DbVector3(character.velocity.vx, character.velocity.vy, character.velocity.vz);
-                    float vn = Dot(v, nOut);
-                    if (vn < 0f)
-                    {
-                        v = Sub(v, Mul(nOut, vn)); // remove inward component
-                        character.velocity = FromVec3(v);
-                    }
-                }
-            }
-
-            character.CollidingIds = stillColliding;
-
             ctx.Db.playable_character.identity.Update(character);
         }
 
-
-
     }
-    
-    public static DbVelocity3 FromVec3(DbVector3 v)
-        => new DbVelocity3 { vx = v.x, vy = v.y, vz = v.z };
 
     [Reducer]
     public static void ApplyGravity(ReducerContext ctx, Gravity_Timer timer)

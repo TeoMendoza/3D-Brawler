@@ -99,7 +99,7 @@ public static partial class Module
 
     public partial struct Contact
     {
-        public DbVector3 Normal; // Object A -> B
+        public DbVector3 Normal; // Object B -> A
         public float Depth;
     }
 
