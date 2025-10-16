@@ -1,3 +1,4 @@
+using System.Diagnostics.Contracts;
 using System.Numerics;
 using SpacetimeDB;
 
@@ -27,7 +28,9 @@ public static partial class Module
                     new("CanJump", []),
                     new("CanAttack", [])
                 ],
-            CollidingIds = []
+            CollidingIds = [],
+            IsColliding = false,
+            CorrectedVelocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 }
         });
 
         ctx.Db.move_all_players.Insert(new Move_All_Players_Timer
@@ -92,7 +95,9 @@ public static partial class Module
                     new("CanJump", []),
                     new("CanAttack", [])
                 ],
-                CollidingIds = []
+                CollidingIds = [],
+                IsColliding = false,
+                CorrectedVelocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 }
             });
 
         var Match = ctx.Db.match.Id.Find(1);
@@ -218,15 +223,15 @@ public static partial class Module
     public static void MovePlayers(ReducerContext ctx, Move_All_Players_Timer timer)
     {
         var time = timer.tick_rate;
-
         foreach (var charac in ctx.Db.playable_character.Iter())
         {
             var character = charac;
+            DbVelocity3 MoveVelocity = character.IsColliding ? character.CorrectedVelocity : character.velocity;
 
             character.position = new DbVector3(
-            character.position.x + character.velocity.vx * time,
-            character.position.y + character.velocity.vy * time,
-            character.position.z + character.velocity.vz * time
+            character.position.x + MoveVelocity.vx * time,
+            character.position.y + MoveVelocity.vy * time,
+            character.position.z + MoveVelocity.vz * time
             );
 
             if (character.position.y < 0f)
@@ -237,6 +242,39 @@ public static partial class Module
             }
 
             character.Collider.Center = Add(character.position, Mul(character.Collider.Direction, character.Collider.HeightEndToEnd * 0.5f));
+
+            if (character.CollidingIds.Count > 0)
+            {
+                List<Contact> Contacts = [];
+                List<uint> NewCollidingIds = [];
+                foreach (uint ColliderId in character.CollidingIds)
+                {
+                    Playable_Character CollidingObj = ctx.Db.playable_character.Id.Find(ColliderId) ?? throw new Exception("Colliding Player Not Found");
+                    if (TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(CollidingObj.Collider), CollidingObj.Collider, out Contact contact))
+                    {
+                        Contacts.Add(contact);
+                        NewCollidingIds.Add(ColliderId);
+                    }
+                }
+
+                DbVelocity3 CorrectedVelocity = character.velocity;
+                if (Contacts.Count > 0)
+                {
+                    foreach (Contact Contact in Contacts)
+                    {
+                        DbVector3 Normal = Contact.Normal;
+
+                        float Direction = Dot(Normal, DbVelToDbVec(CorrectedVelocity));
+                        if (Direction < 0f) CorrectedVelocity = DbVecToDbVel(Sub(DbVelToDbVec(CorrectedVelocity), Mul(Normal, Direction)));
+                    }
+                }
+
+                character.IsColliding = Contacts.Count > 0;
+                character.CorrectedVelocity = CorrectedVelocity;
+                character.CollidingIds = NewCollidingIds;
+            }
+            
+
             ctx.Db.playable_character.identity.Update(character);
         }
 
@@ -281,7 +319,7 @@ public static partial class Module
 
         if (TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Bullet.Collider), Bullet.Collider, out Contact contact))
         {
-            ctx.Db.projectiles.Id.Delete(Bullet.Id);
+            ctx.Db.projectiles.Id.Delete(Bullet.Id); // Don't Delete If Bullet Owner Is The One Being Hit
         }
     }
 
