@@ -44,6 +44,8 @@ public static partial class Module
         public CapsuleCollider Collider;
         public List<PermissionEntry> PlayerPermissionConfig;
         public List<uint> CollidingIds; // Make Into Class At Some Point To Be Able To Differentiate Between Character Types & Enviornment Objects
+        public bool IsColliding;
+        public DbVelocity3 CorrectedVelocity;
     }
 
     [Table(Name = "projectiles", Public = true)]

@@ -16,6 +16,7 @@ public class PlayableCharacterController : MonoBehaviour
     public uint Id;
     public string Name;
     public uint MatchId;
+    public DbVelocity3 ProposedVelocity = new(0,0,0);
     public Vector3 TargetPosition;
     public DbRotation2 TargetRotation = new(0,0);
     public Animator Animator;
@@ -96,9 +97,6 @@ public class PlayableCharacterController : MonoBehaviour
 
         pitchCurrent = Mathf.SmoothDampAngle(pitchCurrent, TargetRotation.Pitch, ref pitchVel, pitchSmooth);
         thirdPersonCamPivot.transform.localRotation = Quaternion.Euler(pitchCurrent, 0f, 0f);
-
-        // bounds = Collider.bounds;
-        // bounds.Expand(-2 * skinWidth);
     }
 
     public void HandlePlayerUpdate(EventContext context, PlayableCharacter oldChar, PlayableCharacter newChar)
@@ -160,27 +158,5 @@ public class PlayableCharacterController : MonoBehaviour
 
     }
     
-    // public float skinWidth = 0.015f;
-    // private UnityEngine.Vector3 CollideAndSlide(UnityEngine.Vector3 Vel, UnityEngine.Vector3 Pos, int Depth)
-    // {
-    //     if (Depth >= 5) return UnityEngine.Vector3.zero;
-
-    //     float distance = Vel.magnitude + skinWidth;
-
-    //     RaycastHit Hit; 
-    //     if (Physics.CapsuleCast(Pos, bounds.extents.x, Vel.normalized, out Hit, distance, layerMask))
-    //     {
-    //         Vector3 snapToSurface = Vel.normalized * (Hit.distance - skinWidth);
-    //         Vector3 leftover = Vel - snapToSurface;
-
-    //         float mag = leftover.magnitude;
-    //         leftover = Vector3.ProjectOnPlane(leftover, Hit.normal).normalized;
-    //         leftover *= mag;
-
-    //         return snapToSurface + CollideAndSlide(leftover, Pos + snapToSurface, Depth + 1);
-    //     }
-
-    //     return Vel;
-    // }
     
 }
