@@ -484,6 +484,7 @@ namespace SpacetimeDB.Types
                 "HandlePlayerPlayerCollision" => BSATNHelpers.Decode<Reducer.HandlePlayerPlayerCollision>(encodedArgs),
                 "MovePlayers" => BSATNHelpers.Decode<Reducer.MovePlayers>(encodedArgs),
                 "MoveProjectilesAndCheckCollisions" => BSATNHelpers.Decode<Reducer.MoveProjectilesAndCheckCollisions>(encodedArgs),
+                "RemovePlayerPlayerCollision" => BSATNHelpers.Decode<Reducer.RemovePlayerPlayerCollision>(encodedArgs),
                 "SpawnProjectile" => BSATNHelpers.Decode<Reducer.SpawnProjectile>(encodedArgs),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
@@ -516,6 +517,7 @@ namespace SpacetimeDB.Types
                 Reducer.HandlePlayerPlayerCollision args => Reducers.InvokeHandlePlayerPlayerCollision(eventContext, args),
                 Reducer.MovePlayers args => Reducers.InvokeMovePlayers(eventContext, args),
                 Reducer.MoveProjectilesAndCheckCollisions args => Reducers.InvokeMoveProjectilesAndCheckCollisions(eventContext, args),
+                Reducer.RemovePlayerPlayerCollision args => Reducers.InvokeRemovePlayerPlayerCollision(eventContext, args),
                 Reducer.SpawnProjectile args => Reducers.InvokeSpawnProjectile(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };

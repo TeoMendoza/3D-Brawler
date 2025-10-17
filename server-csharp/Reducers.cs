@@ -246,14 +246,14 @@ public static partial class Module
             if (character.CollidingIds.Count > 0)
             {
                 List<Contact> Contacts = [];
-                List<uint> NewCollidingIds = [];
+                //List<uint> NewCollidingIds = [];
                 foreach (uint ColliderId in character.CollidingIds)
                 {
                     Playable_Character CollidingObj = ctx.Db.playable_character.Id.Find(ColliderId) ?? throw new Exception("Colliding Player Not Found");
                     if (TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(CollidingObj.Collider), CollidingObj.Collider, out Contact contact))
                     {
                         Contacts.Add(contact);
-                        NewCollidingIds.Add(ColliderId);
+                        //NewCollidingIds.Add(ColliderId);
                     }
                 }
 
@@ -271,7 +271,7 @@ public static partial class Module
 
                 character.IsColliding = Contacts.Count > 0;
                 character.CorrectedVelocity = CorrectedVelocity;
-                character.CollidingIds = NewCollidingIds;
+                // character.CollidingIds = NewCollidingIds;
             }
             
             ctx.Db.playable_character.identity.Update(character);
@@ -328,6 +328,14 @@ public static partial class Module
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player (Sender) Not Found");
         if (playerId == character.Id) return;
         if (character.CollidingIds.Contains(playerId) is false) character.CollidingIds.Add(playerId);
+        ctx.Db.playable_character.identity.Update(character);
+    }
+
+    [Reducer]
+    public static void RemovePlayerPlayerCollision(ReducerContext ctx, uint playerId)
+    {
+        Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player (Sender) Not Found");
+        if (character.CollidingIds.Contains(playerId) is true) character.CollidingIds.Remove(playerId);
         ctx.Db.playable_character.identity.Update(character);
     }
 

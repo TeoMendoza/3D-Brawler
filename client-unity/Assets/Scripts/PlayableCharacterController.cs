@@ -167,7 +167,7 @@ public class PlayableCharacterController : MonoBehaviour
         {
             var Player = other.gameObject.GetComponent<PlayableCharacterController>();
             var PlayerId = Player.Id;
-            //GameManager.Conn.Reducers.RemovePlayerPlayerCollision(playerId: PlayerId);
+            GameManager.Conn.Reducers.RemovePlayerPlayerCollision(playerId: PlayerId);
         }
 
     }
