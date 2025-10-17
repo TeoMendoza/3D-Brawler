@@ -274,7 +274,6 @@ public static partial class Module
                 character.CollidingIds = NewCollidingIds;
             }
             
-
             ctx.Db.playable_character.identity.Update(character);
         }
 
