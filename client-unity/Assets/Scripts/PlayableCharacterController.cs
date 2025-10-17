@@ -170,6 +170,6 @@ public class PlayableCharacterController : MonoBehaviour
             //GameManager.Conn.Reducers.RemovePlayerPlayerCollision(playerId: PlayerId);
         }
 
-    
+    }
     
 }
