@@ -14,17 +14,17 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void MoveProjectilesAndCheckCollisionsHandler(ReducerEventContext ctx, MoveProjectilesAndCheckCollisionsTimer timer);
-        public event MoveProjectilesAndCheckCollisionsHandler? OnMoveProjectilesAndCheckCollisions;
+        public delegate void MoveProjectilesHandler(ReducerEventContext ctx, MoveProjectilesTimer timer);
+        public event MoveProjectilesHandler? OnMoveProjectiles;
 
-        public void MoveProjectilesAndCheckCollisions(MoveProjectilesAndCheckCollisionsTimer timer)
+        public void MoveProjectiles(MoveProjectilesTimer timer)
         {
-            conn.InternalCallReducer(new Reducer.MoveProjectilesAndCheckCollisions(timer), this.SetCallReducerFlags.MoveProjectilesAndCheckCollisionsFlags);
+            conn.InternalCallReducer(new Reducer.MoveProjectiles(timer), this.SetCallReducerFlags.MoveProjectilesFlags);
         }
 
-        public bool InvokeMoveProjectilesAndCheckCollisions(ReducerEventContext ctx, Reducer.MoveProjectilesAndCheckCollisions args)
+        public bool InvokeMoveProjectiles(ReducerEventContext ctx, Reducer.MoveProjectiles args)
         {
-            if (OnMoveProjectilesAndCheckCollisions == null)
+            if (OnMoveProjectiles == null)
             {
                 if (InternalOnUnhandledReducerError != null)
                 {
@@ -36,7 +36,7 @@ namespace SpacetimeDB.Types
                 }
                 return false;
             }
-            OnMoveProjectilesAndCheckCollisions(
+            OnMoveProjectiles(
                 ctx,
                 args.Timer
             );
@@ -48,28 +48,28 @@ namespace SpacetimeDB.Types
     {
         [SpacetimeDB.Type]
         [DataContract]
-        public sealed partial class MoveProjectilesAndCheckCollisions : Reducer, IReducerArgs
+        public sealed partial class MoveProjectiles : Reducer, IReducerArgs
         {
             [DataMember(Name = "timer")]
-            public MoveProjectilesAndCheckCollisionsTimer Timer;
+            public MoveProjectilesTimer Timer;
 
-            public MoveProjectilesAndCheckCollisions(MoveProjectilesAndCheckCollisionsTimer Timer)
+            public MoveProjectiles(MoveProjectilesTimer Timer)
             {
                 this.Timer = Timer;
             }
 
-            public MoveProjectilesAndCheckCollisions()
+            public MoveProjectiles()
             {
                 this.Timer = new();
             }
 
-            string IReducerArgs.ReducerName => "MoveProjectilesAndCheckCollisions";
+            string IReducerArgs.ReducerName => "MoveProjectiles";
         }
     }
 
     public sealed partial class SetReducerFlags
     {
-        internal CallReducerFlags MoveProjectilesAndCheckCollisionsFlags;
-        public void MoveProjectilesAndCheckCollisions(CallReducerFlags flags) => MoveProjectilesAndCheckCollisionsFlags = flags;
+        internal CallReducerFlags MoveProjectilesFlags;
+        public void MoveProjectiles(CallReducerFlags flags) => MoveProjectilesFlags = flags;
     }
 }

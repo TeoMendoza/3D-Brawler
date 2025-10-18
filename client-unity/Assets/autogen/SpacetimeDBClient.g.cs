@@ -27,7 +27,7 @@ namespace SpacetimeDB.Types
             AddTable(LoggedOutPlayers = new(conn));
             AddTable(Match = new(conn));
             AddTable(MoveAllPlayers = new(conn));
-            AddTable(MoveProjectilesAndCheckCollisions = new(conn));
+            AddTable(MoveProjectiles = new(conn));
             AddTable(PlayableCharacter = new(conn));
             AddTable(Player = new(conn));
             AddTable(Projectiles = new(conn));
@@ -474,17 +474,16 @@ namespace SpacetimeDB.Types
             var encodedArgs = update.ReducerCall.Args;
             return update.ReducerCall.ReducerName switch
             {
+                "AddCollisionEntry" => BSATNHelpers.Decode<Reducer.AddCollisionEntry>(encodedArgs),
                 "ApplyGravity" => BSATNHelpers.Decode<Reducer.ApplyGravity>(encodedArgs),
                 "Connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
                 "Disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
                 "HandleActionEnterRequest" => BSATNHelpers.Decode<Reducer.HandleActionEnterRequest>(encodedArgs),
                 "HandleActionExitRequest" => BSATNHelpers.Decode<Reducer.HandleActionExitRequest>(encodedArgs),
-                "HandleBulletPlayerCollision" => BSATNHelpers.Decode<Reducer.HandleBulletPlayerCollision>(encodedArgs),
                 "HandleMovementRequest" => BSATNHelpers.Decode<Reducer.HandleMovementRequest>(encodedArgs),
-                "HandlePlayerPlayerCollision" => BSATNHelpers.Decode<Reducer.HandlePlayerPlayerCollision>(encodedArgs),
                 "MovePlayers" => BSATNHelpers.Decode<Reducer.MovePlayers>(encodedArgs),
-                "MoveProjectilesAndCheckCollisions" => BSATNHelpers.Decode<Reducer.MoveProjectilesAndCheckCollisions>(encodedArgs),
-                "RemovePlayerPlayerCollision" => BSATNHelpers.Decode<Reducer.RemovePlayerPlayerCollision>(encodedArgs),
+                "MoveProjectiles" => BSATNHelpers.Decode<Reducer.MoveProjectiles>(encodedArgs),
+                "RemoveCollisionEntry" => BSATNHelpers.Decode<Reducer.RemoveCollisionEntry>(encodedArgs),
                 "SpawnProjectile" => BSATNHelpers.Decode<Reducer.SpawnProjectile>(encodedArgs),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
@@ -507,17 +506,16 @@ namespace SpacetimeDB.Types
             var eventContext = (ReducerEventContext)context;
             return reducer switch
             {
+                Reducer.AddCollisionEntry args => Reducers.InvokeAddCollisionEntry(eventContext, args),
                 Reducer.ApplyGravity args => Reducers.InvokeApplyGravity(eventContext, args),
                 Reducer.Connect args => Reducers.InvokeConnect(eventContext, args),
                 Reducer.Disconnect args => Reducers.InvokeDisconnect(eventContext, args),
                 Reducer.HandleActionEnterRequest args => Reducers.InvokeHandleActionEnterRequest(eventContext, args),
                 Reducer.HandleActionExitRequest args => Reducers.InvokeHandleActionExitRequest(eventContext, args),
-                Reducer.HandleBulletPlayerCollision args => Reducers.InvokeHandleBulletPlayerCollision(eventContext, args),
                 Reducer.HandleMovementRequest args => Reducers.InvokeHandleMovementRequest(eventContext, args),
-                Reducer.HandlePlayerPlayerCollision args => Reducers.InvokeHandlePlayerPlayerCollision(eventContext, args),
                 Reducer.MovePlayers args => Reducers.InvokeMovePlayers(eventContext, args),
-                Reducer.MoveProjectilesAndCheckCollisions args => Reducers.InvokeMoveProjectilesAndCheckCollisions(eventContext, args),
-                Reducer.RemovePlayerPlayerCollision args => Reducers.InvokeRemovePlayerPlayerCollision(eventContext, args),
+                Reducer.MoveProjectiles args => Reducers.InvokeMoveProjectiles(eventContext, args),
+                Reducer.RemoveCollisionEntry args => Reducers.InvokeRemoveCollisionEntry(eventContext, args),
                 Reducer.SpawnProjectile args => Reducers.InvokeSpawnProjectile(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };

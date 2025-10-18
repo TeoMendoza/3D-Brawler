@@ -28,15 +28,15 @@ public static partial class Module
                     new("CanJump", []),
                     new("CanAttack", [])
                 ],
-            CollidingIds = [],
+            CollisionEntries = [],
             IsColliding = false,
             CorrectedVelocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 }
         });
 
         ctx.Db.move_all_players.Insert(new Move_All_Players_Timer
         {
-            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
-            tick_rate = 1.0f / 60.0f
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 120.0)),
+            tick_rate = 1.0f / 120.0f
         });
 
         ctx.Db.gravity.Insert(new Gravity_Timer
@@ -46,10 +46,10 @@ public static partial class Module
             gravity = 20
         });
 
-        ctx.Db.move_projectiles_and_check_collisions.Insert(new Move_Projectiles_And_Check_Collisions_Timer
+        ctx.Db.move_projectiles.Insert(new Move_Projectiles_Timer
         {
-            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
-            tick_rate = 1.0f / 60.0f
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 90.0)),
+            tick_rate = 1.0f / 90.0f
         });
     }
 
@@ -95,7 +95,7 @@ public static partial class Module
                     new("CanJump", []),
                     new("CanAttack", [])
                 ],
-                CollidingIds = [],
+                CollisionEntries = [],
                 IsColliding = false,
                 CorrectedVelocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 }
             });
@@ -243,18 +243,34 @@ public static partial class Module
 
             character.Collider.Center = Add(character.position, Mul(character.Collider.Direction, character.Collider.HeightEndToEnd * 0.5f));
 
-            if (character.CollidingIds.Count > 0)
+            if (character.CollisionEntries.Count > 0)
             {
                 List<Contact> Contacts = [];
-                //List<uint> NewCollidingIds = [];
-                foreach (uint ColliderId in character.CollidingIds)
+                foreach (var Entry in character.CollisionEntries)
                 {
-                    Playable_Character CollidingObj = ctx.Db.playable_character.Id.Find(ColliderId) ?? throw new Exception("Colliding Player Not Found");
-                    if (TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(CollidingObj.Collider), CollidingObj.Collider, out Contact contact))
+                    switch (Entry.Type)
                     {
-                        Contacts.Add(contact);
-                        //NewCollidingIds.Add(ColliderId);
+                        case CollisionEntryType.Player:
+                            Playable_Character Player = ctx.Db.playable_character.Id.Find(Entry.Id) ?? throw new Exception("Colliding Player Not Found");
+                            if (Player.Id != character.Id && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Player.Collider), Player.Collider, out Contact contact))
+                            {
+                                Contacts.Add(contact);
+                            }
+                            break;
+
+                        case CollisionEntryType.Bullet:
+                            Projectile Projectile = ctx.Db.projectiles.Id.Find(Entry.Id) ?? throw new Exception("Colliding Bullet Not Found");
+                            if (Projectile.Id != character.Id && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Projectile.Collider), Projectile.Collider, out Contact _contact))
+                            {
+                                ctx.Db.projectiles.Id.Delete(Projectile.Id);
+
+                            }
+                            break;
+
+                        default:
+                            break;
                     }
+                    
                 }
 
                 DbVelocity3 CorrectedVelocity = character.velocity;
@@ -271,7 +287,6 @@ public static partial class Module
 
                 character.IsColliding = Contacts.Count > 0;
                 character.CorrectedVelocity = CorrectedVelocity;
-                // character.CollidingIds = NewCollidingIds;
             }
             
             ctx.Db.playable_character.identity.Update(character);
@@ -293,7 +308,7 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void MoveProjectilesAndCheckCollisions(ReducerContext ctx, Move_Projectiles_And_Check_Collisions_Timer timer) // Maybe Seperate Move Proj And The Collision Check Into Seperate Timed Reducers
+    public static void MoveProjectiles(ReducerContext ctx, Move_Projectiles_Timer timer) 
     {
         var time = timer.tick_rate;
         foreach (Projectile projectile in ctx.Db.projectiles.Iter())
@@ -311,31 +326,20 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void HandleBulletPlayerCollision(ReducerContext ctx, Identity PlayerIdentity, uint BulletId)
-    {
-        Playable_Character character = ctx.Db.playable_character.identity.Find(PlayerIdentity) ?? throw new Exception("Player Hit By Bullet Not Found");
-        Projectile Bullet = ctx.Db.projectiles.Id.Find(BulletId) ?? throw new Exception("Bullet That Hit Player Not Found");
 
-        if (TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Bullet.Collider), Bullet.Collider, out Contact contact))
-        {
-            ctx.Db.projectiles.Id.Delete(Bullet.Id); // Don't Delete If Bullet Owner Is The One Being Hit
-        }
-    }
-
-    [Reducer]
-    public static void HandlePlayerPlayerCollision(ReducerContext ctx, uint playerId)
+    public static void AddCollisionEntry(ReducerContext ctx, CollisionEntry Entry)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player (Sender) Not Found");
-        if (playerId == character.Id) return;
-        if (character.CollidingIds.Contains(playerId) is false) character.CollidingIds.Add(playerId);
+        if (character.CollisionEntries.Contains(Entry) is false) character.CollisionEntries.Add(Entry);
         ctx.Db.playable_character.identity.Update(character);
     }
 
     [Reducer]
-    public static void RemovePlayerPlayerCollision(ReducerContext ctx, uint playerId)
+
+    public static void RemoveCollisionEntry(ReducerContext ctx, CollisionEntry Entry)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player (Sender) Not Found");
-        if (character.CollidingIds.Contains(playerId) is true) character.CollidingIds.Remove(playerId);
+        if (character.CollisionEntries.Contains(Entry) is true) character.CollisionEntries.Remove(Entry);
         ctx.Db.playable_character.identity.Update(character);
     }
 

@@ -14,17 +14,17 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void RemovePlayerPlayerCollisionHandler(ReducerEventContext ctx, uint playerId);
-        public event RemovePlayerPlayerCollisionHandler? OnRemovePlayerPlayerCollision;
+        public delegate void AddCollisionEntryHandler(ReducerEventContext ctx, CollisionEntry entry);
+        public event AddCollisionEntryHandler? OnAddCollisionEntry;
 
-        public void RemovePlayerPlayerCollision(uint playerId)
+        public void AddCollisionEntry(CollisionEntry entry)
         {
-            conn.InternalCallReducer(new Reducer.RemovePlayerPlayerCollision(playerId), this.SetCallReducerFlags.RemovePlayerPlayerCollisionFlags);
+            conn.InternalCallReducer(new Reducer.AddCollisionEntry(entry), this.SetCallReducerFlags.AddCollisionEntryFlags);
         }
 
-        public bool InvokeRemovePlayerPlayerCollision(ReducerEventContext ctx, Reducer.RemovePlayerPlayerCollision args)
+        public bool InvokeAddCollisionEntry(ReducerEventContext ctx, Reducer.AddCollisionEntry args)
         {
-            if (OnRemovePlayerPlayerCollision == null)
+            if (OnAddCollisionEntry == null)
             {
                 if (InternalOnUnhandledReducerError != null)
                 {
@@ -36,9 +36,9 @@ namespace SpacetimeDB.Types
                 }
                 return false;
             }
-            OnRemovePlayerPlayerCollision(
+            OnAddCollisionEntry(
                 ctx,
-                args.PlayerId
+                args.Entry
             );
             return true;
         }
@@ -48,27 +48,28 @@ namespace SpacetimeDB.Types
     {
         [SpacetimeDB.Type]
         [DataContract]
-        public sealed partial class RemovePlayerPlayerCollision : Reducer, IReducerArgs
+        public sealed partial class AddCollisionEntry : Reducer, IReducerArgs
         {
-            [DataMember(Name = "playerId")]
-            public uint PlayerId;
+            [DataMember(Name = "Entry")]
+            public CollisionEntry Entry;
 
-            public RemovePlayerPlayerCollision(uint PlayerId)
+            public AddCollisionEntry(CollisionEntry Entry)
             {
-                this.PlayerId = PlayerId;
+                this.Entry = Entry;
             }
 
-            public RemovePlayerPlayerCollision()
+            public AddCollisionEntry()
             {
+                this.Entry = new();
             }
 
-            string IReducerArgs.ReducerName => "RemovePlayerPlayerCollision";
+            string IReducerArgs.ReducerName => "AddCollisionEntry";
         }
     }
 
     public sealed partial class SetReducerFlags
     {
-        internal CallReducerFlags RemovePlayerPlayerCollisionFlags;
-        public void RemovePlayerPlayerCollision(CallReducerFlags flags) => RemovePlayerPlayerCollisionFlags = flags;
+        internal CallReducerFlags AddCollisionEntryFlags;
+        public void AddCollisionEntry(CallReducerFlags flags) => AddCollisionEntryFlags = flags;
     }
 }

@@ -15,27 +15,27 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteTables
     {
-        public sealed class MoveProjectilesAndCheckCollisionsHandle : RemoteTableHandle<EventContext, MoveProjectilesAndCheckCollisionsTimer>
+        public sealed class MoveProjectilesHandle : RemoteTableHandle<EventContext, MoveProjectilesTimer>
         {
-            protected override string RemoteTableName => "move_projectiles_and_check_collisions";
+            protected override string RemoteTableName => "move_projectiles";
 
             public sealed class ScheduledIdUniqueIndex : UniqueIndexBase<ulong>
             {
-                protected override ulong GetKey(MoveProjectilesAndCheckCollisionsTimer row) => row.ScheduledId;
+                protected override ulong GetKey(MoveProjectilesTimer row) => row.ScheduledId;
 
-                public ScheduledIdUniqueIndex(MoveProjectilesAndCheckCollisionsHandle table) : base(table) { }
+                public ScheduledIdUniqueIndex(MoveProjectilesHandle table) : base(table) { }
             }
 
             public readonly ScheduledIdUniqueIndex ScheduledId;
 
-            internal MoveProjectilesAndCheckCollisionsHandle(DbConnection conn) : base(conn)
+            internal MoveProjectilesHandle(DbConnection conn) : base(conn)
             {
                 ScheduledId = new(this);
             }
 
-            protected override object GetPrimaryKey(MoveProjectilesAndCheckCollisionsTimer row) => row.ScheduledId;
+            protected override object GetPrimaryKey(MoveProjectilesTimer row) => row.ScheduledId;
         }
 
-        public readonly MoveProjectilesAndCheckCollisionsHandle MoveProjectilesAndCheckCollisions;
+        public readonly MoveProjectilesHandle MoveProjectiles;
     }
 }

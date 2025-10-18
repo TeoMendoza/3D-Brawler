@@ -97,10 +97,26 @@ public static partial class Module
         Box
     }
 
+    [SpacetimeDB.Type]
+    public partial struct CollisionEntry(CollisionEntryType type, uint id)
+    {
+        public CollisionEntryType Type = type;
+        public uint Id = id;
+
+    }
+
+    [SpacetimeDB.Type]
+    public enum CollisionEntryType
+    {
+        Player, // Make One For Each Character Type, Projectile Type, Etc,
+        Map,
+        Bullet,
+    }
+
+
     public partial struct Contact
     {
         public DbVector3 Normal; // Object B -> A
         public float Depth;
     }
-
 }

@@ -35,8 +35,8 @@ namespace SpacetimeDB.Types
         public CapsuleCollider Collider;
         [DataMember(Name = "PlayerPermissionConfig")]
         public System.Collections.Generic.List<PermissionEntry> PlayerPermissionConfig;
-        [DataMember(Name = "CollidingIds")]
-        public System.Collections.Generic.List<uint> CollidingIds;
+        [DataMember(Name = "CollisionEntries")]
+        public System.Collections.Generic.List<CollisionEntry> CollisionEntries;
         [DataMember(Name = "IsColliding")]
         public bool IsColliding;
         [DataMember(Name = "CorrectedVelocity")]
@@ -53,7 +53,7 @@ namespace SpacetimeDB.Types
             PlayerState State,
             CapsuleCollider Collider,
             System.Collections.Generic.List<PermissionEntry> PlayerPermissionConfig,
-            System.Collections.Generic.List<uint> CollidingIds,
+            System.Collections.Generic.List<CollisionEntry> CollisionEntries,
             bool IsColliding,
             DbVelocity3 CorrectedVelocity
         )
@@ -68,7 +68,7 @@ namespace SpacetimeDB.Types
             this.State = State;
             this.Collider = Collider;
             this.PlayerPermissionConfig = PlayerPermissionConfig;
-            this.CollidingIds = CollidingIds;
+            this.CollisionEntries = CollisionEntries;
             this.IsColliding = IsColliding;
             this.CorrectedVelocity = CorrectedVelocity;
         }
@@ -81,7 +81,7 @@ namespace SpacetimeDB.Types
             this.Velocity = new();
             this.Collider = new();
             this.PlayerPermissionConfig = new();
-            this.CollidingIds = new();
+            this.CollisionEntries = new();
             this.CorrectedVelocity = new();
         }
     }

@@ -43,7 +43,7 @@ public static partial class Module
         public PlayerState state;
         public CapsuleCollider Collider;
         public List<PermissionEntry> PlayerPermissionConfig;
-        public List<uint> CollidingIds; // Make Into Class At Some Point To Be Able To Differentiate Between Character Types & Enviornment Objects
+        public List<CollisionEntry> CollisionEntries;
         public bool IsColliding;
         public DbVelocity3 CorrectedVelocity;
     }
@@ -81,8 +81,8 @@ public static partial class Module
         public float gravity;
     }
 
-    [Table(Name = "move_projectiles_and_check_collisions", Scheduled = nameof(MoveProjectilesAndCheckCollisions), ScheduledAt = nameof(scheduled_at))]
-    public partial struct Move_Projectiles_And_Check_Collisions_Timer
+    [Table(Name = "move_projectiles", Scheduled = nameof(MoveProjectiles), ScheduledAt = nameof(scheduled_at))]
+    public partial struct Move_Projectiles_Timer
     {
         [PrimaryKey, AutoInc] public ulong scheduled_id;
         public ScheduleAt scheduled_at;

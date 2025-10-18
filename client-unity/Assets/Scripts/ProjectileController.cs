@@ -10,6 +10,7 @@ using System.Linq;
 public class ProjectileController : MonoBehaviour
 {
     public uint Id;
+    public Identity OwnerIdentity;
     public uint MatchId;
     public Vector3 TargetPosition;
     public ProjectileType ProjectileType;
@@ -17,6 +18,7 @@ public class ProjectileController : MonoBehaviour
     public void Initalize(Projectile Projectile)
     {
         Id = Projectile.Id;
+        OwnerIdentity = Projectile.OwnerIdentity;
         MatchId = Projectile.MatchId;
         ProjectileType = Projectile.ProjectileType;
         transform.position = Projectile.Position;
@@ -45,16 +47,6 @@ public class ProjectileController : MonoBehaviour
     {
         if (Id != newProjectile.Id) return;
         TargetPosition = newProjectile.Position;
-    }
-
-    public void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.CompareTag("PlayableCharacter"))
-        {
-            var Player = other.gameObject.GetComponent<PlayableCharacterController>();
-            var PlayerIdentity = Player.Identity;
-            GameManager.Conn.Reducers.HandleBulletPlayerCollision(playerIdentity: PlayerIdentity, bulletId: Id);
-        }
     }
     
     public void Delete(EventContext context)

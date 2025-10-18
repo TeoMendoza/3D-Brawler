@@ -152,24 +152,47 @@ public class PlayableCharacterController : MonoBehaviour
         if (other.gameObject.CompareTag("PlayableCharacter"))
         {
             var Player = other.gameObject.GetComponent<PlayableCharacterController>();
-            var PlayerId = Player.Id;
-            GameManager.Conn.Reducers.HandlePlayerPlayerCollision(playerId: PlayerId);
+            if (Player.Id != Id)
+            {
+                var Entry = new CollisionEntry(Type: CollisionEntryType.Player, Id: Player.Id);
+                GameManager.Conn.Reducers.AddCollisionEntry(entry: Entry);
+            }
+        }
+
+        else if (other.gameObject.CompareTag("Projectile"))
+        {
+            var Projectile = other.gameObject.GetComponent<ProjectileController>();
+            if (Projectile.OwnerIdentity != Identity)
+            {
+                var Entry = new CollisionEntry(Type: CollisionEntryType.Bullet, Id: Projectile.Id);
+                GameManager.Conn.Reducers.AddCollisionEntry(entry: Entry);
+            }
         }
 
     }
 
     public void OnTriggerExit(Collider other)
     {
-        // NEEDED TO FIX CURRENT BUG, I THINK ITS THAT THE ID IS GETTING REMOVED AFTER THE COLLISION HAS BEEN RESOLVED,
-        // BUT SMALL DISCREPANCIES CAUSE UNITY COLLIDERS TO STILL BE OVERLAPPING, SO THE ID IS NOT ACTUALLY REGISTERED AS A POSSIBLE CHECK, 
-        // SO THE SOLUTION IS TO ONLY REMOVE THE ID ONCE UNITY SAYS THEY ARE NOT COLLIDING, SINCE WE CAN STILL CHECK THEM THROUGH SPACETIME DB LOGIC
         if (other.gameObject.CompareTag("PlayableCharacter"))
         {
             var Player = other.gameObject.GetComponent<PlayableCharacterController>();
-            var PlayerId = Player.Id;
-            GameManager.Conn.Reducers.RemovePlayerPlayerCollision(playerId: PlayerId);
+            if (Player.Id != Id)
+            {
+                var Entry = new CollisionEntry(Type: CollisionEntryType.Player, Id: Player.Id);
+                GameManager.Conn.Reducers.RemoveCollisionEntry(entry: Entry);
+            }
+            
         }
 
+        else if (other.gameObject.CompareTag("Projectile"))
+        {
+            var Projectile = other.gameObject.GetComponent<ProjectileController>();
+            if (Projectile.OwnerIdentity != Identity)
+            {
+                var Entry = new CollisionEntry(Type: CollisionEntryType.Bullet, Id: Projectile.Id);
+                GameManager.Conn.Reducers.RemoveCollisionEntry(entry: Entry);
+            }
+        }
     }
     
 }
