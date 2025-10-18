@@ -191,7 +191,7 @@ public static partial class Module
             position = spawnPoint,
             velocity = velocity,
             direction = direction,
-            Collider = new CapsuleCollider { Center = spawnPoint, Direction = direction, HeightEndToEnd = 0.1f, Radius = 0.025f }, // Accounts For Prefab Scale
+            Collider = new CapsuleCollider { Center = spawnPoint, Direction = direction, HeightEndToEnd = 1f, Radius = 0.25f }, // Accounts For Prefab Scale, 0.1f, 0.025f
             ProjectileType = ProjectileType.Bullet
         };
 
@@ -260,10 +260,10 @@ public static partial class Module
 
                         case CollisionEntryType.Bullet:
                             Projectile Projectile = ctx.Db.projectiles.Id.Find(Entry.Id) ?? throw new Exception("Colliding Bullet Not Found");
-                            if (Projectile.Id != character.Id && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Projectile.Collider), Projectile.Collider, out Contact _contact))
+                            if (Projectile.OwnerIdentity != character.identity && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Projectile.Collider), Projectile.Collider, out Contact _contact))
                             {
+                                Log.Info("Bullet Deleted");
                                 ctx.Db.projectiles.Id.Delete(Projectile.Id);
-
                             }
                             break;
 
