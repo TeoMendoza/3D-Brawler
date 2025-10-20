@@ -33,8 +33,6 @@ public static partial class Module
 
     static bool OverlapCapsuleCapsule(CapsuleCollider a, CapsuleCollider b, out Contact contact)
     {
-        static float Length(DbVector3 v) => Sqrt(LenSq(v));
-
         var aDir = a.Direction;
         var bDir = b.Direction;
 
@@ -175,12 +173,14 @@ public static partial class Module
     static float Dot(in DbVector3 x, in DbVector3 y) => x.x * y.x + x.y * y.y + x.z * y.z;
     static float LenSq(in DbVector3 x) => Dot(x, x);
     static float Sqrt(float v) => (float)Math.Sqrt(v);
+    static float Length(DbVector3 v) => Sqrt(LenSq(v));
     static float Magnitude(in DbVector3 x) => Sqrt(Dot(x, x));
     static float Clamp01(float t) => t < 0f ? 0f : (t > 1f ? 1f : t);
     static DbVector3 Cross(in DbVector3 a, in DbVector3 b) => new(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
     static bool IsZero(DbVector3 v) => (v.x * v.x + v.y * v.y + v.z * v.z) < 1e-10f;
     static DbVector3 DbVelToDbVec(DbVelocity3 v) => new DbVector3(v.vx, v.vy, v.vz);
     static DbVelocity3 DbVecToDbVel(DbVector3 v) => new DbVelocity3(v.x, v.y, v.z);
+    
     static void AddSubscriberUnique(List<string> subscribers, string reason)
     {
         if (subscribers.Contains(reason)) return;

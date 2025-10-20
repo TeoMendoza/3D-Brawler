@@ -21,17 +21,18 @@ public class PlayableCharacterController : MonoBehaviour
     public DbRotation2 TargetRotation = new(0,0);
     public Animator Animator;
     public bool PrevGrounded = true;
-
     public UnityEngine.CapsuleCollider Collider;
     private Camera mainCamera;
     public Transform attackHand;
     public Bounds bounds;
     float yaw = 0f; 
     float pitch = 0f;
-    [SerializeField] float sensX = 200f, sensY = 100f;   // deg/sec at mouse = 1.0
-    [SerializeField] float minPitch = -15f, maxPitch = 15f;
-    [SerializeField] float pitchSmooth = 0.08f; // seconds
-    float pitchCurrent; 
+    private readonly float sensX = 200f;
+    private readonly float sensY = 100f;
+    private readonly float minPitch = -30f;
+    private readonly float maxPitch = 40f;
+    readonly float pitchSmooth = 0.08f; // seconds
+    float pitchCurrent;
     float pitchVel;
 
     public void Initalize(PlayableCharacter Character)
@@ -148,7 +149,6 @@ public class PlayableCharacterController : MonoBehaviour
 
     public void OnTriggerEnter(Collider other)
     {
-        // Check eventually whetehr other is differnt type of character, map, etc
         if (other.gameObject.CompareTag("PlayableCharacter"))
         {
             var Player = other.gameObject.GetComponent<PlayableCharacterController>();

@@ -10,28 +10,28 @@ public static partial class Module
     {
         Log.Info($"Initializing...");
         ctx.Db.match.Insert(new Match { maxPlayers = 12, currentPlayers = 0, inProgress = false });
-        ctx.Db.playable_character.Insert(new Playable_Character
-        {
-            identity = new Identity(),
-            Id = 10000,
-            Name = "Test Teo",
-            MatchId = 1,
-            position = new DbVector3 { x = 20, y = 0, z = 0 },
-            rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
-            velocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 },
-            state = PlayerState.Default,
-            Collider = new CapsuleCollider { Center = new DbVector3 { x = 20, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f },
-            PlayerPermissionConfig =
-                [
-                    new("CanWalk", []),
-                    new("CanRun", []),
-                    new("CanJump", []),
-                    new("CanAttack", [])
-                ],
-            CollisionEntries = [],
-            IsColliding = false,
-            CorrectedVelocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 }
-        });
+        // ctx.Db.playable_character.Insert(new Playable_Character
+        // {
+        //     identity = new Identity(),
+        //     Id = 10000,
+        //     Name = "Test Teo",
+        //     MatchId = 1,
+        //     position = new DbVector3 { x = 20, y = 0, z = 0 },
+        //     rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
+        //     velocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 },
+        //     state = PlayerState.Default,
+        //     Collider = new CapsuleCollider { Center = new DbVector3 { x = 20, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f },
+        //     PlayerPermissionConfig =
+        //         [
+        //             new("CanWalk", []),
+        //             new("CanRun", []),
+        //             new("CanJump", []),
+        //             new("CanAttack", [])
+        //         ],
+        //     CollisionEntries = [],
+        //     IsColliding = false,
+        //     CorrectedVelocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 }
+        // });
 
         ctx.Db.move_all_players.Insert(new Move_All_Players_Timer
         {
@@ -183,7 +183,7 @@ public static partial class Module
     public static void SpawnProjectile(ReducerContext ctx, DbVector3 direction, DbVector3 spawnPoint)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Projectile Owner Not Found");
-        DbVelocity3 velocity = new DbVelocity3(direction.x * 2f, direction.y * 2f, direction.z * 2f); // Direction - Unit Vector
+        DbVelocity3 velocity = new DbVelocity3(direction.x * 10f, direction.y * 10f, direction.z * 10f); // Direction - Unit Vector
         Projectile projectile = new()
         {
             OwnerIdentity = character.identity,
@@ -191,7 +191,7 @@ public static partial class Module
             position = spawnPoint,
             velocity = velocity,
             direction = direction,
-            Collider = new CapsuleCollider { Center = spawnPoint, Direction = direction, HeightEndToEnd = 1f, Radius = 0.25f }, // Accounts For Prefab Scale, 0.1f, 0.025f
+            Collider = new CapsuleCollider { Center = spawnPoint, Direction = direction, HeightEndToEnd = 0.1f, Radius = 0.025f }, // Accounts For Prefab Scale, 0.1f, 0.025f
             ProjectileType = ProjectileType.Bullet
         };
 
@@ -260,10 +260,10 @@ public static partial class Module
 
                         case CollisionEntryType.Bullet:
                             Projectile Projectile = ctx.Db.projectiles.Id.Find(Entry.Id) ?? throw new Exception("Colliding Bullet Not Found");
-                            if (Projectile.OwnerIdentity != character.identity && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Projectile.Collider), Projectile.Collider, out Contact _contact))
+                            if (Projectile.OwnerIdentity != character.identity &&  TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Projectile.Collider), Projectile.Collider, out Contact _contact))
                             {
-                                Log.Info("Bullet Deleted");
                                 ctx.Db.projectiles.Id.Delete(Projectile.Id);
+                                if (character.CollisionEntries.Contains(Entry) is true) character.CollisionEntries.Remove(Entry);
                             }
                             break;
 
@@ -326,16 +326,14 @@ public static partial class Module
     }
 
     [Reducer]
-
     public static void AddCollisionEntry(ReducerContext ctx, CollisionEntry Entry)
     {
-        Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player (Sender) Not Found");
+        Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player (Sender) Not Found"); // THIS IS THE ISSUE, DOESN"T ADD/REMOVE TO OUR TEST PLAYER LIST
         if (character.CollisionEntries.Contains(Entry) is false) character.CollisionEntries.Add(Entry);
         ctx.Db.playable_character.identity.Update(character);
     }
 
     [Reducer]
-
     public static void RemoveCollisionEntry(ReducerContext ctx, CollisionEntry Entry)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player (Sender) Not Found");
