@@ -183,7 +183,7 @@ public static partial class Module
     public static void SpawnProjectile(ReducerContext ctx, DbVector3 direction, DbVector3 spawnPoint)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Projectile Owner Not Found");
-        DbVector3 velocity = new DbVector3(direction.x * 10f, direction.y * 10f, direction.z * 10f); // Direction - Unit Vector
+        DbVector3 velocity = new DbVector3(direction.x * 50f, direction.y * 50f, direction.z * 50f); // Direction - Unit Vector
         Projectile projectile = new()
         {
             OwnerIdentity = character.identity,

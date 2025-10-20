@@ -28,8 +28,8 @@ public class PlayableCharacterController : MonoBehaviour
     float pitch = 0f;
     private readonly float sensX = 200f;
     private readonly float sensY = 100f;
-    private readonly float minPitch = -30f;
-    private readonly float maxPitch = 40f;
+    private readonly float minPitch = -50f;
+    private readonly float maxPitch = 75f;
     readonly float pitchSmooth = 0.08f; // seconds
     float pitchCurrent;
     float pitchVel;
@@ -131,12 +131,11 @@ public class PlayableCharacterController : MonoBehaviour
         GameManager.Conn.Reducers.HandleActionExitRequest(newPlayerState: PlayerState.Default);
     }
 
-    public void OnAttackAnimation() // Triggers when the hand is at correct position to emulate bullet spawning where we want
+    public void OnAttackAnimation() 
     {
-
         Vector2 screenCenter = new(Screen.width * 0.5f, Screen.height * 0.5f);
         Ray aimRay = mainCamera.ScreenPointToRay(screenCenter);
-        Vector3 aimPoint = aimRay.GetPoint(20f);
+        Vector3 aimPoint = aimRay.GetPoint(10f); // Eventually check for the crosshair being over an object, so if its far away the bullet travels towards the object, otherwise a really close distance as we are doing now
         Vector3 projectileDirection = (aimPoint - attackHand.position).normalized;
         GameManager.Conn.Reducers.SpawnProjectile(direction: (DbVector3)projectileDirection, spawnPoint: (DbVector3)attackHand.position);
     }

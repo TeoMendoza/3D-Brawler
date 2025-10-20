@@ -27,8 +27,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3191044479256309481}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.079599276, y: -0.052362435, z: 0.0041870973, w: 0.9954419}
-  m_LocalPosition: {x: 0.59235287, y: 2.1046076, z: -2.2641883}
+  m_LocalRotation: {x: 0.079599276, y: -0.052362427, z: 0.0041870964, w: 0.9954419}
+  m_LocalPosition: {x: 0.53029126, y: 2.0751517, z: -2.6290665}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -58,10 +58,10 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 75
+    FieldOfView: 60
     OrthographicSize: 5
     NearClipPlane: 0.3
-    FarClipPlane: 1000
+    FarClipPlane: 500
     Dutch: 0
     ModeOverride: 0
     PhysicalProperties:
@@ -89,13 +89,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 625c14eee3ad46c99df7c7c891ef668a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Damping: {x: 0.18, y: 0.18, z: 0.18}
-  ShoulderOffset: {x: 0.5, y: -0.3, z: 0.6}
+  Damping: {x: 0, y: 0, z: 0}
+  ShoulderOffset: {x: 0.5, y: -0.25, z: -0.25}
   VerticalArmLength: 0.4
-  CameraSide: 0.85
-  CameraDistance: 3
+  CameraSide: 0.75
+  CameraDistance: 2.5
   AvoidObstacles:
-    Enabled: 1
+    Enabled: 0
     CollisionFilter:
       serializedVersion: 2
       m_Bits: 1
@@ -574,11 +574,6 @@ MonoBehaviour:
   bounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 0, y: 0, z: 0}
-  sensX: 200
-  sensY: 100
-  minPitch: -30
-  maxPitch: 30
-  pitchSmooth: 0.08
 --- !u!136 &2520976131155784165
 CapsuleCollider:
   m_ObjectHideFlags: 0
