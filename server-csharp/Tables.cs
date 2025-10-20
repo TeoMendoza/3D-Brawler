@@ -4,7 +4,7 @@ using SpacetimeDB;
 public static partial class Module
 {
 
-    [Table(Name = "player", Public = true)]
+    [Table(Name = "logged_in_players", Public = true)]
     [Table(Name = "logged_out_players")]
     public partial struct Player
     {
@@ -39,13 +39,13 @@ public static partial class Module
         public uint MatchId;
         public DbVector3 position;
         public DbRotation2 rotation;
-        public DbVelocity3 velocity;
+        public DbVector3 velocity;
         public PlayerState state;
         public CapsuleCollider Collider;
         public List<PermissionEntry> PlayerPermissionConfig;
         public List<CollisionEntry> CollisionEntries;
         public bool IsColliding;
-        public DbVelocity3 CorrectedVelocity;
+        public DbVector3 CorrectedVelocity;
     }
 
     [Table(Name = "projectiles", Public = true)]
@@ -56,7 +56,7 @@ public static partial class Module
         public Identity OwnerIdentity;
         public uint MatchId;
         public DbVector3 position;
-        public DbVelocity3 velocity;
+        public DbVector3 velocity;
         public DbVector3 direction;
         public CapsuleCollider Collider;
         public ProjectileType ProjectileType;

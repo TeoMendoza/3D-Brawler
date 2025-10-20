@@ -24,12 +24,12 @@ namespace SpacetimeDB.Types
         public RemoteTables(DbConnection conn)
         {
             AddTable(Gravity = new(conn));
+            AddTable(LoggedInPlayers = new(conn));
             AddTable(LoggedOutPlayers = new(conn));
             AddTable(Match = new(conn));
             AddTable(MoveAllPlayers = new(conn));
             AddTable(MoveProjectiles = new(conn));
             AddTable(PlayableCharacter = new(conn));
-            AddTable(Player = new(conn));
             AddTable(Projectiles = new(conn));
         }
     }

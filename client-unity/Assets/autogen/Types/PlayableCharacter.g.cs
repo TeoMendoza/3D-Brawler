@@ -28,7 +28,7 @@ namespace SpacetimeDB.Types
         [DataMember(Name = "rotation")]
         public DbRotation2 Rotation;
         [DataMember(Name = "velocity")]
-        public DbVelocity3 Velocity;
+        public DbVector3 Velocity;
         [DataMember(Name = "state")]
         public PlayerState State;
         [DataMember(Name = "Collider")]
@@ -40,7 +40,7 @@ namespace SpacetimeDB.Types
         [DataMember(Name = "IsColliding")]
         public bool IsColliding;
         [DataMember(Name = "CorrectedVelocity")]
-        public DbVelocity3 CorrectedVelocity;
+        public DbVector3 CorrectedVelocity;
 
         public PlayableCharacter(
             SpacetimeDB.Identity Identity,
@@ -49,13 +49,13 @@ namespace SpacetimeDB.Types
             uint MatchId,
             DbVector3 Position,
             DbRotation2 Rotation,
-            DbVelocity3 Velocity,
+            DbVector3 Velocity,
             PlayerState State,
             CapsuleCollider Collider,
             System.Collections.Generic.List<PermissionEntry> PlayerPermissionConfig,
             System.Collections.Generic.List<CollisionEntry> CollisionEntries,
             bool IsColliding,
-            DbVelocity3 CorrectedVelocity
+            DbVector3 CorrectedVelocity
         )
         {
             this.Identity = Identity;

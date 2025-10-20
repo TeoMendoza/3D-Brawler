@@ -7,9 +7,9 @@ public static partial class Module
     [SpacetimeDB.Type]
     public partial struct DbVector3(float x, float y, float z)
     {
-        public float x = x;
-        public float y = y;
-        public float z = z;
+        public float x = x; // Velocity right/left
+        public float y = y; // Velocity up/down
+        public float z = z; // Velocity forward/back
     }
 
     [SpacetimeDB.Type]
@@ -17,14 +17,6 @@ public static partial class Module
     {
         public float Yaw = Yaw; // Y axis, horizontal
         public float Pitch = Pitch; // X axis, verticle
-    }
-
-    [SpacetimeDB.Type]
-    public partial struct DbVelocity3(float vx, float vy, float vz)
-    {
-        public float vx = vx; // X axis, right/left
-        public float vy = vy; // Y axis, up/down
-        public float vz = vz; // Z axis, forward/back
     }
 
     [SpacetimeDB.Type]
@@ -41,9 +33,9 @@ public static partial class Module
     }
 
     [SpacetimeDB.Type]
-    public partial struct MovementRequest(DbVelocity3 velocity, bool sprint, bool jump, DbRotation2 aim)
+    public partial struct MovementRequest(DbVector3 velocity, bool sprint, bool jump, DbRotation2 aim)
     {
-        public DbVelocity3 Velocity = velocity;
+        public DbVector3 Velocity = velocity;
         public bool Sprint = sprint;
         public bool Jump = jump;
         public DbRotation2 Aim = aim;
@@ -85,7 +77,6 @@ public static partial class Module
         public float HeightEndToEnd = heightEndToEnd;
         public float Radius = radius;
         public DbVector3 Direction = direction; // Normalized Already
-
     }
 
 
@@ -113,6 +104,13 @@ public static partial class Module
         Bullet,
     }
 
+    [SpacetimeDB.Type]
+    public enum CharacterType
+    {
+        Magician,
+        Hunter,
+        Monk
+    }
 
     public partial struct Contact
     {

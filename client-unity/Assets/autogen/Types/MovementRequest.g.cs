@@ -16,7 +16,7 @@ namespace SpacetimeDB.Types
     public sealed partial class MovementRequest
     {
         [DataMember(Name = "Velocity")]
-        public DbVelocity3 Velocity;
+        public DbVector3 Velocity;
         [DataMember(Name = "Sprint")]
         public bool Sprint;
         [DataMember(Name = "Jump")]
@@ -25,7 +25,7 @@ namespace SpacetimeDB.Types
         public DbRotation2 Aim;
 
         public MovementRequest(
-            DbVelocity3 Velocity,
+            DbVector3 Velocity,
             bool Sprint,
             bool Jump,
             DbRotation2 Aim

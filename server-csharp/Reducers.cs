@@ -18,7 +18,7 @@ public static partial class Module
         //     MatchId = 1,
         //     position = new DbVector3 { x = 20, y = 0, z = 0 },
         //     rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
-        //     velocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 },
+        //     velocity = new DbVector3 { x = 0, y = 0, z = 0 },
         //     state = PlayerState.Default,
         //     Collider = new CapsuleCollider { Center = new DbVector3 { x = 20, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f },
         //     PlayerPermissionConfig =
@@ -30,7 +30,7 @@ public static partial class Module
         //         ],
         //     CollisionEntries = [],
         //     IsColliding = false,
-        //     CorrectedVelocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 }
+        //     CorrectedVelocity = new DbVector3 { x = 0, y = 0, z = 0 }
         // });
 
         ctx.Db.move_all_players.Insert(new Move_All_Players_Timer
@@ -61,19 +61,19 @@ public static partial class Module
         var player = ctx.Db.logged_out_players.identity.Find(ctx.Sender);
         if (player != null)
         {
-            ctx.Db.player.Insert(player.Value);
+            ctx.Db.logged_in_players.Insert(player.Value);
             ctx.Db.logged_out_players.identity.Delete(player.Value.identity);
         }
         else
         {
-            ctx.Db.player.Insert(new Player
+            ctx.Db.logged_in_players.Insert(new Player
             {
                 identity = ctx.Sender,
                 Name = "Test Player"
             });
         }
 
-        var Player = ctx.Db.player.identity.Find(ctx.Sender) ?? throw new Exception("Player not found after insert/restore");
+        var Player = ctx.Db.logged_in_players.identity.Find(ctx.Sender) ?? throw new Exception("Player not found after insert/restore");
 
 
         ctx.Db.playable_character.Insert(
@@ -85,7 +85,7 @@ public static partial class Module
                 MatchId = 1,
                 position = new DbVector3 { x = 0, y = 0, z = 0 },
                 rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
-                velocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 },
+                velocity = new DbVector3 { x = 0, y = 0, z = 0 },
                 state = PlayerState.Default,
                 Collider = new CapsuleCollider { Center = new DbVector3 { x = 0, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f }, // Height & Radius Are Manual For Now, Have To Change If Collider Changes
                 PlayerPermissionConfig =
@@ -97,7 +97,7 @@ public static partial class Module
                 ],
                 CollisionEntries = [],
                 IsColliding = false,
-                CorrectedVelocity = new DbVelocity3 { vx = 0, vy = 0, vz = 0 }
+                CorrectedVelocity = new DbVector3 { x = 0, y = 0, z = 0 }
             });
 
         var Match = ctx.Db.match.Id.Find(1);
@@ -113,7 +113,7 @@ public static partial class Module
     [Reducer(ReducerKind.ClientDisconnected)]
     public static void Disconnect(ReducerContext ctx)
     {
-        var player = ctx.Db.player.identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
+        var player = ctx.Db.logged_in_players.identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
         var character = ctx.Db.playable_character.identity.Find(ctx.Sender);
 
         if (character != null)
@@ -137,7 +137,7 @@ public static partial class Module
         }
 
         ctx.Db.logged_out_players.Insert(player);
-        ctx.Db.player.identity.Delete(player.identity);
+        ctx.Db.logged_in_players.identity.Delete(player.identity);
     }
 
     [Reducer]
@@ -149,15 +149,15 @@ public static partial class Module
         if (GetPermissionEntry(character.PlayerPermissionConfig, "CanWalk").Subscribers.Count == 0)
         {
             float YawRotation = (float)(Math.PI / 180.0) * character.rotation.Yaw;
-            float SprintMultiplier = (GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint && Request.Velocity.vz > 0f) ? 2f : 1f;
+            float SprintMultiplier = (GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint && Request.Velocity.z > 0f) ? 2f : 1f;
 
-            character.velocity = new DbVelocity3((MathF.Cos(YawRotation) * Request.Velocity.vx + MathF.Sin(YawRotation) * Request.Velocity.vz) * SprintMultiplier,
-                character.velocity.vy, (-MathF.Sin(YawRotation) * Request.Velocity.vx + MathF.Cos(YawRotation) * Request.Velocity.vz) * SprintMultiplier);
+            character.velocity = new DbVector3((MathF.Cos(YawRotation) * Request.Velocity.x + MathF.Sin(YawRotation) * Request.Velocity.z) * SprintMultiplier,
+                character.velocity.y, (-MathF.Sin(YawRotation) * Request.Velocity.x + MathF.Cos(YawRotation) * Request.Velocity.z) * SprintMultiplier);
         }
 
         if (GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers.Count == 0 && Request.Jump)
         {
-            character.velocity.vy = 7.5f;
+            character.velocity.y = 7.5f;
             AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
             AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
         }
@@ -183,7 +183,7 @@ public static partial class Module
     public static void SpawnProjectile(ReducerContext ctx, DbVector3 direction, DbVector3 spawnPoint)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Projectile Owner Not Found");
-        DbVelocity3 velocity = new DbVelocity3(direction.x * 10f, direction.y * 10f, direction.z * 10f); // Direction - Unit Vector
+        DbVector3 velocity = new DbVector3(direction.x * 10f, direction.y * 10f, direction.z * 10f); // Direction - Unit Vector
         Projectile projectile = new()
         {
             OwnerIdentity = character.identity,
@@ -226,12 +226,12 @@ public static partial class Module
         foreach (var charac in ctx.Db.playable_character.Iter())
         {
             var character = charac;
-            DbVelocity3 MoveVelocity = character.IsColliding ? character.CorrectedVelocity : character.velocity;
+            DbVector3 MoveVelocity = character.IsColliding ? character.CorrectedVelocity : character.velocity;
 
             character.position = new DbVector3(
-            character.position.x + MoveVelocity.vx * time,
-            character.position.y + MoveVelocity.vy * time,
-            character.position.z + MoveVelocity.vz * time
+            character.position.x + MoveVelocity.x * time,
+            character.position.y + MoveVelocity.y * time,
+            character.position.z + MoveVelocity.z * time
             );
 
             if (character.position.y < 0f)
@@ -273,15 +273,15 @@ public static partial class Module
                     
                 }
 
-                DbVelocity3 CorrectedVelocity = character.velocity;
+                DbVector3 CorrectedVelocity = character.velocity;
                 if (Contacts.Count > 0)
                 {
                     foreach (Contact Contact in Contacts)
                     {
                         DbVector3 Normal = Contact.Normal;
 
-                        float Direction = Dot(Normal, DbVelToDbVec(CorrectedVelocity));
-                        if (Direction < 0f) CorrectedVelocity = DbVecToDbVel(Sub(DbVelToDbVec(CorrectedVelocity), Mul(Normal, Direction)));
+                        float Direction = Dot(Normal, CorrectedVelocity);
+                        if (Direction < 0f) CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, Direction));
                     }
                 }
 
@@ -301,7 +301,7 @@ public static partial class Module
         foreach (var charac in ctx.Db.playable_character.Iter())
         {
             var character = charac;
-            character.velocity.vy -= timer.gravity * time;
+            character.velocity.y -= timer.gravity * time;
             ctx.Db.playable_character.identity.Update(character);
         }
 
@@ -315,9 +315,9 @@ public static partial class Module
         {
             var Projectile = projectile;
             Projectile.position = new DbVector3(
-            Projectile.position.x + Projectile.velocity.vx * time,
-            Projectile.position.y + Projectile.velocity.vy * time,
-            Projectile.position.z + Projectile.velocity.vz * time
+            Projectile.position.x + Projectile.velocity.x * time,
+            Projectile.position.y + Projectile.velocity.y * time,
+            Projectile.position.z + Projectile.velocity.z * time
             );
 
             Projectile.Collider.Center = Add(Projectile.position, Mul(Projectile.Collider.Direction, Projectile.Collider.HeightEndToEnd * 0.5f));

@@ -7,7 +7,6 @@ using Unity.Cinemachine;
 using Unity.VisualScripting;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using UnityEditor.Experimental.GraphView;
 public class PlayableCharacterController : MonoBehaviour
 {
     [SerializeField] private CinemachineCamera thirdPersonCam;
@@ -16,7 +15,7 @@ public class PlayableCharacterController : MonoBehaviour
     public uint Id;
     public string Name;
     public uint MatchId;
-    public DbVelocity3 ProposedVelocity = new(0,0,0);
+    public DbVector3 ProposedVelocity = new(0,0,0);
     public Vector3 TargetPosition;
     public DbRotation2 TargetRotation = new(0,0);
     public Animator Animator;
@@ -59,12 +58,12 @@ public class PlayableCharacterController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        MovementRequest req = new(Velocity: new DbVelocity3(0, 0, 0), Sprint: false, Jump: false, Aim: new DbRotation2(0, 0));
+        MovementRequest req = new(Velocity: new DbVector3(0, 0, 0), Sprint: false, Jump: false, Aim: new DbRotation2(0, 0));
 
-        if (Input.GetKey(KeyCode.W)) req.Velocity.Vz += 2;
-        if (Input.GetKey(KeyCode.S)) req.Velocity.Vz -= 2;
-        if (Input.GetKey(KeyCode.D)) req.Velocity.Vx += 1.5f;
-        if (Input.GetKey(KeyCode.A)) req.Velocity.Vx -= 1.5f;
+        if (Input.GetKey(KeyCode.W)) req.Velocity.Z += 2;
+        if (Input.GetKey(KeyCode.S)) req.Velocity.Z -= 2;
+        if (Input.GetKey(KeyCode.D)) req.Velocity.X += 1.5f;
+        if (Input.GetKey(KeyCode.A)) req.Velocity.X -= 1.5f;
         if (Input.GetKey(KeyCode.LeftShift)) req.Sprint = true;
         if (Input.GetKeyDown(KeyCode.Space)) req.Jump = true;
 
@@ -107,7 +106,7 @@ public class PlayableCharacterController : MonoBehaviour
         TargetRotation = newChar.Rotation;
 
         bool wasGrounded = PrevGrounded;
-        float vy = newChar.Velocity.Vy;
+        float vy = newChar.Velocity.Y;
         bool grounded = newChar.Position.Y <= 0.001f && vy <= 0;
         bool attack = oldChar.State is PlayerState.Default && newChar.State is PlayerState.Attack;
 
@@ -120,7 +119,7 @@ public class PlayableCharacterController : MonoBehaviour
         Animator.SetBool("IsGrounded", grounded);
 
 
-        float horizSpeed = Mathf.Sqrt(newChar.Velocity.Vx * newChar.Velocity.Vx + newChar.Velocity.Vz * newChar.Velocity.Vz);
+        float horizSpeed = Mathf.Sqrt(newChar.Velocity.X * newChar.Velocity.X + newChar.Velocity.Z * newChar.Velocity.Z);
         Animator.SetFloat("Speed", horizSpeed);
         Animator.SetFloat("VerticleSpeed", vy);
 

@@ -16,19 +16,6 @@ namespace SpacetimeDB.Types
         }
     }
 
-    public partial class DbVelocity3
-    {
-        public static implicit operator Vector3(DbVelocity3 vec)
-        {
-            return new Vector3(vec.Vx, vec.Vy, vec.Vz);
-        }
-
-        public static implicit operator DbVelocity3(Vector3 vec)
-        {
-            return new DbVelocity3(vec.x, vec.y, vec.z);
-        }
-    }
-
     public partial class DbRotation2
     {
         public static implicit operator Vector3(DbRotation2 vec)
