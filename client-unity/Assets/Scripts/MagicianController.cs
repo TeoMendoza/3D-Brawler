@@ -14,7 +14,7 @@ public class MagicianController : MonoBehaviour
     [SerializeField] private GameObject thirdPersonCamPivot;
     public Identity Identity;
     public uint Id;
-    //public Target ReducerTarget;
+    // public Target ReducerTarget;
     public string Name;
     public uint MatchId;
     public DbVector3 ProposedVelocity = new(0,0,0);
