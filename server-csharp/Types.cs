@@ -112,15 +112,18 @@ public static partial class Module
         Monk
     }
 
+    [SpacetimeDB.Type]
+    public partial struct Target(CharacterType characterType, uint id)
+    {
+        public CharacterType CharacterType = characterType;
+        public uint Id = id;
+    }
+
     public partial struct Contact
     {
         public DbVector3 Normal; // Object B -> A
         public float Depth;
     }
 
-    public partial struct ReducerTarget
-    {
-        public CharacterType CharacterType;
-        public uint Id;
-    }
+    
 }

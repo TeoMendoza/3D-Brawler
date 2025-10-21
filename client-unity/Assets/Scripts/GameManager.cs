@@ -13,9 +13,6 @@ public class GameManager : MonoBehaviour
     public static event Action OnConnected;
     public static event Action OnSubscriptionApplied;
 
-    public float borderThickness = 2;
-    public Material borderMaterial;
-
 	public static GameManager Instance { get; private set; }
     public static Identity LocalIdentity { get; private set; }
     public static DbConnection Conn { get; private set; }

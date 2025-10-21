@@ -7,13 +7,14 @@ using Unity.Cinemachine;
 using Unity.VisualScripting;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+
 public class MagicianController : MonoBehaviour
 {
     [SerializeField] private CinemachineCamera thirdPersonCam;
     [SerializeField] private GameObject thirdPersonCamPivot;
     public Identity Identity;
     public uint Id;
-    //public ReducerTarget ReducerTarget;
+    //public Target ReducerTarget;
     public string Name;
     public uint MatchId;
     public DbVector3 ProposedVelocity = new(0,0,0);
@@ -43,7 +44,7 @@ public class MagicianController : MonoBehaviour
         MatchId = Character.MatchId;
         transform.position = Character.Position;
         TargetPosition = Character.Position;
-        //ReducerTarget = new ReducerTarget { CharacterType = CharacterType.Magician, Id = Character.Id };
+        //ReducerTarget = new Target(characterType: CharacterType.Magician, id: Character.Id );
 
         if (thirdPersonCam != null && Identity.Equals(GameManager.Conn.Identity))
             thirdPersonCam.gameObject.SetActive(true);
