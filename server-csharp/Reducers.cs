@@ -10,28 +10,28 @@ public static partial class Module
     {
         Log.Info($"Initializing...");
         ctx.Db.match.Insert(new Match { maxPlayers = 12, currentPlayers = 0, inProgress = false });
-        // ctx.Db.playable_character.Insert(new Playable_Character
-        // {
-        //     identity = new Identity(),
-        //     Id = 10000,
-        //     Name = "Test Teo",
-        //     MatchId = 1,
-        //     position = new DbVector3 { x = 20, y = 0, z = 0 },
-        //     rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
-        //     velocity = new DbVector3 { x = 0, y = 0, z = 0 },
-        //     state = PlayerState.Default,
-        //     Collider = new CapsuleCollider { Center = new DbVector3 { x = 20, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f },
-        //     PlayerPermissionConfig =
-        //         [
-        //             new("CanWalk", []),
-        //             new("CanRun", []),
-        //             new("CanJump", []),
-        //             new("CanAttack", [])
-        //         ],
-        //     CollisionEntries = [],
-        //     IsColliding = false,
-        //     CorrectedVelocity = new DbVector3 { x = 0, y = 0, z = 0 }
-        // });
+        ctx.Db.playable_character.Insert(new Playable_Character
+        {
+            identity = new Identity(),
+            Id = 10000,
+            Name = "Test Teo",
+            MatchId = 1,
+            position = new DbVector3 { x = 20, y = 0, z = 0 },
+            rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
+            velocity = new DbVector3 { x = 0, y = 0, z = 0 },
+            state = PlayerState.Default,
+            Collider = new CapsuleCollider { Center = new DbVector3 { x = 20, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f },
+            PlayerPermissionConfig =
+                [
+                    new("CanWalk", []),
+                    new("CanRun", []),
+                    new("CanJump", []),
+                    new("CanAttack", [])
+                ],
+            CollisionEntries = [],
+            IsColliding = false,
+            CorrectedVelocity = new DbVector3 { x = 0, y = 0, z = 0 }
+        });
 
         ctx.Db.move_all_players.Insert(new Move_All_Players_Timer
         {

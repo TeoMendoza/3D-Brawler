@@ -117,4 +117,10 @@ public static partial class Module
         public DbVector3 Normal; // Object B -> A
         public float Depth;
     }
+
+    public partial struct ReducerTarget
+    {
+        public CharacterType CharacterType;
+        public uint Id;
+    }
 }
