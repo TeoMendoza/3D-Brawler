@@ -1,12 +1,7 @@
 using SpacetimeDB;
 using UnityEngine;
-using System.Collections;
 using SpacetimeDB.Types;
-using UnityEngine.Playables;
 using Unity.Cinemachine;
-using Unity.VisualScripting;
-using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 public class MagicianController : MonoBehaviour
 {
@@ -14,7 +9,7 @@ public class MagicianController : MonoBehaviour
     [SerializeField] private GameObject thirdPersonCamPivot;
     public Identity Identity;
     public uint Id;
-    // public Target ReducerTarget;
+    // public ReducerTarget ReducerTargetInformation;
     public string Name;
     public uint MatchId;
     public DbVector3 ProposedVelocity = new(0,0,0);
@@ -44,7 +39,6 @@ public class MagicianController : MonoBehaviour
         MatchId = Character.MatchId;
         transform.position = Character.Position;
         TargetPosition = Character.Position;
-        //ReducerTarget = new Target(characterType: CharacterType.Magician, id: Character.Id );
 
         if (thirdPersonCam != null && Identity.Equals(GameManager.Conn.Identity))
             thirdPersonCam.gameObject.SetActive(true);
@@ -129,71 +123,15 @@ public class MagicianController : MonoBehaviour
         PrevGrounded = grounded;
     }
 
-    public void OnAttackFinished()
-    {
-        GameManager.Conn.Reducers.HandleActionExitRequest(newPlayerState: PlayerState.Default);
-    }
-
-    public void OnAttackAnimation() 
-    {
-        Vector2 screenCenter = new(Screen.width * 0.5f, Screen.height * 0.5f);
-        Ray aimRay = mainCamera.ScreenPointToRay(screenCenter);
-        Vector3 aimPoint = aimRay.GetPoint(10f); // Eventually check for the crosshair being over an object, so if its far away the bullet travels towards the object, otherwise a really close distance as we are doing now
-        Vector3 projectileDirection = (aimPoint - attackHand.position).normalized;
-        GameManager.Conn.Reducers.SpawnProjectile(direction: (DbVector3)projectileDirection, spawnPoint: (DbVector3)attackHand.position);
-    }
+    
 
     public void Delete(EventContext context)
     {
         Destroy(gameObject);
     }
 
-    public void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.CompareTag("PlayableCharacter"))
-        {
-            var Player = other.gameObject.GetComponent<PlayableCharacterController>();
-            if (Player.Id != Id)
-            {
-                var Entry = new CollisionEntry(Type: CollisionEntryType.Player, Id: Player.Id);
-                GameManager.Conn.Reducers.AddCollisionEntry(entry: Entry);
-            }
-        }
+    
 
-        else if (other.gameObject.CompareTag("Projectile"))
-        {
-            var Projectile = other.gameObject.GetComponent<ProjectileController>();
-            if (Projectile.OwnerIdentity != Identity)
-            {
-                var Entry = new CollisionEntry(Type: CollisionEntryType.Bullet, Id: Projectile.Id);
-                GameManager.Conn.Reducers.AddCollisionEntry(entry: Entry);
-            }
-        }
-
-    }
-
-    public void OnTriggerExit(Collider other)
-    {
-        if (other.gameObject.CompareTag("PlayableCharacter"))
-        {
-            var Player = other.gameObject.GetComponent<PlayableCharacterController>();
-            if (Player.Id != Id)
-            {
-                var Entry = new CollisionEntry(Type: CollisionEntryType.Player, Id: Player.Id);
-                GameManager.Conn.Reducers.RemoveCollisionEntry(entry: Entry);
-            }
-            
-        }
-
-        else if (other.gameObject.CompareTag("Projectile"))
-        {
-            var Projectile = other.gameObject.GetComponent<ProjectileController>();
-            if (Projectile.OwnerIdentity != Identity)
-            {
-                var Entry = new CollisionEntry(Type: CollisionEntryType.Bullet, Id: Projectile.Id);
-                GameManager.Conn.Reducers.RemoveCollisionEntry(entry: Entry);
-            }
-        }
-    }
+    
     
 }

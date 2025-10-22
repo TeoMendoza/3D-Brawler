@@ -26,6 +26,7 @@ namespace SpacetimeDB.Types
             AddTable(Gravity = new(conn));
             AddTable(LoggedInPlayers = new(conn));
             AddTable(LoggedOutPlayers = new(conn));
+            AddTable(Magician = new(conn));
             AddTable(Match = new(conn));
             AddTable(MoveAllPlayers = new(conn));
             AddTable(MoveProjectiles = new(conn));
@@ -481,6 +482,7 @@ namespace SpacetimeDB.Types
                 "HandleActionEnterRequest" => BSATNHelpers.Decode<Reducer.HandleActionEnterRequest>(encodedArgs),
                 "HandleActionExitRequest" => BSATNHelpers.Decode<Reducer.HandleActionExitRequest>(encodedArgs),
                 "HandleMovementRequest" => BSATNHelpers.Decode<Reducer.HandleMovementRequest>(encodedArgs),
+                "HandleMovementRequestMagician" => BSATNHelpers.Decode<Reducer.HandleMovementRequestMagician>(encodedArgs),
                 "MovePlayers" => BSATNHelpers.Decode<Reducer.MovePlayers>(encodedArgs),
                 "MoveProjectiles" => BSATNHelpers.Decode<Reducer.MoveProjectiles>(encodedArgs),
                 "RemoveCollisionEntry" => BSATNHelpers.Decode<Reducer.RemoveCollisionEntry>(encodedArgs),
@@ -513,6 +515,7 @@ namespace SpacetimeDB.Types
                 Reducer.HandleActionEnterRequest args => Reducers.InvokeHandleActionEnterRequest(eventContext, args),
                 Reducer.HandleActionExitRequest args => Reducers.InvokeHandleActionExitRequest(eventContext, args),
                 Reducer.HandleMovementRequest args => Reducers.InvokeHandleMovementRequest(eventContext, args),
+                Reducer.HandleMovementRequestMagician args => Reducers.InvokeHandleMovementRequestMagician(eventContext, args),
                 Reducer.MovePlayers args => Reducers.InvokeMovePlayers(eventContext, args),
                 Reducer.MoveProjectiles args => Reducers.InvokeMoveProjectiles(eventContext, args),
                 Reducer.RemoveCollisionEntry args => Reducers.InvokeRemoveCollisionEntry(eventContext, args),

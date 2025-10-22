@@ -166,6 +166,31 @@ public static partial class Module
     }
 
     [Reducer]
+    public static void HandleMovementRequestMagician(ReducerContext ctx, MovementRequest Request)
+    {
+        Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");
+        character.rotation = Request.Aim;
+
+        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanWalk").Subscribers.Count == 0)
+        {
+            float YawRotation = (float)(Math.PI / 180.0) * character.rotation.Yaw;
+            float SprintMultiplier = (GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint && Request.Velocity.z > 0f) ? 2f : 1f;
+
+            character.velocity = new DbVector3((MathF.Cos(YawRotation) * Request.Velocity.x + MathF.Sin(YawRotation) * Request.Velocity.z) * SprintMultiplier,
+                character.velocity.y, (-MathF.Sin(YawRotation) * Request.Velocity.x + MathF.Cos(YawRotation) * Request.Velocity.z) * SprintMultiplier);
+        }
+
+        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers.Count == 0 && Request.Jump)
+        {
+            character.velocity.y = 7.5f;
+            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
+            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
+        }
+
+        ctx.Db.playable_character.identity.Update(character);
+    }
+
+    [Reducer]
     public static void HandleActionEnterRequest(ReducerContext ctx, ActionRequest request)
     {
         Playable_Character character = ctx.Db.playable_character.identity.Find(ctx.Sender) ?? throw new Exception("Player To Move Not Found");

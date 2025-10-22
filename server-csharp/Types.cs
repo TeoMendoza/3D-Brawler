@@ -27,6 +27,13 @@ public static partial class Module
     }
 
     [SpacetimeDB.Type]
+    public enum MagicianState
+    {
+        Default,
+        Attack
+    }
+
+    [SpacetimeDB.Type]
     public enum ProjectileType
     {
         Bullet,
@@ -112,18 +119,36 @@ public static partial class Module
         Monk
     }
 
-    [SpacetimeDB.Type]
-    public partial struct Target(CharacterType characterType, uint id)
-    {
-        public CharacterType CharacterType = characterType;
-        public uint Id = id;
-    }
-
     public partial struct Contact
     {
         public DbVector3 Normal; // Object B -> A
         public float Depth;
     }
 
-    
+    [SpacetimeDB.Type]
+    public partial struct KinematicInformation(bool falling, bool crouched, bool grounded, bool landing, bool sprinting)
+    {
+        public bool Falling = falling;
+        public bool Crouched = crouched;
+        public bool Grounded = grounded;
+        public bool Landing = landing;
+        public bool Sprinting = sprinting;
+    }
+
+    [SpacetimeDB.Type]
+    public partial struct MovementRequestMagician(DbVector3 velocity, bool sprint, bool jump, bool crouch, DbRotation2 aim)
+    {
+        public DbVector3 Velocity = velocity;
+        public bool Sprint = sprint;
+        public bool Jump = jump;
+        public bool Crouch = crouch;
+        public DbRotation2 Aim = aim;
+    }
+
+    [SpacetimeDB.Type]
+    public partial struct ReducerTarget(CharacterType characterType, uint id)
+    {
+        public CharacterType CharacterType = characterType;
+        public uint Id = id;
+    }
 }

@@ -26,6 +26,27 @@ public static partial class Module
         public bool inProgress;
     }
 
+    [Table(Name = "magician", Public = true)]
+    public partial struct Magician
+    {
+        [PrimaryKey]
+        public Identity identity;
+
+        [Unique]
+        public uint Id;
+        public string Name;
+        public uint MatchId;
+        public DbVector3 Position;
+        public DbRotation2 Rotation;
+        public DbVector3 Velocity;
+        public MagicianState State;
+        public KinematicInformation KinematicInformation;
+        public CapsuleCollider Collider;
+        public List<PermissionEntry> PlayerPermissionConfig;
+        public List<CollisionEntry> CollisionEntries;
+        public DbVector3 CorrectedVelocity;
+        public bool IsColliding;
+    }
 
     [Table(Name = "playable_character", Public = true)]
     public partial struct Playable_Character
