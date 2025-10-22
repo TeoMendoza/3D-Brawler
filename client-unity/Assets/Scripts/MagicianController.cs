@@ -14,7 +14,8 @@ public class MagicianController : MonoBehaviour
     public uint MatchId;
     public DbVector3 ProposedVelocity = new(0,0,0);
     public Vector3 TargetPosition;
-    public DbRotation2 TargetRotation = new(0,0);
+    public DbRotation2 TargetRotation = new(0, 0);
+    public KinematicInformation KinematicInformation;
     public Animator Animator;
     public bool PrevGrounded = true;
     public UnityEngine.CapsuleCollider Collider;
@@ -31,7 +32,7 @@ public class MagicianController : MonoBehaviour
     float pitchCurrent;
     float pitchVel;
 
-    public void Initalize(PlayableCharacter Character)
+    public void Initalize(Magician Character)
     {
         Identity = Character.Identity;
         Id = Character.Id;
@@ -39,6 +40,7 @@ public class MagicianController : MonoBehaviour
         MatchId = Character.MatchId;
         transform.position = Character.Position;
         TargetPosition = Character.Position;
+        KinematicInformation = Character.KinematicInformation;
 
         if (thirdPersonCam != null && Identity.Equals(GameManager.Conn.Identity))
             thirdPersonCam.gameObject.SetActive(true);
@@ -49,13 +51,13 @@ public class MagicianController : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        GameManager.Conn.Db.PlayableCharacter.OnUpdate += HandlePlayerUpdate;
+        GameManager.Conn.Db.Magician.OnUpdate += HandleMagicianUpdate;
     }
 
     // Update is called once per frame
     void Update()
     {
-        MovementRequest req = new(Velocity: new DbVector3(0, 0, 0), Sprint: false, Jump: false, Aim: new DbRotation2(0, 0));
+        MovementRequest req = new(Velocity: new DbVector3(0, 0, 0), Sprint: false, Jump: false, Crouch: false, Aim: new DbRotation2(0, 0));
 
         if (Input.GetKey(KeyCode.W)) req.Velocity.Z += 2;
         if (Input.GetKey(KeyCode.S)) req.Velocity.Z -= 2;
@@ -63,6 +65,7 @@ public class MagicianController : MonoBehaviour
         if (Input.GetKey(KeyCode.A)) req.Velocity.X -= 1.5f;
         if (Input.GetKey(KeyCode.LeftShift)) req.Sprint = true;
         if (Input.GetKeyDown(KeyCode.Space)) req.Jump = true;
+        if (Input.GetKeyDown(KeyCode.LeftControl)) req.Crouch = true;
 
         float mx = Input.GetAxis("Mouse X");
         float my = Input.GetAxis("Mouse Y");
@@ -71,13 +74,13 @@ public class MagicianController : MonoBehaviour
         pitch = Mathf.Clamp(pitch - my * sensY * Time.deltaTime, minPitch, maxPitch);
 
         req.Aim = new DbRotation2(yaw, pitch);
-        GameManager.Conn.Reducers.HandleMovementRequest(req);
+        GameManager.Conn.Reducers.HandleMovementRequestMagician(req);
 
         // Action Requests (States)
-        if (Input.GetMouseButtonDown(0)) // Left Mouse Button
-        {  
-            GameManager.Conn.Reducers.HandleActionEnterRequest(request: new ActionRequest (PlayerState: PlayerState.Attack));
-        }
+        // if (Input.GetMouseButtonDown(0)) // Left Mouse Button
+        // {  
+        //     GameManager.Conn.Reducers.HandleActionEnterRequest(request: new ActionRequest (PlayerState: PlayerState.Attack));
+        // }
         
     }
     
@@ -96,31 +99,32 @@ public class MagicianController : MonoBehaviour
         thirdPersonCamPivot.transform.localRotation = Quaternion.Euler(pitchCurrent, 0f, 0f);
     }
 
-    public void HandlePlayerUpdate(EventContext context, PlayableCharacter oldChar, PlayableCharacter newChar)
+    public void HandleMagicianUpdate(EventContext context, Magician oldChar, Magician newChar)
     {
         if (Identity != newChar.Identity) return;
         TargetPosition = newChar.Position;
         TargetRotation = newChar.Rotation;
 
-        bool wasGrounded = PrevGrounded;
-        float vy = newChar.Velocity.Y;
-        bool grounded = newChar.Position.Y <= 0.001f && vy <= 0;
-        bool attack = oldChar.State is PlayerState.Default && newChar.State is PlayerState.Attack;
+        bool wasGrounded = oldChar.KinematicInformation.Grounded;
+        bool Grounded = newChar.KinematicInformation.Grounded;
+        bool Landing = newChar.KinematicInformation.Landing;
+        bool Sprinting = newChar.KinematicInformation.Sprinting;
+        bool Crouching = newChar.KinematicInformation.Crouched;
+        bool Falling = newChar.KinematicInformation.Falling;
+        bool attack = oldChar.State is MagicianState.Default && newChar.State is MagicianState.Attack;
 
         if (attack)
             Animator.SetTrigger("Attack");
 
-        if (wasGrounded && !grounded && vy > 0f)
+        if (wasGrounded && Grounded is false)
             Animator.SetTrigger("Jump");
 
-        Animator.SetBool("IsGrounded", grounded);
+        Animator.SetBool("IsGrounded", Grounded);
 
 
-        float horizSpeed = Mathf.Sqrt(newChar.Velocity.X * newChar.Velocity.X + newChar.Velocity.Z * newChar.Velocity.Z);
-        Animator.SetFloat("Speed", horizSpeed);
-        Animator.SetFloat("VerticleSpeed", vy);
-
-        PrevGrounded = grounded;
+        //float horizSpeed = Mathf.Sqrt(newChar.Velocity.X * newChar.Velocity.X + newChar.Velocity.Z * newChar.Velocity.Z);
+        //Animator.SetFloat("Speed", horizSpeed);
+       // Animator.SetFloat("VerticleSpeed", vy);
     }
 
     

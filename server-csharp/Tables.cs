@@ -110,4 +110,12 @@ public static partial class Module
         public float tick_rate;
     }
 
+    [Table(Name = "move_all_magicians", Scheduled = nameof(MoveMagicians), ScheduledAt = nameof(scheduled_at))]
+    public partial struct Move_All_Magicians_Timer
+    {
+        [PrimaryKey, AutoInc] public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+        public float tick_rate;
+    }
+
 }

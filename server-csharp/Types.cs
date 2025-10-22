@@ -40,11 +40,12 @@ public static partial class Module
     }
 
     [SpacetimeDB.Type]
-    public partial struct MovementRequest(DbVector3 velocity, bool sprint, bool jump, DbRotation2 aim)
+    public partial struct MovementRequest(DbVector3 velocity, bool sprint, bool jump, bool crouch, DbRotation2 aim)
     {
         public DbVector3 Velocity = velocity;
         public bool Sprint = sprint;
         public bool Jump = jump;
+        public bool Crouch = crouch;
         public DbRotation2 Aim = aim;
     }
 
@@ -133,22 +134,5 @@ public static partial class Module
         public bool Grounded = grounded;
         public bool Landing = landing;
         public bool Sprinting = sprinting;
-    }
-
-    [SpacetimeDB.Type]
-    public partial struct MovementRequestMagician(DbVector3 velocity, bool sprint, bool jump, bool crouch, DbRotation2 aim)
-    {
-        public DbVector3 Velocity = velocity;
-        public bool Sprint = sprint;
-        public bool Jump = jump;
-        public bool Crouch = crouch;
-        public DbRotation2 Aim = aim;
-    }
-
-    [SpacetimeDB.Type]
-    public partial struct ReducerTarget(CharacterType characterType, uint id)
-    {
-        public CharacterType CharacterType = characterType;
-        public uint Id = id;
     }
 }

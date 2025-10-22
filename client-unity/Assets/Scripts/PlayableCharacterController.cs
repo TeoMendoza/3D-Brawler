@@ -17,7 +17,7 @@ public class PlayableCharacterController : MonoBehaviour
     public uint MatchId;
     public DbVector3 ProposedVelocity = new(0,0,0);
     public Vector3 TargetPosition;
-    public DbRotation2 TargetRotation = new(0,0);
+    public DbRotation2 TargetRotation = new(0, 0);
     public Animator Animator;
     public bool PrevGrounded = true;
     public UnityEngine.CapsuleCollider Collider;
@@ -58,7 +58,7 @@ public class PlayableCharacterController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        MovementRequest req = new(Velocity: new DbVector3(0, 0, 0), Sprint: false, Jump: false, Aim: new DbRotation2(0, 0));
+        MovementRequest req = new(Velocity: new DbVector3(0, 0, 0), Sprint: false, Jump: false, Crouch: false, Aim: new DbRotation2(0, 0));
 
         if (Input.GetKey(KeyCode.W)) req.Velocity.Z += 2;
         if (Input.GetKey(KeyCode.S)) req.Velocity.Z -= 2;

@@ -21,6 +21,8 @@ namespace SpacetimeDB.Types
         public bool Sprint;
         [DataMember(Name = "Jump")]
         public bool Jump;
+        [DataMember(Name = "Crouch")]
+        public bool Crouch;
         [DataMember(Name = "Aim")]
         public DbRotation2 Aim;
 
@@ -28,12 +30,14 @@ namespace SpacetimeDB.Types
             DbVector3 Velocity,
             bool Sprint,
             bool Jump,
+            bool Crouch,
             DbRotation2 Aim
         )
         {
             this.Velocity = Velocity;
             this.Sprint = Sprint;
             this.Jump = Jump;
+            this.Crouch = Crouch;
             this.Aim = Aim;
         }
 
