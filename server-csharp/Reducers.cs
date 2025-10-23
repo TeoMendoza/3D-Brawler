@@ -401,9 +401,6 @@ public static partial class Module
         if (GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers.Count == 0 && Request.Jump)
         {
             character.Velocity.y = 7.5f;
-            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
-            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
-            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump");
         }
 
         if (GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers.Count == 0 && Request.Crouch)
@@ -413,10 +410,9 @@ public static partial class Module
             AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Crouch");            
         }
 
-        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint && character.Velocity.z >= 0f)
+        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint)
         {
             character.Velocity = new DbVector3(character.Velocity.x * 2f, character.Velocity.y, character.Velocity.z * 2f);
-            character.KinematicInformation.Sprinting = true;
         }
 
         if (Request.Crouch is false)
@@ -424,8 +420,6 @@ public static partial class Module
             character.KinematicInformation.Crouched = false;
             RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Crouch");
         }
-        
-        if (Request.Sprint is false) character.KinematicInformation.Sprinting = false;
 
         ctx.Db.magician.identity.Update(character);
     }
@@ -450,10 +444,16 @@ public static partial class Module
             if (character.Position.y <= 0f)
             {
                 character.Position.y = 0f;
-                character.KinematicInformation.Grounded = true;              
+                character.KinematicInformation.Grounded = true;
             }
 
-            else character.KinematicInformation.Grounded = false;
+            else
+            {
+                character.KinematicInformation.Grounded = false;
+                AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
+                AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
+                AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump");
+            }
 
             if (oldPosition.y > 0f && character.Position.y <= 0f) character.KinematicInformation.Landing = true;
 
