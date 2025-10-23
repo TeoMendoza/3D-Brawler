@@ -493,7 +493,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Standing To Crouch
-  m_Speed: 1.75
+  m_Speed: 1.5
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -4022229263173626796}
@@ -549,7 +549,7 @@ BlendTree:
   m_Name: Blend Tree
   m_Childs:
   - serializedVersion: 2
-    m_Motion: {fileID: -203655887218126122, guid: f1668117fcb2049fc8cea5e5242b6b95, type: 3}
+    m_Motion: {fileID: -203655887218126122, guid: f5645d06d95d04cbcbd5ca755e634778, type: 3}
     m_Threshold: 0
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
@@ -595,7 +595,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Crouch To Standing
-  m_Speed: 1.75
+  m_Speed: 1.5
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -1166545765474949766}
@@ -660,12 +660,12 @@ AnimatorStateMachine:
   - {fileID: -4379991920053049061}
   m_EntryTransitions: []
   m_StateMachineTransitions:
-  - first: {fileID: -31127791598426823}
-    second:
-    - {fileID: -9100178488302811027}
   - first: {fileID: -5169706584723637600}
     second:
     - {fileID: -6280346579482989705}
+  - first: {fileID: -31127791598426823}
+    second:
+    - {fileID: -9100178488302811027}
   m_StateMachineBehaviours: []
   m_AnyStatePosition: {x: 50, y: 80, z: 0}
   m_EntryPosition: {x: 50, y: 120, z: 0}

@@ -3,7 +3,6 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-
     public static Shape GetColliderShape(object collider)
     {
         return collider switch
@@ -178,27 +177,4 @@ public static partial class Module
     static float Clamp01(float t) => t < 0f ? 0f : (t > 1f ? 1f : t);
     static DbVector3 Cross(in DbVector3 a, in DbVector3 b) => new(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
     static bool IsZero(DbVector3 v) => (v.x * v.x + v.y * v.y + v.z * v.z) < 1e-10f;
-
-    static void AddSubscriberUnique(List<string> subscribers, string reason)
-    {
-        if (subscribers.Contains(reason)) return;
-        subscribers.Add(reason);
-    }
-
-    static void RemoveSubscriber(List<string> subscribers, string reason)
-    {
-        for (int i = subscribers.Count - 1; i >= 0; i--)
-            if (subscribers[i] == reason) { subscribers.RemoveAt(i); break; }
-    }
-
-    private static PermissionEntry GetPermissionEntry(List<PermissionEntry> entries, string key)
-    {
-        foreach (var entry in entries)
-        {
-            if (entry.Key == key)
-                return entry;
-        }
-        return entries[0];
-    }
-
 }
