@@ -12,16 +12,13 @@ public class MagicianController : MonoBehaviour
     // public ReducerTarget ReducerTargetInformation;
     public string Name;
     public uint MatchId;
-    public DbVector3 ProposedVelocity = new(0,0,0);
     public Vector3 TargetPosition;
     public DbRotation2 TargetRotation = new(0, 0);
     public KinematicInformation KinematicInformation;
     public Animator Animator;
-    public bool PrevGrounded = true;
     public UnityEngine.CapsuleCollider Collider;
     private Camera mainCamera;
     public Transform attackHand;
-    public Bounds bounds;
     float yaw = 0f; 
     float pitch = 0f;
     private readonly float sensX = 200f;
@@ -65,7 +62,7 @@ public class MagicianController : MonoBehaviour
         if (Input.GetKey(KeyCode.A)) req.Velocity.X -= 1.5f;
         if (Input.GetKey(KeyCode.LeftShift)) req.Sprint = true;
         if (Input.GetKeyDown(KeyCode.Space)) req.Jump = true;
-        if (Input.GetKeyDown(KeyCode.LeftControl)) req.Crouch = true;
+        if (Input.GetKey(KeyCode.LeftControl)) req.Crouch = true;
 
         float mx = Input.GetAxis("Mouse X");
         float my = Input.GetAxis("Mouse Y");
@@ -108,32 +105,45 @@ public class MagicianController : MonoBehaviour
         bool wasGrounded = oldChar.KinematicInformation.Grounded;
         bool Grounded = newChar.KinematicInformation.Grounded;
         bool Landing = newChar.KinematicInformation.Landing;
-        bool Sprinting = newChar.KinematicInformation.Sprinting;
         bool Crouching = newChar.KinematicInformation.Crouched;
         bool Falling = newChar.KinematicInformation.Falling;
-        bool attack = oldChar.State is MagicianState.Default && newChar.State is MagicianState.Attack;
-
-        if (attack)
+        bool Attack = oldChar.State is MagicianState.Default && newChar.State is MagicianState.Attack;
+   
+        if (Attack)
             Animator.SetTrigger("Attack");
 
         if (wasGrounded && Grounded is false)
             Animator.SetTrigger("Jump");
 
-        Animator.SetBool("IsGrounded", Grounded);
+        Animator.SetBool("Crouching", Crouching);
+        Animator.SetBool("Falling", Falling);
+        Animator.SetBool("Grounded", Grounded);
+        Animator.SetBool("Landing", Landing);
 
+        Vector3 vWorld = new Vector3(newChar.Velocity.X, 0f, newChar.Velocity.Z);
+        Quaternion yawOnly = Quaternion.Euler(0f, TargetRotation.Yaw, 0f);
 
-        //float horizSpeed = Mathf.Sqrt(newChar.Velocity.X * newChar.Velocity.X + newChar.Velocity.Z * newChar.Velocity.Z);
-        //Animator.SetFloat("Speed", horizSpeed);
-       // Animator.SetFloat("VerticleSpeed", vy);
+        Vector3 vLocal = Quaternion.Inverse(yawOnly) * vWorld;
+
+        float forward = vLocal.z;
+        float side = vLocal.x;
+
+        const float damp = 0.1f; // try 0.12–0.20
+        Animator.SetFloat("ForwardSpeed",    forward, damp, Time.deltaTime);
+        Animator.SetFloat("HorizontalSpeed", side,    damp, Time.deltaTime);
     }
 
-    
+
 
     public void Delete(EventContext context)
     {
         Destroy(gameObject);
     }
 
+    public void HandleFinishedLanding()
+    {
+        GameManager.Conn.Reducers.MagicianFinishedLanding();
+    }
     
 
     

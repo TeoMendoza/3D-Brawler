@@ -118,4 +118,13 @@ public static partial class Module
         public float tick_rate;
     }
 
+    [Table(Name = "gravity_magician", Scheduled = nameof(ApplyGravityMagician), ScheduledAt = nameof(scheduled_at))]
+    public partial struct Gravity_Timer_Magician
+    {
+        [PrimaryKey, AutoInc] public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+        public float tick_rate;
+        public float gravity;
+    }
+
 }

@@ -10,28 +10,28 @@ public static partial class Module
     {
         Log.Info($"Initializing...");
         ctx.Db.match.Insert(new Match { maxPlayers = 12, currentPlayers = 0, inProgress = false });
-        ctx.Db.playable_character.Insert(new Playable_Character
-        {
-            identity = new Identity(),
-            Id = 10000,
-            Name = "Test Teo",
-            MatchId = 1,
-            position = new DbVector3 { x = 20, y = 0, z = 0 },
-            rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
-            velocity = new DbVector3 { x = 0, y = 0, z = 0 },
-            state = PlayerState.Default,
-            Collider = new CapsuleCollider { Center = new DbVector3 { x = 20, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f },
-            PlayerPermissionConfig =
-                [
-                    new("CanWalk", []),
-                    new("CanRun", []),
-                    new("CanJump", []),
-                    new("CanAttack", [])
-                ],
-            CollisionEntries = [],
-            IsColliding = false,
-            CorrectedVelocity = new DbVector3 { x = 0, y = 0, z = 0 }
-        });
+        // ctx.Db.playable_character.Insert(new Playable_Character
+        // {
+        //     identity = new Identity(),
+        //     Id = 10000,
+        //     Name = "Test Teo",
+        //     MatchId = 1,
+        //     position = new DbVector3 { x = 20, y = 0, z = 0 },
+        //     rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
+        //     velocity = new DbVector3 { x = 0, y = 0, z = 0 },
+        //     state = PlayerState.Default,
+        //     Collider = new CapsuleCollider { Center = new DbVector3 { x = 20, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f },
+        //     PlayerPermissionConfig =
+        //         [
+        //             new("CanWalk", []),
+        //             new("CanRun", []),
+        //             new("CanJump", []),
+        //             new("CanAttack", [])
+        //         ],
+        //     CollisionEntries = [],
+        //     IsColliding = false,
+        //     CorrectedVelocity = new DbVector3 { x = 0, y = 0, z = 0 }
+        // });
 
         ctx.Db.move_all_players.Insert(new Move_All_Players_Timer
         {
@@ -39,7 +39,20 @@ public static partial class Module
             tick_rate = 1.0f / 120.0f
         });
 
+        ctx.Db.move_all_magicians.Insert(new Move_All_Magicians_Timer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 120.0)),
+            tick_rate = 1.0f / 120.0f
+        });
+
         ctx.Db.gravity.Insert(new Gravity_Timer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
+            tick_rate = 1.0f / 60.0f,
+            gravity = 20
+        });
+
+        ctx.Db.gravity_magician.Insert(new Gravity_Timer_Magician
         {
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
             tick_rate = 1.0f / 60.0f,
@@ -75,30 +88,55 @@ public static partial class Module
 
         var Player = ctx.Db.logged_in_players.identity.Find(ctx.Sender) ?? throw new Exception("Player not found after insert/restore");
 
-
-        ctx.Db.playable_character.Insert(
-            new Playable_Character
+        ctx.Db.magician.Insert(
+            new Magician
             {
                 identity = Player.identity,
                 Id = Player.Id,
                 Name = Player.Name,
                 MatchId = 1,
-                position = new DbVector3 { x = 0, y = 0, z = 0 },
-                rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
-                velocity = new DbVector3 { x = 0, y = 0, z = 0 },
-                state = PlayerState.Default,
+                Position = new DbVector3 { x = 0, y = 0, z = 0 },
+                Rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
+                Velocity = new DbVector3 { x = 0, y = 0, z = 0 },
+                KinematicInformation = new KinematicInformation(falling: false, crouched: false, grounded: true, landing: false, sprinting: false),
+                State = MagicianState.Default,
                 Collider = new CapsuleCollider { Center = new DbVector3 { x = 0, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f }, // Height & Radius Are Manual For Now, Have To Change If Collider Changes
                 PlayerPermissionConfig =
                 [
                     new("CanWalk", []),
                     new("CanRun", []),
                     new("CanJump", []),
-                    new("CanAttack", [])
+                    new("CanAttack", []),
+                    new("CanCrouch", [])
                 ],
                 CollisionEntries = [],
                 IsColliding = false,
                 CorrectedVelocity = new DbVector3 { x = 0, y = 0, z = 0 }
             });
+        
+        // ctx.Db.playable_character.Insert(
+        //     new Playable_Character
+        //     {
+        //         identity = Player.identity,
+        //         Id = Player.Id,
+        //         Name = Player.Name,
+        //         MatchId = 1,
+        //         position = new DbVector3 { x = 0, y = 0, z = 0 },
+        //         rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
+        //         velocity = new DbVector3 { x = 0, y = 0, z = 0 },
+        //         state = PlayerState.Default,
+        //         Collider = new CapsuleCollider { Center = new DbVector3 { x = 0, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f }, // Height & Radius Are Manual For Now, Have To Change If Collider Changes
+        //         PlayerPermissionConfig =
+        //         [
+        //             new("CanWalk", []),
+        //             new("CanRun", []),
+        //             new("CanJump", []),
+        //             new("CanAttack", [])
+        //         ],
+        //         CollisionEntries = [],
+        //         IsColliding = false,
+        //         CorrectedVelocity = new DbVector3 { x = 0, y = 0, z = 0 }
+        //     });
 
         var Match = ctx.Db.match.Id.Find(1);
         if (Match != null)
@@ -114,7 +152,8 @@ public static partial class Module
     public static void Disconnect(ReducerContext ctx)
     {
         var player = ctx.Db.logged_in_players.identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
-        var character = ctx.Db.playable_character.identity.Find(ctx.Sender);
+        var character = ctx.Db.magician.identity.Find(ctx.Sender);
+        //var character = ctx.Db.playable_character.identity.Find(ctx.Sender);
 
         if (character != null)
         {
@@ -126,8 +165,10 @@ public static partial class Module
                 match.currentPlayers -= 1;
                 ctx.Db.match.Id.Update(match);
             }
-            ctx.Db.playable_character.identity.Delete(ctx.Sender);
 
+            //ctx.Db.playable_character.identity.Delete(ctx.Sender);
+            ctx.Db.magician.identity.Delete(ctx.Sender);
+            
             // Removes Player Projectiles
             foreach (Projectile projectile in ctx.Db.projectiles.Iter())
             {
@@ -306,7 +347,6 @@ public static partial class Module
             character.velocity.y -= timer.gravity * time;
             ctx.Db.playable_character.identity.Update(character);
         }
-
     }
 
     [Reducer]
@@ -363,23 +403,28 @@ public static partial class Module
             character.Velocity.y = 7.5f;
             AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
             AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
+            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump");
         }
 
         if (GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers.Count == 0 && Request.Crouch)
         {
             character.Velocity = new DbVector3(character.Velocity.x * 0.5f, character.Velocity.y, character.Velocity.z * 0.5f);
-            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Crouch");
-
             character.KinematicInformation.Crouched = true;
+            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Crouch");            
         }
 
-        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint)
+        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint && character.Velocity.z >= 0f)
         {
             character.Velocity = new DbVector3(character.Velocity.x * 2f, character.Velocity.y, character.Velocity.z * 2f);
             character.KinematicInformation.Sprinting = true;
         }
 
-        if (Request.Crouch is false) character.KinematicInformation.Crouched = false;
+        if (Request.Crouch is false)
+        {
+            character.KinematicInformation.Crouched = false;
+            RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Crouch");
+        }
+        
         if (Request.Sprint is false) character.KinematicInformation.Sprinting = false;
 
         ctx.Db.magician.identity.Update(character);
@@ -405,21 +450,16 @@ public static partial class Module
             if (character.Position.y <= 0f)
             {
                 character.Position.y = 0f;
-                character.KinematicInformation.Grounded = true;
+                character.KinematicInformation.Grounded = true;              
+            }
 
-                // Switch To Removal After Landing Is Switched Back To False
-                RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
-                RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
-                RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump");
-            }
-            else
-            {
-                character.KinematicInformation.Grounded = false;
-                AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump");
-            }
+            else character.KinematicInformation.Grounded = false;
 
             if (oldPosition.y > 0f && character.Position.y <= 0f) character.KinematicInformation.Landing = true;
-            
+
+            if (character.Velocity.y <= 0f) character.KinematicInformation.Falling = true;
+            else character.KinematicInformation.Falling = false;
+
             character.Collider.Center = Add(character.Position, Mul(character.Collider.Direction, character.Collider.HeightEndToEnd * 0.5f));
 
             if (character.CollisionEntries.Count > 0)
@@ -439,7 +479,7 @@ public static partial class Module
 
                         case CollisionEntryType.Bullet:
                             Projectile Projectile = ctx.Db.projectiles.Id.Find(Entry.Id) ?? throw new Exception("Colliding Bullet Not Found");
-                            if (Projectile.OwnerIdentity != character.identity &&  TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Projectile.Collider), Projectile.Collider, out Contact _contact))
+                            if (Projectile.OwnerIdentity != character.identity && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Projectile.Collider), Projectile.Collider, out Contact _contact))
                             {
                                 ctx.Db.projectiles.Id.Delete(Projectile.Id);
                                 if (character.CollisionEntries.Contains(Entry) is true) character.CollisionEntries.Remove(Entry);
@@ -449,7 +489,7 @@ public static partial class Module
                         default:
                             break;
                     }
-                    
+
                 }
 
                 DbVector3 CorrectedVelocity = character.Velocity;
@@ -467,10 +507,34 @@ public static partial class Module
                 character.IsColliding = Contacts.Count > 0;
                 character.CorrectedVelocity = CorrectedVelocity;
             }
-            
+
             ctx.Db.magician.identity.Update(character);
         }
 
+    }
+
+    [Reducer]
+    public static void ApplyGravityMagician(ReducerContext ctx, Gravity_Timer_Magician timer)
+    {
+        var time = timer.tick_rate;
+        foreach (var charac in ctx.Db.magician.Iter())
+        {
+            var character = charac;
+            character.Velocity.y -= timer.gravity * time;
+            ctx.Db.magician.identity.Update(character);
+        }
+    }
+
+    [Reducer]
+    
+    public static void MagicianFinishedLanding(ReducerContext ctx)
+    {
+        Magician Magician = ctx.Db.magician.identity.Find(ctx.Sender) ?? throw new Exception("Could Not Find Magician Who Finished Landing");
+        Magician.KinematicInformation.Landing = false;
+        RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
+        RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
+        RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump");
+        ctx.Db.magician.identity.Update(Magician);
     }
 
 }

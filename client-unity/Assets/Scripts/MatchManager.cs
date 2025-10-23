@@ -12,8 +12,9 @@ public class MatchManager : MonoBehaviour
     public static MatchManager Instance { get; private set; }
     public uint? MatchId = 1;
     public DbConnection Conn;
-    public Dictionary<Identity, PlayableCharacterController> Players = new();
+    public Dictionary<Identity, MagicianController> Players = new();
     public PlayableCharacterController PlayableCharacterPrefab;
+    public MagicianController MagicianPrefab;
     public Dictionary<uint, ProjectileController> Projectiles = new();
     public ProjectileController ProjectilePrefab;
         
@@ -33,16 +34,16 @@ public class MatchManager : MonoBehaviour
     public void InitializeMatch(uint MatchId)
     {
         Conn = GameManager.Conn;
-        Conn.Db.PlayableCharacter.OnInsert += AddNewCharacter;
-        Conn.Db.PlayableCharacter.OnDelete += RemoveCharacter;
+        Conn.Db.Magician.OnInsert += AddNewCharacter;
+        Conn.Db.Magician.OnDelete += RemoveCharacter;
         Conn.Db.Projectiles.OnInsert += AddNewProjectile;
         Conn.Db.Projectiles.OnDelete += RemoveProjectile;
         
-        foreach (PlayableCharacter Character in Conn.Db.PlayableCharacter.Iter())
+        foreach (Magician Character in Conn.Db.Magician.Iter())
         {
             if (Character.MatchId == MatchId)
             {
-                var prefab = Instantiate(PlayableCharacterPrefab);
+                var prefab = Instantiate(MagicianPrefab);
                 prefab.Initalize(Character);
                 Players.Add(Character.Identity, prefab);
             }
@@ -64,18 +65,18 @@ public class MatchManager : MonoBehaviour
         // Next Step Is To Destroy All Game Objects In Dictionary And Reset Values And Unsubscribe from DB Stuff
     }
 
-    public void AddNewCharacter(EventContext context, PlayableCharacter Character)
+    public void AddNewCharacter(EventContext context, Magician Character)
     {
         if (MatchId is not null && Character.MatchId == MatchId)
         {
-            var prefab = Instantiate(PlayableCharacterPrefab);
+            var prefab = Instantiate(MagicianPrefab);
             prefab.Initalize(Character);     
             Players.Add(Character.Identity, prefab);
         }
             
     }
 
-    public void RemoveCharacter(EventContext context, PlayableCharacter Character)
+    public void RemoveCharacter(EventContext context, Magician Character)
     {
         if (MatchId is not null && Character.MatchId == MatchId)
         {

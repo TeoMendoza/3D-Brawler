@@ -24,6 +24,7 @@ namespace SpacetimeDB.Types
         public RemoteTables(DbConnection conn)
         {
             AddTable(Gravity = new(conn));
+            AddTable(GravityMagician = new(conn));
             AddTable(LoggedInPlayers = new(conn));
             AddTable(LoggedOutPlayers = new(conn));
             AddTable(Magician = new(conn));
@@ -478,12 +479,14 @@ namespace SpacetimeDB.Types
             {
                 "AddCollisionEntry" => BSATNHelpers.Decode<Reducer.AddCollisionEntry>(encodedArgs),
                 "ApplyGravity" => BSATNHelpers.Decode<Reducer.ApplyGravity>(encodedArgs),
+                "ApplyGravityMagician" => BSATNHelpers.Decode<Reducer.ApplyGravityMagician>(encodedArgs),
                 "Connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
                 "Disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
                 "HandleActionEnterRequest" => BSATNHelpers.Decode<Reducer.HandleActionEnterRequest>(encodedArgs),
                 "HandleActionExitRequest" => BSATNHelpers.Decode<Reducer.HandleActionExitRequest>(encodedArgs),
                 "HandleMovementRequest" => BSATNHelpers.Decode<Reducer.HandleMovementRequest>(encodedArgs),
                 "HandleMovementRequestMagician" => BSATNHelpers.Decode<Reducer.HandleMovementRequestMagician>(encodedArgs),
+                "MagicianFinishedLanding" => BSATNHelpers.Decode<Reducer.MagicianFinishedLanding>(encodedArgs),
                 "MoveMagicians" => BSATNHelpers.Decode<Reducer.MoveMagicians>(encodedArgs),
                 "MovePlayers" => BSATNHelpers.Decode<Reducer.MovePlayers>(encodedArgs),
                 "MoveProjectiles" => BSATNHelpers.Decode<Reducer.MoveProjectiles>(encodedArgs),
@@ -512,12 +515,14 @@ namespace SpacetimeDB.Types
             {
                 Reducer.AddCollisionEntry args => Reducers.InvokeAddCollisionEntry(eventContext, args),
                 Reducer.ApplyGravity args => Reducers.InvokeApplyGravity(eventContext, args),
+                Reducer.ApplyGravityMagician args => Reducers.InvokeApplyGravityMagician(eventContext, args),
                 Reducer.Connect args => Reducers.InvokeConnect(eventContext, args),
                 Reducer.Disconnect args => Reducers.InvokeDisconnect(eventContext, args),
                 Reducer.HandleActionEnterRequest args => Reducers.InvokeHandleActionEnterRequest(eventContext, args),
                 Reducer.HandleActionExitRequest args => Reducers.InvokeHandleActionExitRequest(eventContext, args),
                 Reducer.HandleMovementRequest args => Reducers.InvokeHandleMovementRequest(eventContext, args),
                 Reducer.HandleMovementRequestMagician args => Reducers.InvokeHandleMovementRequestMagician(eventContext, args),
+                Reducer.MagicianFinishedLanding args => Reducers.InvokeMagicianFinishedLanding(eventContext, args),
                 Reducer.MoveMagicians args => Reducers.InvokeMoveMagicians(eventContext, args),
                 Reducer.MovePlayers args => Reducers.InvokeMovePlayers(eventContext, args),
                 Reducer.MoveProjectiles args => Reducers.InvokeMoveProjectiles(eventContext, args),

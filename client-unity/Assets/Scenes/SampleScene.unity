@@ -149,6 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PlayableCharacterPrefab: {fileID: 2608645888762272316, guid: c33192d84c49846b7ac8b86a8b28226b, type: 3}
+  MagicianPrefab: {fileID: 3838300054775145683, guid: 9cac75c6e83db44a488f7f31d8e9a9b3, type: 3}
   ProjectilePrefab: {fileID: -6938544144073055576, guid: 8865bb78ddc4b46a7b2aa0c7491ac1db, type: 3}
 --- !u!4 &156625267
 Transform:
