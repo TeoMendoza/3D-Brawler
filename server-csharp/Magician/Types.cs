@@ -9,6 +9,12 @@ public static partial class Module
         Default,
         Attack
     }
+
+    [SpacetimeDB.Type]
+    public partial struct ActionRequestMagician(MagicianState state)
+    {
+        public MagicianState State = state;
+    }
     
     [SpacetimeDB.Type]
     public partial struct KinematicInformation(bool falling, bool crouched, bool grounded, bool landing, bool sprinting)

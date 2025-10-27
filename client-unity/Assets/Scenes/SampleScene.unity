@@ -150,7 +150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PlayableCharacterPrefab: {fileID: 2608645888762272316, guid: c33192d84c49846b7ac8b86a8b28226b, type: 3}
   MagicianPrefab: {fileID: 3838300054775145683, guid: 9cac75c6e83db44a488f7f31d8e9a9b3, type: 3}
-  ProjectilePrefab: {fileID: -6938544144073055576, guid: 8865bb78ddc4b46a7b2aa0c7491ac1db, type: 3}
+  ThrowingCardPrefab: {fileID: 4753613909389792992, guid: 45a99bf801c8a486aa152076d1859586, type: 3}
 --- !u!4 &156625267
 Transform:
   m_ObjectHideFlags: 0
@@ -229,7 +229,7 @@ Camera:
   far clip plane: 500
   field of view: 60
   orthographic: 0
-  orthographic size: 10
+  orthographic size: 5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -253,8 +253,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.07410855, y: 0, z: 0, w: 0.9972502}
-  m_LocalPosition: {x: 0.25, y: 0.92608255, z: -2.7816632}
+  m_LocalRotation: {x: 0.07959928, y: -0.05236248, z: 0.004187101, w: 0.9954419}
+  m_LocalPosition: {x: 0.53029126, y: 2.0751517, z: -2.6290665}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

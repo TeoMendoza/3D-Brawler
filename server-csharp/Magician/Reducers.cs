@@ -83,32 +83,34 @@ public static partial class Module
             if (character.CollisionEntries.Count > 0)
             {
                 List<Contact> Contacts = [];
+                List<CollisionEntry> EntriesToRemove = [];
                 foreach (var Entry in character.CollisionEntries)
                 {
                     switch (Entry.Type)
                     {
-                        case CollisionEntryType.Player:
-                            Playable_Character Player = ctx.Db.playable_character.Id.Find(Entry.Id) ?? throw new Exception("Colliding Player Not Found");
+                        case CollisionEntryType.Magician:
+                            Magician Player = ctx.Db.magician.Id.Find(Entry.Id) ?? throw new Exception("Colliding Magician Not Found");
                             if (Player.Id != character.Id && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Player.Collider), Player.Collider, out Contact contact))
                             {
                                 Contacts.Add(contact);
                             }
                             break;
 
-                        case CollisionEntryType.Bullet:
-                            Projectile Projectile = ctx.Db.projectiles.Id.Find(Entry.Id) ?? throw new Exception("Colliding Bullet Not Found");
-                            if (Projectile.OwnerIdentity != character.identity && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Projectile.Collider), Projectile.Collider, out Contact _contact))
+                        case CollisionEntryType.ThrowingCard:
+                            ThrowingCard ThrowingCard = ctx.Db.throwing_cards.Id.Find(Entry.Id) ?? throw new Exception("Colliding Bullet Not Found");
+                            if (ThrowingCard.OwnerIdentity != character.identity && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(ThrowingCard.Collider), ThrowingCard.Collider, out Contact _contact))
                             {
-                                ctx.Db.projectiles.Id.Delete(Projectile.Id);
-                                if (character.CollisionEntries.Contains(Entry) is true) character.CollisionEntries.Remove(Entry);
+                                ctx.Db.throwing_cards.Id.Delete(ThrowingCard.Id);
+                                if (character.CollisionEntries.Contains(Entry) is true) EntriesToRemove.Add(Entry);
                             }
                             break;
 
                         default:
                             break;
                     }
-
                 }
+                
+                character.CollisionEntries.RemoveAll(CollisionEntry => EntriesToRemove.Contains(CollisionEntry));
 
                 DbVector3 CorrectedVelocity = character.Velocity;
                 if (Contacts.Count > 0)
@@ -151,6 +153,98 @@ public static partial class Module
         RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
         RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
         RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump");
+        ctx.Db.magician.identity.Update(Magician);
+    }
+
+
+    [Reducer]
+    public static void HandleActionChangeRequestMagician(ReducerContext ctx, ActionRequestMagician request)
+    {
+        Identity identity = ctx.Sender;
+        Magician character = ctx.Db.magician.identity.Find(identity) ?? throw new Exception("Magician Not Found");
+        MagicianState oldState = character.State;
+
+        bool StateSwitched = false;
+        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers.Count == 0 && request.State == MagicianState.Attack)
+        {
+            character.State = MagicianState.Attack;
+            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Attack");
+            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
+            StateSwitched = true;
+        }
+
+        else if (request.State == MagicianState.Default)
+        {
+            character.State = MagicianState.Default;
+            StateSwitched = true;
+        }
+
+        if (StateSwitched)
+        {
+            switch (oldState)
+            {
+                case MagicianState.Attack:
+                    RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Attack");
+                    RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
+                    break;
+                case MagicianState.Default:
+                    break;
+            }
+        }
+
+        ctx.Db.magician.identity.Update(character);
+    }
+
+    [Reducer]
+    public static void SpawnThrowingCard(ReducerContext ctx, DbVector3 direction, DbVector3 spawnPoint)
+    {
+        Magician character = ctx.Db.magician.identity.Find(ctx.Sender) ?? throw new Exception("Throwing Card Owner Not Found");
+        DbVector3 velocity = new DbVector3(direction.x * 10f, direction.y * 10f, direction.z * 10f); // Direction - Unit Vector
+        ThrowingCard ThrowingCard = new()
+        {
+            OwnerIdentity = character.identity,
+            MatchId = character.MatchId,
+            position = spawnPoint,
+            velocity = velocity,
+            direction = direction,
+            Collider = new CapsuleCollider { Center = spawnPoint, Direction = direction, HeightEndToEnd = 0.1f, Radius = 0.025f }, // Accounts For Prefab Scale, 0.1f, 0.025f
+        };
+
+        ctx.Db.throwing_cards.Insert(ThrowingCard);
+
+    }
+
+    [Reducer]
+    public static void MoveThrowingCards(ReducerContext ctx, Move_ThrowingCards_Timer timer)
+    {
+        var time = timer.tick_rate;
+        foreach (ThrowingCard throwingCard in ctx.Db.throwing_cards.Iter())
+        {
+            var ThrowingCard = throwingCard;
+            ThrowingCard.position = new DbVector3(
+            ThrowingCard.position.x + ThrowingCard.velocity.x * time,
+            ThrowingCard.position.y + ThrowingCard.velocity.y * time,
+            ThrowingCard.position.z + ThrowingCard.velocity.z * time
+            );
+
+            ThrowingCard.Collider.Center = Add(ThrowingCard.position, Mul(ThrowingCard.Collider.Direction, ThrowingCard.Collider.HeightEndToEnd * 0.5f));
+            ctx.Db.throwing_cards.Id.Update(ThrowingCard);
+        }
+    }
+    
+    [Reducer]
+    public static void AddCollisionEntryMagician(ReducerContext ctx, CollisionEntry Entry, Identity TargetIdentity)
+    {
+        Magician Magician = ctx.Db.magician.identity.Find(TargetIdentity) ?? throw new Exception("Magician (Sender) Not Found");
+        if (Magician.CollisionEntries.Contains(Entry) is false) Magician.CollisionEntries.Add(Entry);
+        ctx.Db.magician.identity.Update(Magician);
+    }
+
+    [Reducer]
+    public static void RemoveCollisionEntryMagician(ReducerContext ctx, CollisionEntry Entry, Identity TargetIdentity)
+    {
+        Magician Magician = ctx.Db.magician.identity.Find(TargetIdentity) ?? throw new Exception("Magician (Sender) Not Found");
+        if (Magician.CollisionEntries.Contains(Entry) is true) Magician.CollisionEntries.Remove(Entry);
         ctx.Db.magician.identity.Update(Magician);
     }
     

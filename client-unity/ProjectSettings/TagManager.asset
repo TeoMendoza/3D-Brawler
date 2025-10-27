@@ -8,6 +8,8 @@ TagManager:
   - PlayableCharacter
   - Bullet
   - Projectile
+  - Magician
+  - ThrowingCard
   layers:
   - Default
   - TransparentFX

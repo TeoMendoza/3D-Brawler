@@ -3,11 +3,6 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-    [SpacetimeDB.Type]
-    public enum ProjectileType
-    {
-        Bullet
-    }
 
     [SpacetimeDB.Type]
     public partial struct SphereCollider(DbVector3 center, float radius)
@@ -53,10 +48,11 @@ public static partial class Module
     [SpacetimeDB.Type]
     public enum CollisionEntryType
     {
-        Player, // Make One For Each Character Type, Projectile Type, Etc,
         Magician,
+        ThrowingCard,
         Map,
-        Bullet,
+        Player, // Remove Eventually
+        Bullet  // Remove Eventually  
     }
 
     public partial struct Contact

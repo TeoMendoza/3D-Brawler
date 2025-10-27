@@ -58,7 +58,6 @@ public static partial class Module
             velocity = velocity,
             direction = direction,
             Collider = new CapsuleCollider { Center = spawnPoint, Direction = direction, HeightEndToEnd = 0.1f, Radius = 0.025f }, // Accounts For Prefab Scale, 0.1f, 0.025f
-            ProjectileType = ProjectileType.Bullet
         };
 
         ctx.Db.projectiles.Insert(projectile);

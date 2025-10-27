@@ -13,7 +13,7 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class Projectile
+    public sealed partial class ThrowingCard
     {
         [DataMember(Name = "Id")]
         public uint Id;
@@ -30,7 +30,7 @@ namespace SpacetimeDB.Types
         [DataMember(Name = "Collider")]
         public CapsuleCollider Collider;
 
-        public Projectile(
+        public ThrowingCard(
             uint Id,
             SpacetimeDB.Identity OwnerIdentity,
             uint MatchId,
@@ -49,7 +49,7 @@ namespace SpacetimeDB.Types
             this.Collider = Collider;
         }
 
-        public Projectile()
+        public ThrowingCard()
         {
             this.Position = new();
             this.Velocity = new();

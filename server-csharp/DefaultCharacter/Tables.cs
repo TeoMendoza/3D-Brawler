@@ -61,7 +61,6 @@ public static partial class Module
         public DbVector3 velocity;
         public DbVector3 direction;
         public CapsuleCollider Collider;
-        public ProjectileType ProjectileType;
 
         // public List<Effect> Effects; // Add once effects are being implemented
     }

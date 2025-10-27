@@ -12,8 +12,10 @@ namespace SpacetimeDB.Types
     [SpacetimeDB.Type]
     public enum CollisionEntryType
     {
-        Player,
+        Magician,
+        ThrowingCard,
         Map,
+        Player,
         Bullet,
     }
 }

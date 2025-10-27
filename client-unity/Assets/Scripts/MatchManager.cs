@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using SpacetimeDB;
 using SpacetimeDB.Types;
 using System.Linq;
+using Unity.VisualScripting;
 
 #nullable enable
 public class MatchManager : MonoBehaviour
@@ -15,8 +16,8 @@ public class MatchManager : MonoBehaviour
     public Dictionary<Identity, MagicianController> Players = new();
     public PlayableCharacterController PlayableCharacterPrefab;
     public MagicianController MagicianPrefab;
-    public Dictionary<uint, ProjectileController> Projectiles = new();
-    public ProjectileController ProjectilePrefab;
+    public Dictionary<uint, ThrowingCardController> ThrowingCards = new();
+    public ThrowingCardController ThrowingCardPrefab;
         
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -36,8 +37,8 @@ public class MatchManager : MonoBehaviour
         Conn = GameManager.Conn;
         Conn.Db.Magician.OnInsert += AddNewCharacter;
         Conn.Db.Magician.OnDelete += RemoveCharacter;
-        Conn.Db.Projectiles.OnInsert += AddNewProjectile;
-        Conn.Db.Projectiles.OnDelete += RemoveProjectile;
+        Conn.Db.ThrowingCards.OnInsert += AddThrowingCard;
+        Conn.Db.ThrowingCards.OnDelete += RemoveThrowingCard;
         
         foreach (Magician Character in Conn.Db.Magician.Iter())
         {
@@ -49,13 +50,13 @@ public class MatchManager : MonoBehaviour
             }
         }
         
-        foreach (Projectile Projectile in Conn.Db.Projectiles.Iter())
+        foreach (ThrowingCard throwingCard in Conn.Db.ThrowingCards.Iter())
         {
-            if (Projectile.MatchId == MatchId)
+            if (throwingCard.MatchId == MatchId)
             {
-                var prefab = Instantiate(ProjectilePrefab);
-                prefab.Initalize(Projectile);
-                Projectiles.Add(Projectile.Id, prefab);
+                var prefab = Instantiate(ThrowingCardPrefab);
+                prefab.Initalize(throwingCard);
+                ThrowingCards.Add(throwingCard.Id, prefab);
             }
         }
     }
@@ -90,26 +91,26 @@ public class MatchManager : MonoBehaviour
 
     }
     
-    public void AddNewProjectile(EventContext context, Projectile Projectile)
+    public void AddThrowingCard(EventContext context, ThrowingCard throwingCard)
     {
-        if (MatchId is not null && Projectile.MatchId == MatchId)
+        if (MatchId is not null && throwingCard.MatchId == MatchId)
         {
-            var prefab = Instantiate(ProjectilePrefab);
-            prefab.Initalize(Projectile);     
-            Projectiles.Add(Projectile.Id, prefab);
+            var prefab = Instantiate(ThrowingCardPrefab);
+            prefab.Initalize(throwingCard);     
+            ThrowingCards.Add(throwingCard.Id, prefab);
         }
             
     }
     
-    public void RemoveProjectile(EventContext context, Projectile Projectile)
+    public void RemoveThrowingCard(EventContext context, ThrowingCard throwingCard)
     {
-        if (MatchId is not null && Projectile.MatchId == MatchId)
+        if (MatchId is not null && throwingCard.MatchId == MatchId)
         {
-            Projectiles.TryGetValue(Projectile.Id, out var prefab);
+            ThrowingCards.TryGetValue(throwingCard.Id, out var prefab);
             if (prefab != null)
             {
                 prefab.Delete(context);
-                Projectiles.Remove(Projectile.Id);
+                ThrowingCards.Remove(throwingCard.Id);
             }
         }
             

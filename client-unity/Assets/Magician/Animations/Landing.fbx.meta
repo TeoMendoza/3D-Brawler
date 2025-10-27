@@ -55,10 +55,10 @@ ModelImporter:
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
       events:
-      - time: 0.9212598
+      - time: 0.91863513
         functionName: HandleFinishedLanding
         data: 
-        objectReferenceParameter: {instanceID: 0}
+        objectReferenceParameter: {fileID: 11500000, guid: e93a1e9e576ec4ddba74cd1abb92f2a6, type: 3}
         floatParameter: 0
         intParameter: 0
         messageOptions: 0

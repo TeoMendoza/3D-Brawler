@@ -13,14 +13,12 @@ public class ProjectileController : MonoBehaviour
     public Identity OwnerIdentity;
     public uint MatchId;
     public Vector3 TargetPosition;
-    public ProjectileType ProjectileType;
 
     public void Initalize(Projectile Projectile)
     {
         Id = Projectile.Id;
         OwnerIdentity = Projectile.OwnerIdentity;
         MatchId = Projectile.MatchId;
-        ProjectileType = Projectile.ProjectileType;
         transform.position = Projectile.Position;
         TargetPosition = Projectile.Position;
 

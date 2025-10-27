@@ -40,5 +40,28 @@ public static partial class Module
         public ScheduleAt scheduled_at;
         public float tick_rate;
         public float gravity;
-    } 
+    }
+
+    [Table(Name = "throwing_cards", Public = true)]
+    public partial struct ThrowingCard
+    {
+        [PrimaryKey, AutoInc]
+        public uint Id;
+        public Identity OwnerIdentity;
+        public uint MatchId;
+        public DbVector3 position;
+        public DbVector3 velocity;
+        public DbVector3 direction;
+        public CapsuleCollider Collider;
+
+        // public List<Effect> Effects; // Add once effects are being implemented
+    }
+    
+    [Table(Name = "move_throwing_cards", Scheduled = nameof(MoveThrowingCards), ScheduledAt = nameof(scheduled_at))]
+    public partial struct Move_ThrowingCards_Timer
+    {
+        [PrimaryKey, AutoInc] public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+        public float tick_rate;
+    }
 }
