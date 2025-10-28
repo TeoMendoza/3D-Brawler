@@ -168,7 +168,6 @@ public static partial class Module
         if (GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers.Count == 0 && request.State == MagicianState.Attack)
         {
             character.State = MagicianState.Attack;
-            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Attack");
             AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
             StateSwitched = true;
         }
@@ -184,7 +183,6 @@ public static partial class Module
             switch (oldState)
             {
                 case MagicianState.Attack:
-                    RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Attack");
                     RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
                     break;
                 case MagicianState.Default:

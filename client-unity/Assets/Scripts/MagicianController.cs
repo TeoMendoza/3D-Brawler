@@ -16,10 +16,8 @@ public class MagicianController : MonoBehaviour
     public DbRotation2 TargetRotation = new(0, 0);
     public KinematicInformation KinematicInformation;
     public Animator Animator;
-    public UnityEngine.CapsuleCollider Collider;
     private Camera mainCamera;
-    public Transform rightHand;
-    public Transform leftHand;
+    public Transform CardThrowHand;
     float yaw = 0f; 
     float pitch = 0f;
     private readonly float sensX = 200f;
@@ -143,36 +141,22 @@ public class MagicianController : MonoBehaviour
         GameManager.Conn.Reducers.MagicianFinishedLanding();
     }
 
-    public void RightHandAttack()
+    public void CardThrow()
     {
-        Vector3 HandPosition = rightHand.position;
 
         Vector2 screenCenter = new(Screen.width * 0.5f, Screen.height * 0.5f);
         Ray aimRay = mainCamera.ScreenPointToRay(screenCenter);
-        Vector3 aimPoint = aimRay.GetPoint(10f); // Eventually check for the crosshair being over an object, so if its far away the bullet travels towards the object, otherwise a really close distance as we are doing now
-        Vector3 projectileDirection = (aimPoint - HandPosition).normalized;
-        GameManager.Conn.Reducers.SpawnThrowingCard(direction: (DbVector3)projectileDirection, spawnPoint: (DbVector3)HandPosition);
+        GameManager.Conn.Reducers.SpawnThrowingCard(direction: (DbVector3)aimRay.direction, spawnPoint: (DbVector3)CardThrowHand.position);
 
         if (Input.GetMouseButton(0) is false)
         {
-            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(request: new ActionRequestMagician (State: MagicianState.Default));
+            CardThrowFinished();
         }
     }
 
-    public void LeftHandAttack()
+    public void CardThrowFinished()
     {
-        Vector3 HandPosition = leftHand.position;
-         
-        Vector2 screenCenter = new(Screen.width * 0.5f, Screen.height * 0.5f);
-        Ray aimRay = mainCamera.ScreenPointToRay(screenCenter);
-        Vector3 aimPoint = aimRay.GetPoint(10f); // Eventually check for the crosshair being over an object, so if its far away the bullet travels towards the object, otherwise a really close distance as we are doing now
-        Vector3 projectileDirection = (aimPoint - HandPosition).normalized;
-        GameManager.Conn.Reducers.SpawnThrowingCard(direction: (DbVector3)projectileDirection, spawnPoint: (DbVector3)HandPosition);
-
-        if (Input.GetMouseButton(0) is false)
-        {
-            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(request: new ActionRequestMagician(State: MagicianState.Default));
-        }
+        GameManager.Conn.Reducers.HandleActionChangeRequestMagician(request: new ActionRequestMagician(State: MagicianState.Default));
     }
     
     public void OnTriggerEnter(Collider other)

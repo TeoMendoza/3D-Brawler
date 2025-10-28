@@ -241,11 +241,6 @@ Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: 3dbd16ef42ad3428cbfe670dd3934420, type: 3}
   m_PrefabInstance: {fileID: 5761719806197285247}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &2447835754778108066 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -1293157592579415587, guid: 3dbd16ef42ad3428cbfe670dd3934420, type: 3}
-  m_PrefabInstance: {fileID: 5761719806197285247}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &4842729089241840686 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 3dbd16ef42ad3428cbfe670dd3934420, type: 3}
@@ -271,8 +266,7 @@ MonoBehaviour:
   TargetPosition: {x: 0, y: 0, z: 0}
   Animator: {fileID: 2206526370085371118}
   Collider: {fileID: 7925984418022316257}
-  rightHand: {fileID: 2447835754778108066}
-  leftHand: {fileID: 4876479327393015265}
+  CardThrowHand: {fileID: 4943952468567908694}
 --- !u!136 &7925984418022316257
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -323,9 +317,9 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!4 &4876479327393015265 stripped
+--- !u!4 &4943952468567908694 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: -8333627713332763490, guid: 3dbd16ef42ad3428cbfe670dd3934420, type: 3}
+  m_CorrespondingSourceObject: {fileID: -8400955822856789975, guid: 3dbd16ef42ad3428cbfe670dd3934420, type: 3}
   m_PrefabInstance: {fileID: 5761719806197285247}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &5223899446332728980 stripped
