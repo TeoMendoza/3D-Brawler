@@ -209,7 +209,6 @@ public static partial class Module
         };
 
         ctx.Db.throwing_cards.Insert(ThrowingCard);
-
     }
 
     [Reducer]

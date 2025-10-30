@@ -143,7 +143,6 @@ public class MagicianController : MonoBehaviour
 
     public void CardThrow()
     {
-
         Vector2 screenCenter = new(Screen.width * 0.5f, Screen.height * 0.5f);
         Ray aimRay = mainCamera.ScreenPointToRay(screenCenter);
         GameManager.Conn.Reducers.SpawnThrowingCard(direction: (DbVector3)aimRay.direction, spawnPoint: (DbVector3)CardThrowHand.position);
