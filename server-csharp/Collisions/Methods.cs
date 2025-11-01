@@ -30,6 +30,88 @@ public static partial class Module
         return false;
     }
 
+    public delegate bool RaycastOverlapFn(object a, Raycast Raycast, out DbVector3 Position);
+
+    static readonly Dictionary<Shape, RaycastOverlapFn> RaycastOverlap = new()
+    {
+        {  Shape.Capsule, (object a, Raycast Raycast, out DbVector3 p) => OverlapRaycastCapsule((CapsuleCollider)a, Raycast, out p) },
+    };
+
+    static bool TryRaycastOverlap(Shape sa, object ca, Raycast Raycast, out DbVector3 Position)
+    {
+        if (RaycastOverlap.TryGetValue(sa, out var fn))
+            return fn(ca, Raycast, out Position);
+
+        Position = default;
+        return false;
+    }
+    
+    static bool OverlapRaycastCapsule(CapsuleCollider Capsule, Raycast Raycast, out DbVector3 Position)
+    {
+        Position = default;
+
+        DbVector3 ro = Raycast.Position;
+        DbVector3 rd = Normalize(Raycast.Forward);
+        float tMax = Raycast.MaxDistance;   
+
+        DbVector3 c = Capsule.Center;
+        DbVector3 ax = Capsule.Direction;
+        float r = Capsule.Radius;
+        float halfCylLen = Math.Max(0f, Capsule.HeightEndToEnd * 0.5f - r);
+
+        DbVector3 pa = Sub(c, Mul(ax, halfCylLen));
+        DbVector3 pb = Add(c, Mul(ax, halfCylLen));
+
+        DbVector3 ba = Sub(pb, pa);
+        DbVector3 oa = Sub(ro, pa);
+
+        float baba = Dot(ba, ba);
+        float bard = Dot(ba, rd);
+        float baoa = Dot(ba, oa);
+        float rdoa = Dot(rd, oa);
+        float oaoa = Dot(oa, oa);
+
+        float k2 = baba - bard * bard;
+        float k1 = baba * rdoa - baoa * bard;
+        float k0 = baba * oaoa - baoa * baoa - r * r * baba;
+
+        float tHit = float.PositiveInfinity;
+
+        const float EPS = 1e-8f;
+        if (k2 > EPS)
+        {
+            float h = k1 * k1 - k2 * k0;
+            if (h >= 0f)
+            {
+                float t = (-k1 - (float)Math.Sqrt(h)) / k2;
+                if (t >= 0f && t <= tMax)
+                {
+                    float y = baoa + t * bard;
+                    if (y > 0f && y < baba) tHit = t;
+                }
+            }
+        }
+
+        if (float.IsPositiveInfinity(tHit))
+        {
+            float yCap = Clamp(baoa, 0f, baba);
+            DbVector3 oc = yCap <= 0f ? oa : Sub(ro, pb);
+            float b = Dot(rd, oc);
+            float c2 = Dot(oc, oc) - r * r;
+            float h = b * b - c2;
+            if (h >= 0f)
+            {
+                float t = -b - (float)Math.Sqrt(h);
+                if (t >= 0f && t <= tMax) tHit = t;
+            }
+        }
+
+        if (float.IsPositiveInfinity(tHit)) return false;
+
+        Position = Add(ro, Mul(rd, tHit));
+        return true;
+    }
+
     static bool OverlapCapsuleCapsule(CapsuleCollider a, CapsuleCollider b, out Contact contact)
     {
         var aDir = a.Direction;
@@ -71,8 +153,6 @@ public static partial class Module
         return true;
 
     }
-    
-    
 
     static void ComputeSegmentEndpoints(in CapsuleCollider capsule, out DbVector3 bottom, out DbVector3 top)
     {
@@ -166,15 +246,23 @@ public static partial class Module
         return NormalizeSmallVector(perp, new DbVector3(1, 0, 0));
     }
 
-    static DbVector3 Add(in DbVector3 x, in DbVector3 y) => new DbVector3(x.x + y.x, x.y + y.y, x.z + y.z);
-    static DbVector3 Sub(in DbVector3 x, in DbVector3 y) => new DbVector3(x.x - y.x, x.y - y.y, x.z - y.z);
-    static DbVector3 Mul(in DbVector3 x, float s) => new DbVector3(x.x * s, x.y * s, x.z * s);
+    static DbVector3 Add(in DbVector3 x, in DbVector3 y) => new(x.x + y.x, x.y + y.y, x.z + y.z);
+    static DbVector3 Sub(in DbVector3 x, in DbVector3 y) => new(x.x - y.x, x.y - y.y, x.z - y.z);
+    static DbVector3 Mul(in DbVector3 x, float s) => new(x.x * s, x.y * s, x.z * s);
     static float Dot(in DbVector3 x, in DbVector3 y) => x.x * y.x + x.y * y.y + x.z * y.z;
     static float LenSq(in DbVector3 x) => Dot(x, x);
     static float Sqrt(float v) => (float)Math.Sqrt(v);
-    static float Length(DbVector3 v) => Sqrt(LenSq(v));
     static float Magnitude(in DbVector3 x) => Sqrt(Dot(x, x));
     static float Clamp01(float t) => t < 0f ? 0f : (t > 1f ? 1f : t);
+    static float Clamp(float x, float a, float b) => x < a ? a : (x > b ? b : x);
     static DbVector3 Cross(in DbVector3 a, in DbVector3 b) => new(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
-    static bool IsZero(DbVector3 v) => (v.x * v.x + v.y * v.y + v.z * v.z) < 1e-10f;
+    private static Vector3 ToVector3(DbVector3 v) => new(v.x, v.y, v.z);
+    private static DbVector3 ToDbVector3(Vector3 v) => new(v.X, v.Y, v.Z);
+    private static DbVector3 Rotate(DbVector3 v, Quaternion q) => ToDbVector3(Vector3.Transform(ToVector3(v), q));
+    private static DbVector3 Normalize(DbVector3 v)
+    {
+        float Magnitude = Module.Magnitude(v);
+        if (Magnitude <= 1e-6f) return new DbVector3(0f, 0f, 0f);
+        return new DbVector3(v.x / Magnitude, v.y / Magnitude, v.z / Magnitude);
+    }
 }

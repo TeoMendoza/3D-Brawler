@@ -1,5 +1,6 @@
 using System.Diagnostics.Contracts;
 using System.Numerics;
+using System;
 using SpacetimeDB;
 
 public static partial class Module
@@ -209,6 +210,38 @@ public static partial class Module
         };
 
         ctx.Db.throwing_cards.Insert(ThrowingCard);
+    }
+
+    [Reducer]
+    public static void SpawnThrowingCardNew(ReducerContext ctx,  DbVector3 CameraPositionOffset, float CameraYawOffset, float CameraPitchOffset, DbVector3 HandPositionOffset, float MaxDistance)
+    {
+        DbVector3 BaseCameraForward = new(0f, 0f, -1f);
+        var Magician = ctx.Db.magician.identity.Find(ctx.Sender) ?? throw new Exception("Owner not found");
+        DbVector3 MagicianPosition = Magician.Position;
+        float MagicianYaw = Magician.Rotation.Yaw;
+        float MagicianPitch = Magician.Rotation.Pitch;
+
+        float CameraYaw = MagicianYaw + CameraYawOffset;
+        float CameraPitch = MagicianPitch + CameraPitchOffset;
+        Quaternion CameraRotation = Quaternion.CreateFromYawPitchRoll(CameraYaw, CameraPitch, 0f);
+        Quaternion MagicianRotation = Quaternion.CreateFromYawPitchRoll(MagicianYaw, MagicianPitch, 0f);
+
+        DbVector3 CameraPosition = Add(MagicianPosition, Rotate(CameraPositionOffset, CameraRotation));
+        DbVector3 CameraForward = Normalize(Rotate(BaseCameraForward, CameraRotation));
+        DbVector3 HandPosition = Add(MagicianPosition, Rotate(HandPositionOffset, MagicianRotation)); // Might be issue since hand offset isn't grabbed at the base orientation, might have to account for the rotation at the moment the offset was grabbed
+
+        DbVector3 ThrowingCardTarget = RaycastFromCamera(ctx, Magician, new Raycast(CameraPosition, CameraForward, MaxDistance));
+        DbVector3 ThrowingCardDirection = Normalize(Sub(ThrowingCardTarget, HandPosition));
+
+        ctx.Db.throwing_cards.Insert(new ThrowingCard
+        {
+            OwnerIdentity = Magician.identity,
+            MatchId = Magician.MatchId,
+            position = HandPosition,
+            direction = ThrowingCardDirection,
+            velocity = Mul(ThrowingCardDirection, 10f),
+            Collider = new CapsuleCollider { Center = HandPosition, Direction = ThrowingCardDirection, HeightEndToEnd = 0.1f, Radius = 0.025f },
+        });
     }
 
     [Reducer]

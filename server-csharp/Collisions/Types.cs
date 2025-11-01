@@ -34,7 +34,7 @@ public static partial class Module
     {
         Capsule,
         Sphere,
-        Box
+        Box,
     }
 
     [SpacetimeDB.Type]
@@ -60,4 +60,12 @@ public static partial class Module
         public DbVector3 Normal; // Object B -> A
         public float Depth;
     }
+
+    public partial struct Raycast(DbVector3 position, DbVector3 forward, float maxDistance)
+    {
+        public DbVector3 Position = position;
+        public DbVector3 Forward = forward;
+        public float MaxDistance = maxDistance;
+    }
+
 }

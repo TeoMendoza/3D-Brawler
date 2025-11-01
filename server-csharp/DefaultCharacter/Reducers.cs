@@ -125,7 +125,7 @@ public static partial class Module
 
                         case CollisionEntryType.Bullet:
                             Projectile Projectile = ctx.Db.projectiles.Id.Find(Entry.Id) ?? throw new Exception("Colliding Bullet Not Found");
-                            if (Projectile.OwnerIdentity != character.identity &&  TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Projectile.Collider), Projectile.Collider, out Contact _contact))
+                            if (Projectile.OwnerIdentity != character.identity && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Projectile.Collider), Projectile.Collider, out Contact _contact))
                             {
                                 ctx.Db.projectiles.Id.Delete(Projectile.Id);
                                 if (character.CollisionEntries.Contains(Entry) is true) character.CollisionEntries.Remove(Entry);
