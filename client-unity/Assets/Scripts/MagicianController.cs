@@ -2,6 +2,7 @@ using SpacetimeDB;
 using UnityEngine;
 using SpacetimeDB.Types;
 using Unity.Cinemachine;
+//using System.Numerics;
 // using System.Numerics;
 
 public class MagicianController : MonoBehaviour
@@ -28,6 +29,11 @@ public class MagicianController : MonoBehaviour
     float pitchCurrent;
     float pitchVel;
 
+    Vector3 CameraPositionOffset;
+    Vector3 HandPositionOffset;
+    float CameraYawOffset;
+    float CameraPitchOffset;
+
     public void Initalize(Magician Character)
     {
         Identity = Character.Identity;
@@ -42,6 +48,19 @@ public class MagicianController : MonoBehaviour
             thirdPersonCam.gameObject.SetActive(true);
 
         mainCamera = FindFirstObjectByType<CinemachineBrain>().OutputCamera != null ? FindFirstObjectByType<CinemachineBrain>().OutputCamera : throw new System.Exception("No Main Camera Brain");
+
+        Vector3 CameraWorldPosition = mainCamera.transform.position;
+        Vector3 CharacterWorldPosition = transform.position;
+        CameraPositionOffset = CameraWorldPosition - CharacterWorldPosition;
+
+        Vector3 HandWorldPosition = CardThrowHand.position;
+        HandPositionOffset = HandWorldPosition - CharacterWorldPosition;
+
+        float CameraYaw = mainCamera.transform.eulerAngles.y;
+        float CameraPitch = mainCamera.transform.eulerAngles.x;
+
+        CameraYawOffset = Mathf.DeltaAngle(TargetRotation.Yaw, CameraYaw);
+        CameraPitchOffset = Mathf.DeltaAngle(TargetRotation.Pitch, CameraPitch);
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -141,11 +160,28 @@ public class MagicianController : MonoBehaviour
         GameManager.Conn.Reducers.MagicianFinishedLanding();
     }
 
-    public void CardThrow()
+    public void CardThrow2()
     {
         Vector2 screenCenter = new(Screen.width * 0.5f, Screen.height * 0.5f);
         Ray aimRay = mainCamera.ScreenPointToRay(screenCenter);
         GameManager.Conn.Reducers.SpawnThrowingCard(direction: (DbVector3)aimRay.direction, spawnPoint: (DbVector3)CardThrowHand.position);
+
+        if (Input.GetMouseButton(0) is false)
+        {
+            CardThrowFinished();
+        }
+    }
+
+    public void CardThrow()
+    {
+        float MaxDistance = 100f;
+        GameManager.Conn.Reducers.SpawnThrowingCardNew(
+            cameraPositionOffset: (DbVector3)CameraPositionOffset,
+            cameraYawOffset: CameraYawOffset,
+            cameraPitchOffset: CameraPitchOffset,
+            handPositionOffset: (DbVector3)HandPositionOffset,
+            maxDistance: MaxDistance
+        );
 
         if (Input.GetMouseButton(0) is false)
         {
