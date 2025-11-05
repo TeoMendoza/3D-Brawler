@@ -225,13 +225,13 @@ public static partial class Module
         Quaternion MagicianRotation = Quaternion.CreateFromYawPitchRoll(MagYawRad, MagPitchRad, 0f);
         Quaternion MagicianYawOnly = Quaternion.CreateFromYawPitchRoll(MagYawRad, 0f, 0f);
 
-        DbVector3 CameraPosition = Add(MagicianPosition, Rotate(CameraPositionOffset, MagicianRotation));
         DbVector3 HandPosition = Add(MagicianPosition, Rotate(HandPositionOffset, MagicianYawOnly));
 
         float OffsetYawRad = CameraYawOffset * Deg2Rad;
         float OffsetPitchRad = CameraPitchOffset * Deg2Rad;
         Quaternion YawPitchOffset = Quaternion.CreateFromYawPitchRoll(OffsetYawRad, OffsetPitchRad, 0f);
         Quaternion CameraRotation = Quaternion.Multiply(MagicianRotation, YawPitchOffset);
+        DbVector3 CameraPosition = Add(MagicianPosition, Rotate(CameraPositionOffset, CameraRotation));
 
         DbVector3 BaseCameraForward = new(0f, 0f, 1f);
         DbVector3 CameraForward = Normalize(Rotate(BaseCameraForward, CameraRotation));

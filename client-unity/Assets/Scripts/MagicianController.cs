@@ -30,9 +30,9 @@ public class MagicianController : MonoBehaviour
     float pitchVel;
 
     Vector3 CameraPositionOffset;
-    Vector3 HandPositionOffset;
     float CameraYawOffset;
     float CameraPitchOffset;
+    Vector3 HandPositionOffset;
 
     public void Initalize(Magician Character)
     {
@@ -53,14 +53,15 @@ public class MagicianController : MonoBehaviour
         Vector3 CharacterWorldPosition = transform.position;
         CameraPositionOffset = CameraWorldPosition - CharacterWorldPosition;
 
-        Vector3 HandWorldPosition = CardThrowHand.position;
-        HandPositionOffset = HandWorldPosition - CharacterWorldPosition;
+        Vector2 Reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
+        Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
+        Vector3 D = AimRay.direction.normalized;
 
-        float CameraYaw = mainCamera.transform.eulerAngles.y;
-        float CameraPitch = mainCamera.transform.eulerAngles.x;
+        float RayYawDeg = Mathf.Atan2(D.x, D.z) * Mathf.Rad2Deg;
+        float RayPitchDeg = Mathf.Asin(D.y) * Mathf.Rad2Deg;
 
-        CameraYawOffset = Mathf.DeltaAngle(TargetRotation.Yaw, CameraYaw);
-        CameraPitchOffset = Mathf.DeltaAngle(TargetRotation.Pitch, CameraPitch);
+        CameraYawOffset = Mathf.DeltaAngle(TargetRotation.Yaw, RayYawDeg);
+        CameraPitchOffset = Mathf.DeltaAngle(TargetRotation.Pitch, RayPitchDeg);   
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -112,6 +113,8 @@ public class MagicianController : MonoBehaviour
 
         pitchCurrent = Mathf.SmoothDampAngle(pitchCurrent, TargetRotation.Pitch, ref pitchVel, pitchSmooth);
         thirdPersonCamPivot.transform.localRotation = Quaternion.Euler(pitchCurrent, 0f, 0f);
+
+        
     }
 
     public void HandleMagicianUpdate(EventContext context, Magician oldChar, Magician newChar)
@@ -174,7 +177,18 @@ public class MagicianController : MonoBehaviour
 
     public void CardThrow()
     {
-        float MaxDistance = 100f;
+        float MaxDistance = 1000f;
+
+        Vector3 CharacterWorldPosition = transform.position;
+        Vector3 HandWorldPosition = CardThrowHand.position;
+        Quaternion Rotation = Quaternion.Euler(0, TargetRotation.Yaw, 0);
+        HandPositionOffset = Quaternion.Inverse(Rotation) * (HandWorldPosition - CharacterWorldPosition);
+
+        Vector2 Reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
+        Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
+        Vector3 D = AimRay.direction.normalized;
+        Debug.Log($"Camera Forward: {D}");
+
         GameManager.Conn.Reducers.SpawnThrowingCardNew(
             cameraPositionOffset: (DbVector3)CameraPositionOffset,
             cameraYawOffset: CameraYawOffset,

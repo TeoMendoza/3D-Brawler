@@ -5,7 +5,9 @@ public static partial class Module
 {
     public static DbVector3 RaycastFromCamera(ReducerContext ctx, Magician Sender, Raycast Raycast)
     {
+
         DbVector3 Closest = Add(Raycast.Position, Mul(Raycast.Forward, Raycast.MaxDistance));
+        Log.Info($"Raycast Forward: {Raycast.Forward}");
         float ClosestScalar = Raycast.MaxDistance;
         const float EPS = 1e-4f;
 
@@ -15,6 +17,7 @@ public static partial class Module
 
             if (TryRaycastOverlap(GetColliderShape(Magician.Collider), Magician.Collider, Raycast, out DbVector3 Hit))
             {
+                Log.Info("Raycast Hit");
                 float Scalar = Dot(Sub(Hit, Raycast.Position), Raycast.Forward);
                 if (Scalar <= ClosestScalar && Scalar >= EPS)
                 {
@@ -26,4 +29,5 @@ public static partial class Module
 
         return Closest;
     }
+
 }
