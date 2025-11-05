@@ -222,15 +222,14 @@ public static partial class Module
 
         float MagYawRad = Magician.Rotation.Yaw * Deg2Rad;
         float MagPitchRad = Magician.Rotation.Pitch * Deg2Rad;
-        Quaternion MagicianRotation = Quaternion.CreateFromYawPitchRoll(MagYawRad, MagPitchRad, 0f);
         Quaternion MagicianYawOnly = Quaternion.CreateFromYawPitchRoll(MagYawRad, 0f, 0f);
 
         DbVector3 HandPosition = Add(MagicianPosition, Rotate(HandPositionOffset, MagicianYawOnly));
 
-        float OffsetYawRad = CameraYawOffset * Deg2Rad;
-        float OffsetPitchRad = CameraPitchOffset * Deg2Rad;
-        Quaternion YawPitchOffset = Quaternion.CreateFromYawPitchRoll(OffsetYawRad, OffsetPitchRad, 0f);
-        Quaternion CameraRotation = Quaternion.Multiply(MagicianRotation, YawPitchOffset);
+        float TotalYawRad = (Magician.Rotation.Yaw + CameraYawOffset) * Deg2Rad;
+        float TotalPitchRad = (Magician.Rotation.Pitch + CameraPitchOffset) * Deg2Rad;
+        Quaternion CameraRotation = Quaternion.CreateFromYawPitchRoll(TotalYawRad, TotalPitchRad, 0f);
+
         DbVector3 CameraPosition = Add(MagicianPosition, Rotate(CameraPositionOffset, CameraRotation));
 
         DbVector3 BaseCameraForward = new(0f, 0f, 1f);
@@ -238,7 +237,6 @@ public static partial class Module
 
         DbVector3 ThrowingCardTarget = RaycastFromCamera(ctx, Magician, new Raycast(CameraPosition, CameraForward, MaxDistance));
         DbVector3 ThrowingCardDirection = Normalize(Sub(ThrowingCardTarget, HandPosition));
-    
 
         ctx.Db.throwing_cards.Insert(new ThrowingCard
         {

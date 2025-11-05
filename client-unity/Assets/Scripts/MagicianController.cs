@@ -53,15 +53,15 @@ public class MagicianController : MonoBehaviour
         Vector3 CharacterWorldPosition = transform.position;
         CameraPositionOffset = CameraWorldPosition - CharacterWorldPosition;
 
-        Vector2 Reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
+        Vector2 Reticle = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
         Vector3 D = AimRay.direction.normalized;
 
-        float RayYawDeg = Mathf.Atan2(D.x, D.z) * Mathf.Rad2Deg;
-        float RayPitchDeg = Mathf.Asin(D.y) * Mathf.Rad2Deg;
+        Quaternion MagicianRotation = Quaternion.Euler(TargetRotation.Pitch, TargetRotation.Yaw, 0f);
+        Vector3 LocalDir = Quaternion.Inverse(MagicianRotation) * D;
 
-        CameraYawOffset = Mathf.DeltaAngle(TargetRotation.Yaw, RayYawDeg);
-        CameraPitchOffset = Mathf.DeltaAngle(TargetRotation.Pitch, RayPitchDeg);   
+        float CameraYawOffset = Mathf.Atan2(LocalDir.x, LocalDir.z) * Mathf.Rad2Deg;
+        float CameraPitchOffset = Mathf.Asin(Mathf.Clamp(LocalDir.y, -1f, 1f)) * Mathf.Rad2Deg;
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created

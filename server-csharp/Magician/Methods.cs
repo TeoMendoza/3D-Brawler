@@ -30,4 +30,11 @@ public static partial class Module
         return Closest;
     }
 
+    static float WrapDeg(float d)
+    {
+        d = (d + 180f) % 360f;
+        if (d < 0f) d += 360f;
+        return d - 180f;
+    }
+
 }
