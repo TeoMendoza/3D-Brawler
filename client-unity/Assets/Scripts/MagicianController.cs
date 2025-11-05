@@ -53,15 +53,27 @@ public class MagicianController : MonoBehaviour
         Vector3 CharacterWorldPosition = transform.position;
         CameraPositionOffset = CameraWorldPosition - CharacterWorldPosition;
 
-        Vector2 Reticle = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-        Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
-        Vector3 D = AimRay.direction.normalized;
+        float BodyYaw = TargetRotation.Yaw;
+float BodyPitch = TargetRotation.Pitch;
 
-        Quaternion MagicianRotation = Quaternion.Euler(TargetRotation.Pitch, TargetRotation.Yaw, 0f);
-        Vector3 LocalDir = Quaternion.Inverse(MagicianRotation) * D;
+float CameraYaw = mainCamera.transform.eulerAngles.y;
+float CameraPitch = mainCamera.transform.eulerAngles.x;
 
-        float CameraYawOffset = Mathf.Atan2(LocalDir.x, LocalDir.z) * Mathf.Rad2Deg;
-        float CameraPitchOffset = Mathf.Asin(Mathf.Clamp(LocalDir.y, -1f, 1f)) * Mathf.Rad2Deg;
+// CameraYawOffset = Mathf.DeltaAngle(BodyYaw, CameraYaw);
+// CameraPitchOffset = Mathf.DeltaAngle(BodyPitch, CameraPitch);
+        // CameraYawOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.y);
+        // CameraPitchOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.x);
+        // Vector2 Reticle = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+        // Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
+        // Vector3 D = AimRay.direction.normalized;
+
+        // Quaternion MagicianRotation = Quaternion.Euler(TargetRotation.Pitch, TargetRotation.Yaw, 0f);
+        // Vector3 LocalDir = Quaternion.Inverse(MagicianRotation) * D;
+
+        // CameraYawOffset = Mathf.Atan2(LocalDir.x, LocalDir.z) * Mathf.Rad2Deg;
+        // CameraPitchOffset = Mathf.Asin(Mathf.Clamp(LocalDir.y, -1f, 1f)) * Mathf.Rad2Deg;
+        // CameraYawOffset = 0;
+        // CameraPitchOffset = 0;
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
