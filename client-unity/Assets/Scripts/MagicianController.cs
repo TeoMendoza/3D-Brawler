@@ -167,7 +167,7 @@ public class MagicianController : MonoBehaviour
 
     public void CardThrow()
     {
-        float MaxDistance = 1000f;
+        float MaxDistance = 100f;
 
         Vector3 CharacterWorldPosition = transform.position;
         Vector3 HandWorldPosition = CardThrowHand.position;

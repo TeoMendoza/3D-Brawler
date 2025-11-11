@@ -7,7 +7,6 @@ public static partial class Module
     {
 
         DbVector3 Closest = Add(Raycast.Position, Mul(Raycast.Forward, Raycast.MaxDistance));
-        Log.Info($"Raycast Forward: {Raycast.Forward}");
         float ClosestScalar = Raycast.MaxDistance;
         const float EPS = 1e-4f;
 
