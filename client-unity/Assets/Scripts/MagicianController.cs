@@ -53,27 +53,17 @@ public class MagicianController : MonoBehaviour
         Vector3 CharacterWorldPosition = transform.position;
         CameraPositionOffset = CameraWorldPosition - CharacterWorldPosition;
 
-        float BodyYaw = TargetRotation.Yaw;
-float BodyPitch = TargetRotation.Pitch;
+        CameraYawOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.y);
+        CameraPitchOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.x);
+        Vector2 Reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
+        Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
+        Vector3 D = AimRay.direction.normalized;
 
-float CameraYaw = mainCamera.transform.eulerAngles.y;
-float CameraPitch = mainCamera.transform.eulerAngles.x;
+        Quaternion MagicianRotation = Quaternion.Euler(TargetRotation.Pitch, TargetRotation.Yaw, 0f);
+        Vector3 LocalDir = Quaternion.Inverse(MagicianRotation) * D;
 
-// CameraYawOffset = Mathf.DeltaAngle(BodyYaw, CameraYaw);
-// CameraPitchOffset = Mathf.DeltaAngle(BodyPitch, CameraPitch);
-        // CameraYawOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.y);
-        // CameraPitchOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.x);
-        // Vector2 Reticle = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-        // Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
-        // Vector3 D = AimRay.direction.normalized;
-
-        // Quaternion MagicianRotation = Quaternion.Euler(TargetRotation.Pitch, TargetRotation.Yaw, 0f);
-        // Vector3 LocalDir = Quaternion.Inverse(MagicianRotation) * D;
-
-        // CameraYawOffset = Mathf.Atan2(LocalDir.x, LocalDir.z) * Mathf.Rad2Deg;
-        // CameraPitchOffset = Mathf.Asin(Mathf.Clamp(LocalDir.y, -1f, 1f)) * Mathf.Rad2Deg;
-        // CameraYawOffset = 0;
-        // CameraPitchOffset = 0;
+        CameraYawOffset = Mathf.Atan2(LocalDir.x, LocalDir.z);
+        CameraPitchOffset = Mathf.Asin(Mathf.Clamp(LocalDir.y, -1f, 1f));
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -175,18 +165,6 @@ float CameraPitch = mainCamera.transform.eulerAngles.x;
         GameManager.Conn.Reducers.MagicianFinishedLanding();
     }
 
-    public void CardThrow2()
-    {
-        Vector2 screenCenter = new(Screen.width * 0.5f, Screen.height * 0.5f);
-        Ray aimRay = mainCamera.ScreenPointToRay(screenCenter);
-        GameManager.Conn.Reducers.SpawnThrowingCard(direction: (DbVector3)aimRay.direction, spawnPoint: (DbVector3)CardThrowHand.position);
-
-        if (Input.GetMouseButton(0) is false)
-        {
-            CardThrowFinished();
-        }
-    }
-
     public void CardThrow()
     {
         float MaxDistance = 1000f;
@@ -201,7 +179,7 @@ float CameraPitch = mainCamera.transform.eulerAngles.x;
         Vector3 D = AimRay.direction.normalized;
         Debug.Log($"Camera Forward: {D}");
 
-        GameManager.Conn.Reducers.SpawnThrowingCardNew(
+        GameManager.Conn.Reducers.SpawnThrowingCard(
             cameraPositionOffset: (DbVector3)CameraPositionOffset,
             cameraYawOffset: CameraYawOffset,
             cameraPitchOffset: CameraPitchOffset,

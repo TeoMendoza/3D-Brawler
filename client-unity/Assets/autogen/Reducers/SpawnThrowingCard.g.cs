@@ -14,12 +14,12 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void SpawnThrowingCardHandler(ReducerEventContext ctx, DbVector3 direction, DbVector3 spawnPoint);
+        public delegate void SpawnThrowingCardHandler(ReducerEventContext ctx, DbVector3 cameraPositionOffset, float cameraYawOffset, float cameraPitchOffset, DbVector3 handPositionOffset, float maxDistance);
         public event SpawnThrowingCardHandler? OnSpawnThrowingCard;
 
-        public void SpawnThrowingCard(DbVector3 direction, DbVector3 spawnPoint)
+        public void SpawnThrowingCard(DbVector3 cameraPositionOffset, float cameraYawOffset, float cameraPitchOffset, DbVector3 handPositionOffset, float maxDistance)
         {
-            conn.InternalCallReducer(new Reducer.SpawnThrowingCard(direction, spawnPoint), this.SetCallReducerFlags.SpawnThrowingCardFlags);
+            conn.InternalCallReducer(new Reducer.SpawnThrowingCard(cameraPositionOffset, cameraYawOffset, cameraPitchOffset, handPositionOffset, maxDistance), this.SetCallReducerFlags.SpawnThrowingCardFlags);
         }
 
         public bool InvokeSpawnThrowingCard(ReducerEventContext ctx, Reducer.SpawnThrowingCard args)
@@ -38,8 +38,11 @@ namespace SpacetimeDB.Types
             }
             OnSpawnThrowingCard(
                 ctx,
-                args.Direction,
-                args.SpawnPoint
+                args.CameraPositionOffset,
+                args.CameraYawOffset,
+                args.CameraPitchOffset,
+                args.HandPositionOffset,
+                args.MaxDistance
             );
             return true;
         }
@@ -51,24 +54,36 @@ namespace SpacetimeDB.Types
         [DataContract]
         public sealed partial class SpawnThrowingCard : Reducer, IReducerArgs
         {
-            [DataMember(Name = "direction")]
-            public DbVector3 Direction;
-            [DataMember(Name = "spawnPoint")]
-            public DbVector3 SpawnPoint;
+            [DataMember(Name = "CameraPositionOffset")]
+            public DbVector3 CameraPositionOffset;
+            [DataMember(Name = "CameraYawOffset")]
+            public float CameraYawOffset;
+            [DataMember(Name = "CameraPitchOffset")]
+            public float CameraPitchOffset;
+            [DataMember(Name = "HandPositionOffset")]
+            public DbVector3 HandPositionOffset;
+            [DataMember(Name = "MaxDistance")]
+            public float MaxDistance;
 
             public SpawnThrowingCard(
-                DbVector3 Direction,
-                DbVector3 SpawnPoint
+                DbVector3 CameraPositionOffset,
+                float CameraYawOffset,
+                float CameraPitchOffset,
+                DbVector3 HandPositionOffset,
+                float MaxDistance
             )
             {
-                this.Direction = Direction;
-                this.SpawnPoint = SpawnPoint;
+                this.CameraPositionOffset = CameraPositionOffset;
+                this.CameraYawOffset = CameraYawOffset;
+                this.CameraPitchOffset = CameraPitchOffset;
+                this.HandPositionOffset = HandPositionOffset;
+                this.MaxDistance = MaxDistance;
             }
 
             public SpawnThrowingCard()
             {
-                this.Direction = new();
-                this.SpawnPoint = new();
+                this.CameraPositionOffset = new();
+                this.HandPositionOffset = new();
             }
 
             string IReducerArgs.ReducerName => "SpawnThrowingCard";

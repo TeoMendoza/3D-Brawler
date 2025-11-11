@@ -120,7 +120,7 @@ public static partial class Module
     public static bool SolveGjk(CompoundCollider A, CompoundCollider B, out GjkResult Result, int MaxIterations = 32)
     {
         var S = new List<GjkVertex>(4);
-        DbVector3 D = new DbVector3(1f, 0f, 0f);
+        DbVector3 D = new(1f, 0f, 0f);
 
         var V0 = SupportPair(A, B, D);
         if (Dot(V0.W, D) <= 0f) { Result = new GjkResult { Intersects = false, Simplex = S, LastDirection = D }; return false; }
@@ -222,64 +222,6 @@ public static partial class Module
 
         D = Negate(S[0].W);
         return false;
-    }
-
-    static DbVector3 ClosestPointOnSegmentToOrigin(DbVector3 P0, DbVector3 P1, out float T)
-    {
-        var V = Sub(P1, P0);
-        float VV = Dot(V, V);
-        if (VV <= 0f) { T = 0f; return P0; }
-        T = Clamp01(-Dot(P0, V) / VV);
-        return new DbVector3(P0.x + V.x * T, P0.y + V.y * T, P0.z + V.z * T);
-    }
-
-    static void ClosestPointOnTriangleToOrigin(DbVector3 A, DbVector3 B, DbVector3 C, out float L0, out float L1, out float L2)
-    {
-        var AB = Sub(B, A);
-        var AC = Sub(C, A);
-        var AO = Negate(A);
-
-        float d1 = Dot(AB, AO);
-        float d2 = Dot(AC, AO);
-        if (d1 <= 0f && d2 <= 0f) { L0 = 1f; L1 = 0f; L2 = 0f; return; }
-
-        var BO = Negate(B);
-        float d3 = Dot(AB, BO);
-        float d4 = Dot(Sub(C, B), BO);
-        if (d3 >= 0f && d4 <= d3) { L0 = 0f; L1 = 1f; L2 = 0f; return; }
-
-        float vc = d1 * d4 - d3 * d2;
-        if (vc <= 0f && d1 >= 0f && d3 <= 0f)
-        {
-            float v = d1 / (d1 - d3);
-            L0 = 1f - v; L1 = v; L2 = 0f; return;
-        }
-
-        var CO = Negate(C);
-        float d5 = Dot(AC, CO);
-        float d6 = Dot(Sub(B, C), CO);
-        if (d6 >= 0f && d5 <= d6) { L0 = 0f; L1 = 0f; L2 = 1f; return; }
-
-        float vb = d5 * d1 - d2 * d6;
-        if (vb <= 0f && d2 >= 0f && d5 <= 0f)
-        {
-            float w = d2 / (d2 - d5);
-            L0 = 1f - w; L1 = 0f; L2 = w; return;
-        }
-
-        float va = d3 * d5 - d4 * d6;
-        if (va <= 0f && d4 - d3 >= 0f && d6 - d5 >= 0f)
-        {
-            float w = (d4 - d3) / ((d4 - d3) + (d6 - d5));
-            L0 = 0f; L1 = 1f - w; L2 = w; return;
-        }
-
-        var N = Cross(AB, AC);
-        float n2 = Dot(N, N);
-        float inv = n2 > 0f ? 1f / n2 : 0f;
-        float u = Dot(N, Cross(AB, AO)) * inv;
-        float v2 = Dot(N, Cross(AO, AC)) * inv;
-        L0 = 1f - u - v2; L1 = u; L2 = v2;
     }
 
     static DbVector3 Negate(DbVector3 A) => new DbVector3(-A.x, -A.y, -A.z);

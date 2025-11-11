@@ -499,7 +499,6 @@ namespace SpacetimeDB.Types
                 "RemoveCollisionEntryMagician" => BSATNHelpers.Decode<Reducer.RemoveCollisionEntryMagician>(encodedArgs),
                 "SpawnProjectile" => BSATNHelpers.Decode<Reducer.SpawnProjectile>(encodedArgs),
                 "SpawnThrowingCard" => BSATNHelpers.Decode<Reducer.SpawnThrowingCard>(encodedArgs),
-                "SpawnThrowingCardNew" => BSATNHelpers.Decode<Reducer.SpawnThrowingCardNew>(encodedArgs),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }
@@ -541,7 +540,6 @@ namespace SpacetimeDB.Types
                 Reducer.RemoveCollisionEntryMagician args => Reducers.InvokeRemoveCollisionEntryMagician(eventContext, args),
                 Reducer.SpawnProjectile args => Reducers.InvokeSpawnProjectile(eventContext, args),
                 Reducer.SpawnThrowingCard args => Reducers.InvokeSpawnThrowingCard(eventContext, args),
-                Reducer.SpawnThrowingCardNew args => Reducers.InvokeSpawnThrowingCardNew(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }

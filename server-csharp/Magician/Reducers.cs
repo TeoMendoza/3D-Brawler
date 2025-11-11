@@ -195,25 +195,7 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void SpawnThrowingCard(ReducerContext ctx, DbVector3 direction, DbVector3 spawnPoint)
-    {
-        Magician character = ctx.Db.magician.identity.Find(ctx.Sender) ?? throw new Exception("Throwing Card Owner Not Found");
-        DbVector3 velocity = new DbVector3(direction.x * 10f, direction.y * 10f, direction.z * 10f); // Direction - Unit Vector
-        ThrowingCard ThrowingCard = new()
-        {
-            OwnerIdentity = character.identity,
-            MatchId = character.MatchId,
-            position = spawnPoint,
-            velocity = velocity,
-            direction = direction,
-            Collider = new CapsuleCollider { Center = spawnPoint, Direction = direction, HeightEndToEnd = 0.1f, Radius = 0.025f }, // Accounts For Prefab Scale, 0.1f, 0.025f
-        };
-
-        ctx.Db.throwing_cards.Insert(ThrowingCard);
-    }
-
-    [Reducer]
-    public static void SpawnThrowingCardNew(ReducerContext ctx,  DbVector3 CameraPositionOffset, float CameraYawOffset, float CameraPitchOffset, DbVector3 HandPositionOffset, float MaxDistance)
+    public static void SpawnThrowingCard(ReducerContext ctx,  DbVector3 CameraPositionOffset, float CameraYawOffset, float CameraPitchOffset, DbVector3 HandPositionOffset, float MaxDistance)
     {
         const float Deg2Rad = MathF.PI / 180f;
 
@@ -244,8 +226,8 @@ public static partial class Module
             MatchId = Magician.MatchId,
             position = HandPosition,
             direction = ThrowingCardDirection,
-            velocity = Mul(ThrowingCardDirection, 10f),
-            Collider = new CapsuleCollider { Center = HandPosition, Direction = ThrowingCardDirection, HeightEndToEnd = 0.1f, Radius = 0.025f },
+            velocity = Mul(ThrowingCardDirection, 50f),
+            Collider = new CapsuleCollider { Center = HandPosition, Direction = ThrowingCardDirection, HeightEndToEnd = 0.5f, Radius = 0.05f }, // 0.1f, 0.025f Original, extended to try and compensate for speed
         });
     }
 
