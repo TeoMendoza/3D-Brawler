@@ -35,8 +35,6 @@ namespace SpacetimeDB.Types
         public KinematicInformation KinematicInformation;
         [DataMember(Name = "Collider")]
         public CapsuleCollider Collider;
-        [DataMember(Name = "GjkCollider")]
-        public ConvexHullCollider GjkCollider;
         [DataMember(Name = "PlayerPermissionConfig")]
         public System.Collections.Generic.List<PermissionEntry> PlayerPermissionConfig;
         [DataMember(Name = "CollisionEntries")]
@@ -57,7 +55,6 @@ namespace SpacetimeDB.Types
             MagicianState State,
             KinematicInformation KinematicInformation,
             CapsuleCollider Collider,
-            ConvexHullCollider GjkCollider,
             System.Collections.Generic.List<PermissionEntry> PlayerPermissionConfig,
             System.Collections.Generic.List<CollisionEntry> CollisionEntries,
             DbVector3 CorrectedVelocity,
@@ -74,7 +71,6 @@ namespace SpacetimeDB.Types
             this.State = State;
             this.KinematicInformation = KinematicInformation;
             this.Collider = Collider;
-            this.GjkCollider = GjkCollider;
             this.PlayerPermissionConfig = PlayerPermissionConfig;
             this.CollisionEntries = CollisionEntries;
             this.CorrectedVelocity = CorrectedVelocity;
@@ -89,7 +85,6 @@ namespace SpacetimeDB.Types
             this.Velocity = new();
             this.KinematicInformation = new();
             this.Collider = new();
-            this.GjkCollider = new();
             this.PlayerPermissionConfig = new();
             this.CollisionEntries = new();
             this.CorrectedVelocity = new();
