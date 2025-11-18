@@ -11,52 +11,29 @@ public static partial class Module
         public float Margin = margin;
     }
 
-    public struct GjkVertex
+    public struct GjkVertex(DbVector3 SupportPointA, DbVector3 SupportPointB)
     {
-        public DbVector3 SupportPointA;
-        public DbVector3 SupportPointB;
-        public DbVector3 MinkowskiPoint;
-
-        public GjkVertex(DbVector3 SupportPointA, DbVector3 SupportPointB)
-        {
-            this.SupportPointA = SupportPointA;
-            this.SupportPointB = SupportPointB;
-            MinkowskiPoint = Sub(SupportPointA, SupportPointB);
-        }
+        public DbVector3 SupportPointA = SupportPointA;
+        public DbVector3 SupportPointB = SupportPointB;
+        public DbVector3 MinkowskiPoint = Sub(SupportPointA, SupportPointB);
     }
 
-    public struct GjkResult
+    public struct GjkResult(bool Intersects, List<GjkVertex> Simplex, DbVector3 LastDirection)
     {
-        public bool Intersects;
-        public List<GjkVertex> Simplex;
-        public DbVector3 LastDirection;
+        public bool Intersects = Intersects;
+        public List<GjkVertex> Simplex = Simplex;
+        public DbVector3 LastDirection = LastDirection;
     }
 
-    public static bool SolveGjk(
-        ConvexHullCollider ColliderA,
-        DbVector3 PositionA,
-        float YawRadiansA,
-        ConvexHullCollider ColliderB,
-        DbVector3 PositionB,
-        float YawRadiansB,
-        out GjkResult Result,
-        int MaxIterations = 32
-    )
+    public static bool SolveGjk(ConvexHullCollider ColliderA, DbVector3 PositionA, float YawRadiansA, ConvexHullCollider ColliderB, DbVector3 PositionB, float YawRadiansB, out GjkResult Result, int MaxIterations = 32)
     {
         List<GjkVertex> Simplex = new List<GjkVertex>(4);
-        DbVector3 SearchDirection = new DbVector3(1f, 0f, 0f);
+        DbVector3 SearchDirection = new(0f, 0f, 1f);
 
-        GjkVertex InitialVertex = SupportPairWorld(
-            ColliderA,
-            PositionA,
-            YawRadiansA,
-            ColliderB,
-            PositionB,
-            YawRadiansB,
-            SearchDirection
-        );
+        GjkVertex InitialVertex = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, SearchDirection);
+        float InitialDot = Dot(InitialVertex.MinkowskiPoint, SearchDirection);
 
-        if (Dot(InitialVertex.MinkowskiPoint, SearchDirection) <= 0f)
+        if (InitialDot <= 0f)
         {
             Result = new GjkResult
             {
@@ -72,17 +49,10 @@ public static partial class Module
 
         for (int IterationIndex = 0; IterationIndex < MaxIterations; IterationIndex++)
         {
-            GjkVertex SupportVertex = SupportPairWorld(
-                ColliderA,
-                PositionA,
-                YawRadiansA,
-                ColliderB,
-                PositionB,
-                YawRadiansB,
-                SearchDirection
-            );
+            GjkVertex SupportVertex = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, SearchDirection);
+            float SupportDot = Dot(SupportVertex.MinkowskiPoint, SearchDirection);
 
-            if (Dot(SupportVertex.MinkowskiPoint, SearchDirection) <= 0f)
+            if (SupportDot <= 0f)
             {
                 Result = new GjkResult
                 {
@@ -116,27 +86,15 @@ public static partial class Module
         return false;
     }
 
-    static GjkVertex SupportPairWorld(
-        ConvexHullCollider ColliderA,
-        DbVector3 PositionA,
-        float YawRadiansA,
-        ConvexHullCollider ColliderB,
-        DbVector3 PositionB,
-        float YawRadiansB,
-        DbVector3 DirectionWorld
-    )
+
+    static GjkVertex SupportPairWorld(ConvexHullCollider ColliderA, DbVector3 PositionA, float YawRadiansA, ConvexHullCollider ColliderB, DbVector3 PositionB, float YawRadiansB, DbVector3 DirectionWorld)
     {
         DbVector3 SupportPointAWorld = SupportWorld(ColliderA, PositionA, YawRadiansA, DirectionWorld);
         DbVector3 SupportPointBWorld = SupportWorld(ColliderB, PositionB, YawRadiansB, Negate(DirectionWorld));
         return new GjkVertex(SupportPointAWorld, SupportPointBWorld);
     }
 
-    static DbVector3 SupportWorld(
-        ConvexHullCollider Collider,
-        DbVector3 WorldPosition,
-        float YawRadians,
-        DbVector3 DirectionWorld
-    )
+    static DbVector3 SupportWorld(ConvexHullCollider Collider, DbVector3 WorldPosition, float YawRadians, DbVector3 DirectionWorld)
     {
         DbVector3 DirectionLocal = RotateAroundYAxis(DirectionWorld, -YawRadians);
         DbVector3 SupportLocalPoint = SupportLocal(Collider, DirectionLocal);
@@ -198,6 +156,16 @@ public static partial class Module
 
             DbVector3 SegmentBA = Sub(PointB, PointA);
             DbVector3 VectorToOriginFromA = Negate(PointA);
+
+            float DotSegmentWithAO = Dot(SegmentBA, VectorToOriginFromA);
+
+            if (DotSegmentWithAO <= 0f)
+            {
+                Simplex.RemoveAt(0);
+                SearchDirection = VectorToOriginFromA;
+                return false;
+            }
+
             DbVector3 NewDirection = TripleCross(SegmentBA, VectorToOriginFromA, SegmentBA);
 
             if (NearZero(NewDirection))
@@ -220,33 +188,59 @@ public static partial class Module
             DbVector3 VectorToOriginFromA = Negate(PointA);
             DbVector3 TriangleNormalABC = Cross(EdgeAB, EdgeAC);
 
-            DbVector3 PerpendicularTowardAB = Cross(TriangleNormalABC, EdgeAB);
-            if (Dot(PerpendicularTowardAB, VectorToOriginFromA) > 0f)
+            float DotAB_AO = Dot(EdgeAB, VectorToOriginFromA);
+            float DotAC_AO = Dot(EdgeAC, VectorToOriginFromA);
+
+            if (DotAB_AO <= 0f && DotAC_AO <= 0f)
             {
-                Simplex.RemoveAt(0);
-                DbVector3 NewDirection = TripleCross(EdgeAB, VectorToOriginFromA, EdgeAB);
-                if (NearZero(NewDirection))
-                {
-                    NewDirection = Perp(EdgeAB);
-                }
-                SearchDirection = NewDirection;
+                Simplex.Clear();
+                Simplex.Add(Simplex[2]);
+                SearchDirection = VectorToOriginFromA;
                 return false;
             }
 
-            DbVector3 PerpendicularTowardAC = Cross(EdgeAC, TriangleNormalABC);
-            if (Dot(PerpendicularTowardAC, VectorToOriginFromA) > 0f)
+            if (DotAB_AO > 0f)
             {
-                Simplex.RemoveAt(1);
-                DbVector3 NewDirection = TripleCross(EdgeAC, VectorToOriginFromA, EdgeAC);
-                if (NearZero(NewDirection))
+                DbVector3 PerpendicularTowardAB = TripleCross(EdgeAC, EdgeAB, EdgeAB);
+                float DotABRegion = Dot(PerpendicularTowardAB, VectorToOriginFromA);
+
+                if (DotABRegion > 0f)
                 {
-                    NewDirection = Perp(EdgeAC);
+                    Simplex.RemoveAt(0);
+                    DbVector3 NewDirection = PerpendicularTowardAB;
+
+                    if (NearZero(NewDirection))
+                    {
+                        NewDirection = Perp(EdgeAB);
+                    }
+
+                    SearchDirection = NewDirection;
+                    return false;
                 }
-                SearchDirection = NewDirection;
-                return false;
+            }
+
+            if (DotAC_AO > 0f)
+            {
+                DbVector3 PerpendicularTowardAC = TripleCross(EdgeAB, EdgeAC, EdgeAC);
+                float DotACRegion = Dot(PerpendicularTowardAC, VectorToOriginFromA);
+
+                if (DotACRegion > 0f)
+                {
+                    Simplex.RemoveAt(1);
+                    DbVector3 NewDirection = PerpendicularTowardAC;
+
+                    if (NearZero(NewDirection))
+                    {
+                        NewDirection = Perp(EdgeAC);
+                    }
+
+                    SearchDirection = NewDirection;
+                    return false;
+                }
             }
 
             DbVector3 OrientedNormal = TriangleNormalABC;
+
             if (Dot(OrientedNormal, VectorToOriginFromA) < 0f)
             {
                 OrientedNormal = Negate(OrientedNormal);
@@ -272,21 +266,25 @@ public static partial class Module
             DbVector3 FaceNormalACD = Cross(EdgeAC, EdgeAD);
             DbVector3 FaceNormalADB = Cross(EdgeAD, EdgeAB);
 
-            if (Dot(FaceNormalABC, VectorToOriginFromA) > 0f)
+            float DotABC = Dot(FaceNormalABC, VectorToOriginFromA);
+            float DotACD = Dot(FaceNormalACD, VectorToOriginFromA);
+            float DotADB = Dot(FaceNormalADB, VectorToOriginFromA);
+
+            if (DotABC > 0f)
             {
                 Simplex.RemoveAt(0);
                 SearchDirection = FaceNormalABC;
                 return false;
             }
 
-            if (Dot(FaceNormalACD, VectorToOriginFromA) > 0f)
+            if (DotACD > 0f)
             {
                 Simplex.RemoveAt(2);
                 SearchDirection = FaceNormalACD;
                 return false;
             }
 
-            if (Dot(FaceNormalADB, VectorToOriginFromA) > 0f)
+            if (DotADB > 0f)
             {
                 Simplex.RemoveAt(1);
                 SearchDirection = FaceNormalADB;
@@ -296,7 +294,8 @@ public static partial class Module
             return true;
         }
 
-        SearchDirection = Negate(Simplex[0].MinkowskiPoint);
+        DbVector3 PointSingle = Simplex[0].MinkowskiPoint;
+        SearchDirection = Negate(PointSingle);
         return false;
     }
 
@@ -446,10 +445,293 @@ public static partial class Module
         new DbVector3(-0.1340702f, 0.005429628f, 0.1797838f),
     };
 
-    public static readonly ConvexHullCollider MagicianColliderTemplate =
-        new ConvexHullCollider
+    public static readonly ConvexHullCollider MagicianColliderTemplate = new() { VerticesLocal = PlayerConvexHullVerticesLocal, Margin = 0f };
+
+
+
+   public struct ContactEPA(DbVector3 Normal)
+{
+    public DbVector3 Normal = Normal; // Object B -> A
+}
+
+public struct EpaFace
+{
+    public int IndexA;
+    public int IndexB;
+    public int IndexC;
+    public DbVector3 Normal;
+    public float Distance;
+    public bool Obsolete;
+}
+
+public struct EpaEdge
+{
+    public int IndexA;
+    public int IndexB;
+    public bool Obsolete;
+}
+
+public static bool EpaSolve(GjkResult Gjk, ConvexHullCollider ColliderA, DbVector3 PositionA, float YawRadiansA, ConvexHullCollider ColliderB, DbVector3 PositionB, float YawRadiansB, out ContactEPA Contact)
+{
+    const int MaxIterations = 32;
+    const float Epsilon = 1e-4f;
+
+    Contact = new ContactEPA(new DbVector3(0f, 0f, 0f));
+
+    List<GjkVertex> PolytopeVertices = Gjk.Simplex;
+    if (PolytopeVertices == null || PolytopeVertices.Count < 4)
+    {
+        return false;
+    }
+
+    List<EpaFace> Faces = new List<EpaFace>();
+    AddFace(PolytopeVertices, Faces, 0, 1, 2);
+    AddFace(PolytopeVertices, Faces, 0, 3, 1);
+    AddFace(PolytopeVertices, Faces, 0, 2, 3);
+    AddFace(PolytopeVertices, Faces, 1, 3, 2);
+
+    for (int Iteration = 0; Iteration < MaxIterations; Iteration++)
+    {
+        int ClosestFaceIndex = -1;
+        float ClosestDistance = float.MaxValue;
+
+        for (int FaceIndex = 0; FaceIndex < Faces.Count; FaceIndex++)
         {
-            VerticesLocal = PlayerConvexHullVerticesLocal,
-            Margin = 0f
-        };
+            EpaFace Face = Faces[FaceIndex];
+            if (Face.Obsolete)
+            {
+                continue;
+            }
+
+            if (Face.Distance < ClosestDistance)
+            {
+                ClosestDistance = Face.Distance;
+                ClosestFaceIndex = FaceIndex;
+            }
+        }
+
+        if (ClosestFaceIndex < 0)
+        {
+            return false;
+        }
+
+        EpaFace ClosestFace = Faces[ClosestFaceIndex];
+        DbVector3 SearchDirection = ClosestFace.Normal;
+
+        GjkVertex NewVertex = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, SearchDirection);
+
+        float Projection = Dot(NewVertex.MinkowskiPoint, SearchDirection);
+        float Improvement = Projection - ClosestFace.Distance;
+
+        if (Improvement < Epsilon)
+        {
+            DbVector3 Normal = ClosestFace.Normal;
+            float LengthSquared = Dot(Normal, Normal);
+
+            if (LengthSquared > 1e-12f)
+            {
+                float InverseLength = 1f / Sqrt(LengthSquared);
+                Normal = Mul(Normal, InverseLength);
+            }
+            else
+            {
+                Normal = NormalizeSmallVector(Gjk.LastDirection, new DbVector3(0f, 1f, 0f));
+            }
+
+            Normal.y = 0f;
+            float HorizontalLengthSquared = Dot(Normal, Normal);
+            if (HorizontalLengthSquared > 1e-12f)
+            {
+                float InverseHorizontalLength = 1f / Sqrt(HorizontalLengthSquared);
+                Normal = Mul(Normal, InverseHorizontalLength);
+            }
+
+            DbVector3 RelativeBToA = Sub(PositionA, PositionB);
+            if (Dot(Normal, RelativeBToA) < 0f)
+            {
+                Normal = Negate(Normal);
+            }
+
+            Contact = new ContactEPA(Normal);
+            return true;
+        }
+
+        int NewVertexIndex = PolytopeVertices.Count;
+        PolytopeVertices.Add(NewVertex);
+
+        List<EpaEdge> Edges = new List<EpaEdge>();
+
+        for (int FaceIndex = 0; FaceIndex < Faces.Count; FaceIndex++)
+        {
+            EpaFace Face = Faces[FaceIndex];
+            if (Face.Obsolete)
+            {
+                continue;
+            }
+
+            DbVector3 FacePoint = PolytopeVertices[Face.IndexA].MinkowskiPoint;
+            DbVector3 ToNewPoint = Sub(NewVertex.MinkowskiPoint, FacePoint);
+            float DotValue = Dot(Face.Normal, ToNewPoint);
+
+            if (DotValue > 0f)
+            {
+                Face.Obsolete = true;
+                Faces[FaceIndex] = Face;
+
+                AddEdge(Edges, Face.IndexA, Face.IndexB);
+                AddEdge(Edges, Face.IndexB, Face.IndexC);
+                AddEdge(Edges, Face.IndexC, Face.IndexA);
+            }
+        }
+
+        for (int FaceIndex = Faces.Count - 1; FaceIndex >= 0; FaceIndex--)
+        {
+            if (Faces[FaceIndex].Obsolete)
+            {
+                Faces.RemoveAt(FaceIndex);
+            }
+        }
+
+        for (int EdgeIndex = 0; EdgeIndex < Edges.Count; EdgeIndex++)
+        {
+            EpaEdge Edge = Edges[EdgeIndex];
+            if (Edge.Obsolete)
+            {
+                continue;
+            }
+
+            AddFace(PolytopeVertices, Faces, Edge.IndexA, Edge.IndexB, NewVertexIndex);
+        }
+    }
+
+    int FinalClosestFaceIndex = -1;
+    float FinalClosestDistance = float.MaxValue;
+
+    for (int FaceIndex = 0; FaceIndex < Faces.Count; FaceIndex++)
+    {
+        EpaFace Face = Faces[FaceIndex];
+        if (Face.Obsolete)
+        {
+            continue;
+        }
+
+        if (Face.Distance < FinalClosestDistance)
+        {
+            FinalClosestDistance = Face.Distance;
+            FinalClosestFaceIndex = FaceIndex;
+        }
+    }
+
+    if (FinalClosestFaceIndex >= 0)
+    {
+        EpaFace Face = Faces[FinalClosestFaceIndex];
+
+        DbVector3 Normal = Face.Normal;
+        float LengthSquared = Dot(Normal, Normal);
+
+        if (LengthSquared > 1e-12f)
+        {
+            float InverseLength = 1f / Sqrt(LengthSquared);
+            Normal = Mul(Normal, InverseLength);
+        }
+        else
+        {
+            Normal = NormalizeSmallVector(Gjk.LastDirection, new DbVector3(0f, 1f, 0f));
+        }
+
+        Normal.y = 0f;
+        float HorizontalLengthSquared = Dot(Normal, Normal);
+        if (HorizontalLengthSquared > 1e-12f)
+        {
+            float InverseHorizontalLength = 1f / Sqrt(HorizontalLengthSquared);
+            Normal = Mul(Normal, InverseHorizontalLength);
+        }
+
+        DbVector3 RelativeBToA = Sub(PositionA, PositionB);
+        if (Dot(Normal, RelativeBToA) < 0f)
+        {
+            Normal = Negate(Normal);
+        }
+
+        Contact = new ContactEPA(Normal);
+        return false;
+    }
+
+    return false;
+}
+
+
+static void AddFace(List<GjkVertex> Vertices, List<EpaFace> Faces, int IndexA, int IndexB, int IndexC)
+{
+    DbVector3 PointA = Vertices[IndexA].MinkowskiPoint;
+    DbVector3 PointB = Vertices[IndexB].MinkowskiPoint;
+    DbVector3 PointC = Vertices[IndexC].MinkowskiPoint;
+
+    DbVector3 EdgeAB = Sub(PointB, PointA);
+    DbVector3 EdgeAC = Sub(PointC, PointA);
+    DbVector3 Normal = Cross(EdgeAB, EdgeAC);
+
+    float LengthSquared = Dot(Normal, Normal);
+    if (LengthSquared > 1e-12f)
+    {
+        float InverseLength = 1f / Sqrt(LengthSquared);
+        Normal = Mul(Normal, InverseLength);
+    }
+    else
+    {
+        Normal = NormalizeSmallVector(Sub(PointB, PointC), new DbVector3(0f, 1f, 0f));
+    }
+
+    float Distance = Dot(Normal, PointA);
+    if (Distance < 0f)
+    {
+        Normal = Negate(Normal);
+        Distance = -Distance;
+        (IndexC, IndexB) = (IndexB, IndexC);
+    }
+
+    EpaFace Face;
+    Face.IndexA = IndexA;
+    Face.IndexB = IndexB;
+    Face.IndexC = IndexC;
+    Face.Normal = Normal;
+    Face.Distance = Distance;
+    Face.Obsolete = false;
+
+    Faces.Add(Face);
+}
+
+static void AddEdge(List<EpaEdge> Edges, int IndexA, int IndexB)
+{
+    for (int EdgeIndex = 0; EdgeIndex < Edges.Count; EdgeIndex++)
+    {
+        EpaEdge ExistingEdge = Edges[EdgeIndex];
+        if (!ExistingEdge.Obsolete && ExistingEdge.IndexA == IndexB && ExistingEdge.IndexB == IndexA)
+        {
+            ExistingEdge.Obsolete = true;
+            Edges[EdgeIndex] = ExistingEdge;
+            return;
+        }
+    }
+
+    EpaEdge Edge;
+    Edge.IndexA = IndexA;
+    Edge.IndexB = IndexB;
+    Edge.Obsolete = false;
+    Edges.Add(Edge);
+}
+
+
+static DbVector3 ComputeContactNormal(DbVector3 RawNormal, DbVector3 PositionA, DbVector3 PositionB)
+{
+    DbVector3 Normal = RawNormal;
+    Normal.y = 0f;
+    Normal = Normalize(Normal);
+
+    DbVector3 RelativeBToA = Sub(PositionA, PositionB);
+    if (Dot(Normal, RelativeBToA) < 0f) Normal = Negate(Normal);
+
+    return Normal;
+}
+
 }

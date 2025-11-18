@@ -18,8 +18,8 @@ public static partial class Module
 
         ctx.Db.move_all_magicians.Insert(new Move_All_Magicians_Timer
         {
-            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 120.0)),
-            tick_rate = 1.0f / 120.0f
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
+            tick_rate = 1.0f / 60.0f
         });
 
         ctx.Db.gravity.Insert(new Gravity_Timer
@@ -44,8 +44,8 @@ public static partial class Module
 
         ctx.Db.move_throwing_cards.Insert(new Move_ThrowingCards_Timer
         {
-            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 90.0)),
-            tick_rate = 1.0f / 90.0f
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
+            tick_rate = 1.0f / 60.0f
         });
 
         ctx.Db.magician.Insert(new Magician

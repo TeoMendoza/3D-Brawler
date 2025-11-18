@@ -16,7 +16,6 @@ public static partial class Module
 
             if (TryRaycastOverlap(GetColliderShape(Magician.Collider), Magician.Collider, Raycast, out DbVector3 Hit))
             {
-                Log.Info("Raycast Hit");
                 float Scalar = Dot(Sub(Hit, Raycast.Position), Raycast.Forward);
                 if (Scalar <= ClosestScalar && Scalar >= EPS)
                 {

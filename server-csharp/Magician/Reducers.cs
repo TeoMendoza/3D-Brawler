@@ -13,7 +13,7 @@ public static partial class Module
 
         if (GetPermissionEntry(character.PlayerPermissionConfig, "CanWalk").Subscribers.Count == 0)
         {
-            float YawRotation = (float)(Math.PI / 180.0) * character.Rotation.Yaw;
+            float YawRotation = ToRadians(character.Rotation.Yaw);
             character.Velocity = new DbVector3(MathF.Cos(YawRotation) * Request.Velocity.x + MathF.Sin(YawRotation) * Request.Velocity.z, character.Velocity.y, -MathF.Sin(YawRotation) * Request.Velocity.x + MathF.Cos(YawRotation) * Request.Velocity.z);
         }
 
@@ -83,7 +83,8 @@ public static partial class Module
 
             if (character.CollisionEntries.Count > 0)
             {
-                List<Contact> Contacts = [];
+                List<ContactEPA> Contacts = [];
+                List<Contact> Contacts2 = [];
                 List<CollisionEntry> EntriesToRemove = [];
                 foreach (var Entry in character.CollisionEntries)
                 {
@@ -91,9 +92,27 @@ public static partial class Module
                     {
                         case CollisionEntryType.Magician:
                             Magician Player = ctx.Db.magician.Id.Find(Entry.Id) ?? throw new Exception("Colliding Magician Not Found");
-                            if (Player.Id != character.Id && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Player.Collider), Player.Collider, out Contact contact))
+
+                            // GJK TEST
+                            var ColliderA = character.GjkCollider;
+                            var PositionA = character.Position;
+                            float YawRadiansA = ToRadians(character.Rotation.Yaw);
+
+                            var ColliderB = Player.GjkCollider;
+                            var PositionB = Player.Position;
+                            float YawRadiansB = ToRadians(Player.Rotation.Yaw);
+
+                            if (Player.Id != character.Id && SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResult GjkResult))
                             {
-                                Contacts.Add(contact);
+                                if(EpaSolve(GjkResult, ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out ContactEPA contact))
+                                {
+                                    Contacts.Add(contact);
+                                }
+                            }
+
+                            if (Player.Id != character.Id && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Player.Collider), Player.Collider, out Contact contact2))
+                            {
+                                Contacts2.Add(contact2);
                             }
                             break;
 
@@ -116,13 +135,13 @@ public static partial class Module
                 DbVector3 CorrectedVelocity = character.Velocity;
                 if (Contacts.Count > 0)
                 {
-                    foreach (Contact Contact in Contacts)
+                    foreach (ContactEPA Contact in Contacts)
                     {
                         DbVector3 Normal = Contact.Normal;
-
                         float Direction = Dot(Normal, CorrectedVelocity);
                         if (Direction < 0f) CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, Direction));
                     }
+
                 }
 
                 character.IsColliding = Contacts.Count > 0;
@@ -197,19 +216,17 @@ public static partial class Module
     [Reducer]
     public static void SpawnThrowingCard(ReducerContext ctx,  DbVector3 CameraPositionOffset, float CameraYawOffset, float CameraPitchOffset, DbVector3 HandPositionOffset, float MaxDistance)
     {
-        const float Deg2Rad = MathF.PI / 180f;
-
         var Magician = ctx.Db.magician.identity.Find(ctx.Sender) ?? throw new Exception("Owner not found");
         DbVector3 MagicianPosition = Magician.Position;
 
-        float MagYawRad = Magician.Rotation.Yaw * Deg2Rad;
-        float MagPitchRad = Magician.Rotation.Pitch * Deg2Rad;
+        float MagYawRad = ToRadians(Magician.Rotation.Yaw);
+        float MagPitchRad = ToRadians(Magician.Rotation.Pitch);
         Quaternion MagicianYawOnly = Quaternion.CreateFromYawPitchRoll(MagYawRad, 0f, 0f);
 
         DbVector3 HandPosition = Add(MagicianPosition, Rotate(HandPositionOffset, MagicianYawOnly));
 
-        float TotalYawRad = (Magician.Rotation.Yaw + CameraYawOffset) * Deg2Rad;
-        float TotalPitchRad = (Magician.Rotation.Pitch + CameraPitchOffset) * Deg2Rad;
+        float TotalYawRad = ToRadians(Magician.Rotation.Yaw + CameraYawOffset);
+        float TotalPitchRad = ToRadians(Magician.Rotation.Pitch + CameraPitchOffset);
         Quaternion CameraRotation = Quaternion.CreateFromYawPitchRoll(TotalYawRad, TotalPitchRad, 0f);
 
         DbVector3 CameraPosition = Add(MagicianPosition, Rotate(CameraPositionOffset, CameraRotation));
