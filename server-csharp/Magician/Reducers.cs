@@ -84,7 +84,6 @@ public static partial class Module
             if (character.CollisionEntries.Count > 0)
             {
                 List<ContactEPA> Contacts = [];
-                List<Contact> Contacts2 = [];
                 List<CollisionEntry> EntriesToRemove = [];
                 foreach (var Entry in character.CollisionEntries)
                 {
@@ -92,8 +91,7 @@ public static partial class Module
                     {
                         case CollisionEntryType.Magician:
                             Magician Player = ctx.Db.magician.Id.Find(Entry.Id) ?? throw new Exception("Colliding Magician Not Found");
-
-                            // GJK TEST
+                            
                             var ColliderA = character.GjkCollider;
                             var PositionA = character.Position;
                             float YawRadiansA = ToRadians(character.Rotation.Yaw);
@@ -109,14 +107,9 @@ public static partial class Module
                                     Contacts.Add(contact);
                                 }
                             }
-
-                            if (Player.Id != character.Id && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(Player.Collider), Player.Collider, out Contact contact2))
-                            {
-                                Contacts2.Add(contact2);
-                            }
                             break;
 
-                        case CollisionEntryType.ThrowingCard:
+                        case CollisionEntryType.ThrowingCard: // Switch To GJK - Also, Need To Remove Collision Entry From All Other Players In Match Aswell, Not Just Hit Target
                             ThrowingCard ThrowingCard = ctx.Db.throwing_cards.Id.Find(Entry.Id) ?? throw new Exception("Colliding Bullet Not Found");
                             if (ThrowingCard.OwnerIdentity != character.identity && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(ThrowingCard.Collider), ThrowingCard.Collider, out Contact _contact))
                             {
@@ -133,15 +126,11 @@ public static partial class Module
                 character.CollisionEntries.RemoveAll(CollisionEntry => EntriesToRemove.Contains(CollisionEntry));
 
                 DbVector3 CorrectedVelocity = character.Velocity;
-                if (Contacts.Count > 0)
+                foreach (ContactEPA Contact in Contacts)
                 {
-                    foreach (ContactEPA Contact in Contacts)
-                    {
-                        DbVector3 Normal = Contact.Normal;
-                        float Direction = Dot(Normal, CorrectedVelocity);
-                        if (Direction < 0f) CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, Direction));
-                    }
-
+                    DbVector3 Normal = Contact.Normal;
+                    float Direction = Dot(Normal, CorrectedVelocity);
+                    if (Direction < 0f) CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, Direction));
                 }
 
                 character.IsColliding = Contacts.Count > 0;

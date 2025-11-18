@@ -37,23 +37,7 @@ public static partial class Module
         Box,
     }
 
-    [SpacetimeDB.Type]
-    public partial struct CollisionEntry(CollisionEntryType type, uint id)
-    {
-        public CollisionEntryType Type = type;
-        public uint Id = id;
-
-    }
-
-    [SpacetimeDB.Type]
-    public enum CollisionEntryType
-    {
-        Magician,
-        ThrowingCard,
-        Map,
-        Player, // Remove Eventually
-        Bullet  // Remove Eventually  
-    }
+    
 
     public partial struct Contact
     {

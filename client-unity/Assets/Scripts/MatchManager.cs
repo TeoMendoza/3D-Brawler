@@ -14,7 +14,6 @@ public class MatchManager : MonoBehaviour
     public uint? MatchId = 1;
     public DbConnection Conn;
     public Dictionary<Identity, MagicianController> Players = new();
-    public PlayableCharacterController PlayableCharacterPrefab;
     public MagicianController MagicianPrefab;
     public Dictionary<uint, ThrowingCardController> ThrowingCards = new();
     public ThrowingCardController ThrowingCardPrefab;

@@ -23,6 +23,8 @@ public static partial class Module
         public uint Id;
         public uint maxPlayers;
         public uint currentPlayers;
+
+        [SpacetimeDB.Index.BTree(Name = "Started")]
         public bool inProgress;
     } 
 }

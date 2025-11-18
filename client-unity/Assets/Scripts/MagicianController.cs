@@ -115,8 +115,6 @@ public class MagicianController : MonoBehaviour
 
         pitchCurrent = Mathf.SmoothDampAngle(pitchCurrent, TargetRotation.Pitch, ref pitchVel, pitchSmooth);
         thirdPersonCamPivot.transform.localRotation = Quaternion.Euler(pitchCurrent, 0f, 0f);
-
-        
     }
 
     public void HandleMagicianUpdate(EventContext context, Magician oldChar, Magician newChar)

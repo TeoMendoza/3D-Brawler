@@ -28,6 +28,24 @@ namespace SpacetimeDB.Types
 
             public readonly IdUniqueIndex Id;
 
+            public sealed class SameMatchPlayersIndex : BTreeIndexBase<(uint MatchId, uint Id)>
+            {
+                protected override (uint MatchId, uint Id) GetKey(Magician row) => (row.MatchId, row.Id);
+
+                public SameMatchPlayersIndex(MagicianHandle table) : base(table) { }
+            }
+
+            public readonly SameMatchPlayersIndex SameMatchPlayers;
+
+            public sealed class MatchIdIndex : BTreeIndexBase<uint>
+            {
+                protected override uint GetKey(Magician row) => row.MatchId;
+
+                public MatchIdIndex(MagicianHandle table) : base(table) { }
+            }
+
+            public readonly MatchIdIndex MatchId;
+
             public sealed class IdentityUniqueIndex : UniqueIndexBase<SpacetimeDB.Identity>
             {
                 protected override SpacetimeDB.Identity GetKey(Magician row) => row.Identity;
@@ -40,6 +58,8 @@ namespace SpacetimeDB.Types
             internal MagicianHandle(DbConnection conn) : base(conn)
             {
                 Id = new(this);
+                SameMatchPlayers = new(this);
+                MatchId = new(this);
                 Identity = new(this);
             }
 

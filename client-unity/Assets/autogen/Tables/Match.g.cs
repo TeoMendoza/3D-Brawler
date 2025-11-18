@@ -28,9 +28,19 @@ namespace SpacetimeDB.Types
 
             public readonly IdUniqueIndex Id;
 
+            public sealed class StartedIndex : BTreeIndexBase<bool>
+            {
+                protected override bool GetKey(Match row) => row.InProgress;
+
+                public StartedIndex(MatchHandle table) : base(table) { }
+            }
+
+            public readonly StartedIndex Started;
+
             internal MatchHandle(DbConnection conn) : base(conn)
             {
                 Id = new(this);
+                Started = new(this);
             }
 
             protected override object GetPrimaryKey(Match row) => row.Id;

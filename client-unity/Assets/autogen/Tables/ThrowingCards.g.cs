@@ -28,9 +28,29 @@ namespace SpacetimeDB.Types
 
             public readonly IdUniqueIndex Id;
 
+            public sealed class MatchIdIndex : BTreeIndexBase<uint>
+            {
+                protected override uint GetKey(ThrowingCard row) => row.MatchId;
+
+                public MatchIdIndex(ThrowingCardsHandle table) : base(table) { }
+            }
+
+            public readonly MatchIdIndex MatchId;
+
+            public sealed class OwnerIdentityIndex : BTreeIndexBase<SpacetimeDB.Identity>
+            {
+                protected override SpacetimeDB.Identity GetKey(ThrowingCard row) => row.OwnerIdentity;
+
+                public OwnerIdentityIndex(ThrowingCardsHandle table) : base(table) { }
+            }
+
+            public readonly OwnerIdentityIndex OwnerIdentity;
+
             internal ThrowingCardsHandle(DbConnection conn) : base(conn)
             {
                 Id = new(this);
+                MatchId = new(this);
+                OwnerIdentity = new(this);
             }
 
             protected override object GetPrimaryKey(ThrowingCard row) => row.Id;
