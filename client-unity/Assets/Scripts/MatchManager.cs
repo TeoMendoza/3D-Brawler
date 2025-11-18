@@ -97,8 +97,7 @@ public class MatchManager : MonoBehaviour
             var prefab = Instantiate(ThrowingCardPrefab);
             prefab.Initalize(throwingCard);     
             ThrowingCards.Add(throwingCard.Id, prefab);
-        }
-            
+        } 
     }
     
     public void RemoveThrowingCard(EventContext context, ThrowingCard throwingCard)
