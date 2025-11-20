@@ -6,7 +6,7 @@ public static partial class Module
 {
     public static bool EpaSolve(GjkResult Gjk, List<ConvexHullCollider> ColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ColliderB, DbVector3 PositionB, float YawRadiansB, out ContactEPA Contact)
     {
-        const int MaxIterations = 32;
+        const int MaxIterations = 16;
         const float Epsilon = 1e-4f;
 
         Contact = new ContactEPA(new DbVector3(0f, 0f, 0f));
