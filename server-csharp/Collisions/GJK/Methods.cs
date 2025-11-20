@@ -4,7 +4,7 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-    public static bool SolveGjk(ConvexHullCollider ColliderA, DbVector3 PositionA, float YawRadiansA, ConvexHullCollider ColliderB, DbVector3 PositionB, float YawRadiansB, out GjkResult Result, int MaxIterations = 32)
+    public static bool SolveGjk(List<ConvexHullCollider> ColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ColliderB, DbVector3 PositionB, float YawRadiansB, out GjkResult Result, int MaxIterations = 32)
     {
         List<GjkVertex> Simplex = new List<GjkVertex>(4);
         DbVector3 SearchDirection = new(0f, 0f, 1f);
@@ -66,19 +66,39 @@ public static partial class Module
     }
 
 
-    static GjkVertex SupportPairWorld(ConvexHullCollider ColliderA, DbVector3 PositionA, float YawRadiansA, ConvexHullCollider ColliderB, DbVector3 PositionB, float YawRadiansB, DbVector3 DirectionWorld)
+    static GjkVertex SupportPairWorld(List<ConvexHullCollider> ComplexColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ComplexColliderB, DbVector3 PositionB, float YawRadiansB, DbVector3 DirectionWorld)
     {
-        DbVector3 SupportPointAWorld = SupportWorld(ColliderA, PositionA, YawRadiansA, DirectionWorld);
-        DbVector3 SupportPointBWorld = SupportWorld(ColliderB, PositionB, YawRadiansB, Negate(DirectionWorld));
+        DbVector3 SupportPointAWorld = SupportWorldComplex(ComplexColliderA, PositionA, YawRadiansA, DirectionWorld);
+        DbVector3 SupportPointBWorld = SupportWorldComplex(ComplexColliderB, PositionB, YawRadiansB, Negate(DirectionWorld));
         return new GjkVertex(SupportPointAWorld, SupportPointBWorld);
     }
 
-    static DbVector3 SupportWorld(ConvexHullCollider Collider, DbVector3 WorldPosition, float YawRadians, DbVector3 DirectionWorld)
+    static DbVector3 SupportWorldComplex(List<ConvexHullCollider> ComplexCollider, DbVector3 WorldPosition, float YawRadians, DbVector3 DirectionWorld)
     {
         DbVector3 DirectionLocal = RotateAroundYAxis(DirectionWorld, -YawRadians);
-        DbVector3 SupportLocalPoint = SupportLocal(Collider, DirectionLocal);
+        DbVector3 SupportLocalPoint = SupportLocalComplex(ComplexCollider, DirectionLocal);
         DbVector3 SupportWorldRotated = RotateAroundYAxis(SupportLocalPoint, YawRadians);
         return Add(SupportWorldRotated, WorldPosition);
+    }
+
+    static DbVector3 SupportLocalComplex(List<ConvexHullCollider> ComplexCollider, DbVector3 DirectionLocal)
+    {
+        float BestDot = float.NegativeInfinity;
+        DbVector3 BestPoint = new(0f, 0f, 0f);
+
+        for (int Index = 0; Index < ComplexCollider.Count; Index++)
+        {
+            DbVector3 HullSupportPoint = SupportLocal(ComplexCollider[Index], DirectionLocal);
+            float DotValue = Dot(HullSupportPoint, DirectionLocal);
+
+            if (DotValue > BestDot)
+            {
+                BestDot = DotValue;
+                BestPoint = HullSupportPoint;
+            }
+        }
+
+        return BestPoint;
     }
 
     static DbVector3 SupportLocal(ConvexHullCollider Collider, DbVector3 Direction)
@@ -99,16 +119,6 @@ public static partial class Module
         }
 
         DbVector3 BestVertex = Vertices[BestVertexIndex];
-
-        if (Collider.Margin > 0f)
-        {
-            DbVector3 NormalizedDirection = Normalize(Direction);
-            return new DbVector3(
-                BestVertex.x + NormalizedDirection.x * Collider.Margin,
-                BestVertex.y + NormalizedDirection.y * Collider.Margin,
-                BestVertex.z + NormalizedDirection.z * Collider.Margin
-            );
-        }
 
         return BestVertex;
     }

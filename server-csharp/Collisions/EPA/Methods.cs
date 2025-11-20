@@ -4,7 +4,7 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-    public static bool EpaSolve(GjkResult Gjk, ConvexHullCollider ColliderA, DbVector3 PositionA, float YawRadiansA, ConvexHullCollider ColliderB, DbVector3 PositionB, float YawRadiansB, out ContactEPA Contact)
+    public static bool EpaSolve(GjkResult Gjk, List<ConvexHullCollider> ColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ColliderB, DbVector3 PositionB, float YawRadiansB, out ContactEPA Contact)
     {
         const int MaxIterations = 32;
         const float Epsilon = 1e-4f;

@@ -92,11 +92,11 @@ public static partial class Module
                         case CollisionEntryType.Magician:
                             Magician Player = ctx.Db.magician.Id.Find(Entry.Id) ?? throw new Exception("Colliding Magician Not Found");
                             
-                            var ColliderA = character.GjkCollider;
+                            var ColliderA = character.GjkCollider.ConvexHulls;
                             var PositionA = character.Position;
                             float YawRadiansA = ToRadians(character.Rotation.Yaw);
 
-                            var ColliderB = Player.GjkCollider;
+                            var ColliderB = Player.GjkCollider.ConvexHulls;
                             var PositionB = Player.Position;
                             float YawRadiansB = ToRadians(Player.Rotation.Yaw);
 

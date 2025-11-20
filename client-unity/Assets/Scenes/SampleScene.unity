@@ -148,7 +148,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87e10196f6cae41f9888eb74336c873a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PlayableCharacterPrefab: {fileID: 2608645888762272316, guid: c33192d84c49846b7ac8b86a8b28226b, type: 3}
   MagicianPrefab: {fileID: 3838300054775145683, guid: 9cac75c6e83db44a488f7f31d8e9a9b3, type: 3}
   ThrowingCardPrefab: {fileID: 4753613909389792992, guid: 45a99bf801c8a486aa152076d1859586, type: 3}
 --- !u!4 &156625267

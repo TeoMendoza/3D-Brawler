@@ -86,7 +86,6 @@ public static partial class Module
                 CorrectedVelocity = new DbVector3 { x = 0, y = 0, z = 0 }
             });
 
-
             // Test Player
             ctx.Db.magician.Insert(new Magician
             {
@@ -132,6 +131,7 @@ public static partial class Module
         }
 
         ctx.Db.magician.identity.Delete(ctx.Sender);
+        ctx.Db.magician.Id.Delete(10000);
 
         // Removes Player Objects
         foreach(ThrowingCard ThrowingCard in ctx.Db.throwing_cards.OwnerIdentity.Filter(character.identity)) ctx.Db.throwing_cards.Id.Delete(ThrowingCard.Id);

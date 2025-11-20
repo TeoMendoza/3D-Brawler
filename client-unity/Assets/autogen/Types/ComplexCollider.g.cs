@@ -13,19 +13,19 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class ConvexHullCollider
+    public sealed partial class ComplexCollider
     {
-        [DataMember(Name = "VerticesLocal")]
-        public System.Collections.Generic.List<DbVector3> VerticesLocal;
+        [DataMember(Name = "ConvexHulls")]
+        public System.Collections.Generic.List<ConvexHullCollider> ConvexHulls;
 
-        public ConvexHullCollider(System.Collections.Generic.List<DbVector3> VerticesLocal)
+        public ComplexCollider(System.Collections.Generic.List<ConvexHullCollider> ConvexHulls)
         {
-            this.VerticesLocal = VerticesLocal;
+            this.ConvexHulls = ConvexHulls;
         }
 
-        public ConvexHullCollider()
+        public ComplexCollider()
         {
-            this.VerticesLocal = new();
+            this.ConvexHulls = new();
         }
     }
 }

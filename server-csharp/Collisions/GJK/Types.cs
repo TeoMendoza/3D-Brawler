@@ -5,10 +5,15 @@ using SpacetimeDB;
 public static partial class Module
 {
     [SpacetimeDB.Type]
-    public partial struct ConvexHullCollider(List<DbVector3> verticesLocal, float margin)
+    public partial struct ComplexCollider(List<ConvexHullCollider> convexHulls)
+    {
+        public List<ConvexHullCollider> ConvexHulls = convexHulls;
+    }
+
+    [SpacetimeDB.Type]
+    public partial struct ConvexHullCollider(List<DbVector3> verticesLocal)
     {
         public List<DbVector3> VerticesLocal = verticesLocal;
-        public float Margin = margin;
     }
 
     public struct GjkVertex(DbVector3 SupportPointA, DbVector3 SupportPointB)
@@ -39,7 +44,5 @@ public static partial class Module
         Magician,
         ThrowingCard,
         Map,
-        Player, // Remove Eventually
-        Bullet  // Remove Eventually  
     }
 }

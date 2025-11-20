@@ -15,7 +15,5 @@ namespace SpacetimeDB.Types
         Magician,
         ThrowingCard,
         Map,
-        Player,
-        Bullet,
     }
 }

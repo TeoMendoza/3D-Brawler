@@ -22,7 +22,7 @@ public static partial class Module
         public MagicianState State;
         public KinematicInformation KinematicInformation;
         public CapsuleCollider Collider;
-        public ConvexHullCollider GjkCollider;
+        public ComplexCollider GjkCollider;
         public List<PermissionEntry> PlayerPermissionConfig;
         public List<CollisionEntry> CollisionEntries;
         public DbVector3 CorrectedVelocity;
