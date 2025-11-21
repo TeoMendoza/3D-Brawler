@@ -154,6 +154,8 @@ public static partial class Module
 
         ctx.Db.logged_out_players.Insert(player);
         ctx.Db.logged_in_players.identity.Delete(player.identity);
+
+        Log.Info("Disconnected");
     }
         
 }

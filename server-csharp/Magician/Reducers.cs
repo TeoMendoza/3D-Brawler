@@ -46,13 +46,17 @@ public static partial class Module
 
     [Reducer]
     public static void MoveMagicians(ReducerContext ctx, Move_All_Magicians_Timer timer)
-    {
+    {   
+        
         var time = timer.tick_rate;
         foreach (var charac in ctx.Db.magician.Iter())
         {
             var character = charac;
             DbVector3 oldPosition = character.Position;
+            // Log.Info($"Colliding: {character.IsColliding}");
             DbVector3 MoveVelocity = character.IsColliding ? character.CorrectedVelocity : character.Velocity;
+            character.IsColliding = false;
+            character.CorrectedVelocity = character.Velocity;       
 
             character.Position = new DbVector3(
             character.Position.x + MoveVelocity.x * time,
@@ -81,6 +85,7 @@ public static partial class Module
 
             character.Collider.Center = Add(character.Position, Mul(character.Collider.Direction, character.Collider.HeightEndToEnd * 0.5f));
 
+            
             if (character.CollisionEntries.Count > 0)
             {
                 List<ContactEPA> Contacts = [];
@@ -90,8 +95,10 @@ public static partial class Module
                     switch (Entry.Type)
                     {
                         case CollisionEntryType.Magician:
+                            
                             Magician Player = ctx.Db.magician.Id.Find(Entry.Id) ?? throw new Exception("Colliding Magician Not Found");
                             
+
                             var ColliderA = character.GjkCollider.ConvexHulls;
                             var PositionA = character.Position;
                             float YawRadiansA = ToRadians(character.Rotation.Yaw);
@@ -102,10 +109,9 @@ public static partial class Module
 
                             if (Player.Id != character.Id && SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResult GjkResult))
                             {
-                                if(EpaSolve(GjkResult, ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out ContactEPA contact))
-                                {
-                                    Contacts.Add(contact);
-                                }
+                                DbVector3 GjkNormal = Negate(GjkResult.LastDirection);
+                                DbVector3 Normal = ComputeContactNormal(GjkNormal, PositionA, PositionB);
+                                Contacts.Add(new ContactEPA(Normal));
                             }
                             break;
 
@@ -130,7 +136,10 @@ public static partial class Module
                 {
                     DbVector3 Normal = Contact.Normal;
                     float Direction = Dot(Normal, CorrectedVelocity);
-                    if (Direction < 0f) CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, Direction));
+                    if (Direction < 0f)
+                    {
+                        CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, Direction));
+                    }
                 }
 
                 character.IsColliding = Contacts.Count > 0;
