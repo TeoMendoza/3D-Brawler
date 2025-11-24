@@ -17,7 +17,8 @@ public class MatchManager : MonoBehaviour
     public MagicianController MagicianPrefab;
     public Dictionary<uint, ThrowingCardController> ThrowingCards = new();
     public ThrowingCardController ThrowingCardPrefab;
-        
+    public Dictionary<uint, FloorController> Map = new(); // Change To More General Map Class
+    public FloorController FloorPrefab;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -38,7 +39,9 @@ public class MatchManager : MonoBehaviour
         Conn.Db.Magician.OnDelete += RemoveCharacter;
         Conn.Db.ThrowingCards.OnInsert += AddThrowingCard;
         Conn.Db.ThrowingCards.OnDelete += RemoveThrowingCard;
+        Conn.Db.Map.OnInsert += AddMapPiece;
         
+        // I'm Not Entirely Sure These Are Needed
         foreach (Magician Character in Conn.Db.Magician.Iter())
         {
             if (Character.MatchId == MatchId)
@@ -58,11 +61,20 @@ public class MatchManager : MonoBehaviour
                 ThrowingCards.Add(throwingCard.Id, prefab);
             }
         }
+
     }
 
     public void EndMatch()
     {
         // Next Step Is To Destroy All Game Objects In Dictionary And Reset Values And Unsubscribe from DB Stuff
+    }
+
+    public void AddMapPiece(EventContext context, Map MapPiece)
+    {
+        Debug.Log("Map Piece Registered");
+        var prefab = Instantiate(FloorPrefab);
+        prefab.Initialize(MapPiece);
+        Map.Add(MapPiece.Id, prefab);
     }
 
     public void AddNewCharacter(EventContext context, Magician Character)

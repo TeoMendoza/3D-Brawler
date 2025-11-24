@@ -212,6 +212,14 @@ public class MagicianController : MonoBehaviour
             }
         }
 
+        else if (other.gameObject.CompareTag("Map"))
+        {
+            var Map = other.gameObject.GetComponent<FloorController>();
+            
+            var Entry = new CollisionEntry(Type: CollisionEntryType.Map, Id: Map.Id);
+            GameManager.Conn.Reducers.AddCollisionEntryMagician(entry: Entry, targetIdentity: Identity);
+        }
+
     }
 
     public void OnTriggerExit(Collider other)
@@ -235,6 +243,14 @@ public class MagicianController : MonoBehaviour
                 var Entry = new CollisionEntry(Type: CollisionEntryType.ThrowingCard, Id: Projectile.Id);
                 GameManager.Conn.Reducers.RemoveCollisionEntryMagician(entry: Entry, targetIdentity: Identity);
             }
+        }  
+
+        else if (other.gameObject.CompareTag("Map"))
+        {
+            var Map = other.gameObject.GetComponent<FloorController>();
+            
+            var Entry = new CollisionEntry(Type: CollisionEntryType.Map, Id: Map.Id);
+            GameManager.Conn.Reducers.RemoveCollisionEntryMagician(entry: Entry, targetIdentity: Identity);
         }
     }
     

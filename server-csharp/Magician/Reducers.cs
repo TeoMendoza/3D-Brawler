@@ -112,6 +112,26 @@ public static partial class Module
                             }
                             break;
 
+                        case CollisionEntryType.Map:
+                        
+                            Map Map = ctx.Db.Map.Id.Find(Entry.Id) ?? throw new Exception("Colliding Map Piece Not Found");
+
+                            var MapColliderA = character.GjkCollider.ConvexHulls;
+                            var MapPositionA = character.Position;
+                            float MapYawRadiansA = ToRadians(character.Rotation.Yaw);
+
+                            var MapColliderB = Map.GjkCollider.ConvexHulls;
+                            var MapPositionB = new DbVector3(0,0,0);
+                            float MapYawRadiansB = 0f;
+
+                            if (SolveGjk(MapColliderA, MapPositionA, MapYawRadiansA, MapColliderB, MapPositionB, MapYawRadiansB, out GjkResult MapGjkResult))
+                            {
+                                DbVector3 GjkNormal = Negate(MapGjkResult.LastDirection);
+                                DbVector3 Normal = ComputeContactNormal(GjkNormal, MapPositionA, MapPositionB);
+                                Contacts.Add(new ContactEPA(Normal)); 
+                            }
+                            break;
+
                         case CollisionEntryType.ThrowingCard: // Switch To GJK - Also, Need To Remove Collision Entry From All Other Players In Match Aswell, Not Just Hit Target
                             ThrowingCard ThrowingCard = ctx.Db.throwing_cards.Id.Find(Entry.Id) ?? throw new Exception("Colliding Bullet Not Found");
                             if (ThrowingCard.OwnerIdentity != character.identity && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(ThrowingCard.Collider), ThrowingCard.Collider, out Contact _contact))

@@ -23,6 +23,7 @@ namespace SpacetimeDB.Types
     {
         public RemoteTables(DbConnection conn)
         {
+            AddTable(Map = new(conn));
             AddTable(GravityMagician = new(conn));
             AddTable(LoggedInPlayers = new(conn));
             AddTable(LoggedOutPlayers = new(conn));

@@ -10,6 +10,8 @@ public static partial class Module
     {
         Log.Info($"Initializing...");
 
+        ctx.Db.Map.Insert(new Map {GjkCollider = FloorCollider});
+
         ctx.Db.move_all_magicians.Insert(new Move_All_Magicians_Timer
         {
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),

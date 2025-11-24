@@ -10,6 +10,7 @@ TagManager:
   - Projectile
   - Magician
   - ThrowingCard
+  - Map
   layers:
   - Default
   - TransparentFX
