@@ -125,7 +125,6 @@ public class MagicianController : MonoBehaviour
 
         bool wasGrounded = oldChar.KinematicInformation.Grounded;
         bool Grounded = newChar.KinematicInformation.Grounded;
-        bool Landing = newChar.KinematicInformation.Landing;
         bool Crouching = newChar.KinematicInformation.Crouched;
         bool Falling = newChar.KinematicInformation.Falling;
         bool Attacking = newChar.State is MagicianState.Attack;
@@ -138,7 +137,6 @@ public class MagicianController : MonoBehaviour
         Animator.SetBool("Crouching", Crouching);
         Animator.SetBool("Falling", Falling);
         Animator.SetBool("Grounded", Grounded);
-        Animator.SetBool("Landing", Landing);
 
         Vector3 vWorld = new(newChar.Velocity.X, 0f, newChar.Velocity.Z);
         Quaternion yawOnly = Quaternion.Euler(0f, TargetRotation.Yaw, 0f);
@@ -156,11 +154,6 @@ public class MagicianController : MonoBehaviour
     public void Delete(EventContext context)
     {
         Destroy(gameObject);
-    }
-
-    public void HandleFinishedLanding()
-    {
-        GameManager.Conn.Reducers.MagicianFinishedLanding();
     }
 
     public void CardThrow()

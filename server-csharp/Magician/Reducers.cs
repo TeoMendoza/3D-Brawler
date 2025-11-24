@@ -53,21 +53,19 @@ public static partial class Module
         {
             var character = charac;
             DbVector3 oldPosition = character.Position;
-            // Log.Info($"Colliding: {character.IsColliding}");
             DbVector3 MoveVelocity = character.IsColliding ? character.CorrectedVelocity : character.Velocity;
             character.IsColliding = false;
             character.CorrectedVelocity = character.Velocity;       
 
-            character.Position = new DbVector3(
-            character.Position.x + MoveVelocity.x * time,
-            character.Position.y + MoveVelocity.y * time,
-            character.Position.z + MoveVelocity.z * time
-            );
+            character.Position = new DbVector3(character.Position.x + MoveVelocity.x * time, character.Position.y + MoveVelocity.y * time, character.Position.z + MoveVelocity.z * time);
 
             if (character.Position.y <= 0f)
             {
                 character.Position.y = 0f;
                 character.KinematicInformation.Grounded = true;
+                RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
+                RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
+                RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump"); 
             }
 
             else
@@ -75,14 +73,15 @@ public static partial class Module
                 character.KinematicInformation.Grounded = false;
                 AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
                 AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
-                AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump");
+                AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump"); 
             }
 
-            if (oldPosition.y > 0f && character.Position.y <= 0f) character.KinematicInformation.Landing = true;
+            // Eventually Needs To Be Inside Check For Grounded = False
+            character.KinematicInformation.Falling = character.Velocity.y <= 0f;
 
-            if (character.Velocity.y <= 0f) character.KinematicInformation.Falling = true;
-            else character.KinematicInformation.Falling = false;
+            AdjustCollider(ctx, charac);
 
+            // Remove Once Old Colliders Go
             character.Collider.Center = Add(character.Position, Mul(character.Collider.Direction, character.Collider.HeightEndToEnd * 0.5f));
 
             if (character.CollisionEntries.Count > 0)
@@ -156,17 +155,6 @@ public static partial class Module
             character.Velocity.y -= timer.gravity * time;
             ctx.Db.magician.identity.Update(character);
         }
-    }
-
-    [Reducer]
-    public static void MagicianFinishedLanding(ReducerContext ctx)
-    {
-        Magician Magician = ctx.Db.magician.identity.Find(ctx.Sender) ?? throw new Exception("Could Not Find Magician Who Finished Landing");
-        Magician.KinematicInformation.Landing = false;
-        RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
-        RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
-        RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump");
-        ctx.Db.magician.identity.Update(Magician);
     }
 
 

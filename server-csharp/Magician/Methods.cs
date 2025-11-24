@@ -28,11 +28,18 @@ public static partial class Module
         return Closest;
     }
 
-    static float WrapDeg(float d)
+    public static void AdjustCollider(ReducerContext ctx, Magician Magician)
     {
-        d = (d + 180f) % 360f;
-        if (d < 0f) d += 360f;
-        return d - 180f;
+        KinematicInformation KinematicInformation = Magician.KinematicInformation;
+        if (KinematicInformation.Grounded is true)
+        {
+            Magician.GjkCollider = KinematicInformation.Crouched is true ? MagicianCrouchingCollider : MagicianIdleCollider;
+        }
+
+        else
+        {
+            Magician.GjkCollider = KinematicInformation.Falling is true ? MagicianFallingCollider : MagicianJumpingCollider;
+        }
     }
 
 }

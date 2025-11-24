@@ -21,8 +21,6 @@ namespace SpacetimeDB.Types
         public bool Crouched;
         [DataMember(Name = "Grounded")]
         public bool Grounded;
-        [DataMember(Name = "Landing")]
-        public bool Landing;
         [DataMember(Name = "Sprinting")]
         public bool Sprinting;
 
@@ -30,14 +28,12 @@ namespace SpacetimeDB.Types
             bool Falling,
             bool Crouched,
             bool Grounded,
-            bool Landing,
             bool Sprinting
         )
         {
             this.Falling = Falling;
             this.Crouched = Crouched;
             this.Grounded = Grounded;
-            this.Landing = Landing;
             this.Sprinting = Sprinting;
         }
 
