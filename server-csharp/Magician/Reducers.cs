@@ -47,43 +47,18 @@ public static partial class Module
     [Reducer]
     public static void MoveMagicians(ReducerContext ctx, Move_All_Magicians_Timer timer)
     {   
-        
         var time = timer.tick_rate;
         foreach (var charac in ctx.Db.magician.Iter())
         {
             var character = charac;
-            DbVector3 oldPosition = character.Position;
-            DbVector3 MoveVelocity = character.IsColliding ? character.CorrectedVelocity : character.Velocity;
-            character.IsColliding = false;
-            character.CorrectedVelocity = character.Velocity;       
 
+            DbVector3 MoveVelocity = character.IsColliding ? character.CorrectedVelocity : character.Velocity;
             character.Position = new DbVector3(character.Position.x + MoveVelocity.x * time, character.Position.y + MoveVelocity.y * time, character.Position.z + MoveVelocity.z * time);
 
-            if (character.Position.y <= 0f)
-            {
-                character.Position.y = 0f;
-                character.KinematicInformation.Grounded = true;
-                RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
-                RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
-                RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump"); 
-            }
-
-            else
-            {
-                character.KinematicInformation.Grounded = false;
-                AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
-                AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
-                AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump"); 
-            }
-
-            // Eventually Needs To Be Inside Check For Grounded = False
-            character.KinematicInformation.Falling = character.Velocity.y <= 0f;
-
             AdjustCollider(ctx, charac);
+            AdjustGrounded(ctx, MoveVelocity, ref character);
 
-            // Remove Once Old Colliders Go
-            character.Collider.Center = Add(character.Position, Mul(character.Collider.Direction, character.Collider.HeightEndToEnd * 0.5f));
-
+            character.IsColliding = false;
             if (character.CollisionEntries.Count > 0)
             {
                 List<ContactEPA> Contacts = [];
@@ -148,16 +123,41 @@ public static partial class Module
                 
                 character.CollisionEntries.RemoveAll(CollisionEntry => EntriesToRemove.Contains(CollisionEntry));
 
-                DbVector3 CorrectedVelocity = character.Velocity;
+                DbVector3 WorldUp = new(0f, 1f, 0f);
+                float MinGroundDot = MathF.Cos(ToRadians(50f));
+
+                DbVector3 InputVelocity = character.Velocity;
+                DbVector3 CorrectedVelocity = InputVelocity;
+
+                bool IsGrounded = false;
                 foreach (ContactEPA Contact in Contacts)
                 {
                     DbVector3 Normal = Contact.Normal;
+
+                    float UpDot = Dot(Normal, WorldUp);
+                    bool IsWalkable = UpDot >= MinGroundDot && UpDot > 0f;
+
+                    if (IsWalkable && InputVelocity.y <= 0f) IsGrounded = true;
+
+                    if (!IsWalkable)
+                    {
+                        Normal.y = 0f;
+                        Normal = Normalize(Normal);
+                    }
+
                     float Direction = Dot(Normal, CorrectedVelocity);
                     if (Direction < 0f) CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, Direction));
                 }
 
+                character.KinematicInformation.Grounded = IsGrounded;
+                if (IsGrounded && InputVelocity.y <= 0f && CorrectedVelocity.y < 0f) CorrectedVelocity.y = 0f;
+
                 character.IsColliding = Contacts.Count > 0;
                 character.CorrectedVelocity = CorrectedVelocity;
+                if (IsGrounded && character.Velocity.y < 0f)
+                {
+                    character.Velocity.y = 0f;
+                }
             }
 
             ctx.Db.magician.identity.Update(character);
@@ -172,7 +172,7 @@ public static partial class Module
         foreach (var charac in ctx.Db.magician.Iter())
         {
             var character = charac;
-            character.Velocity.y -= timer.gravity * time;
+            character.Velocity.y = character.Velocity.y > -10f ? character.Velocity.y -= timer.gravity * time : 10f;
             ctx.Db.magician.identity.Update(character);
         }
     }

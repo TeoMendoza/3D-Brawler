@@ -138,6 +138,8 @@ public class MagicianController : MonoBehaviour
         Animator.SetBool("Falling", Falling);
         Animator.SetBool("Grounded", Grounded);
 
+        Debug.Log($"Falling: {Falling}, Grounded: {Grounded}");
+
         Vector3 vWorld = new(newChar.Velocity.X, 0f, newChar.Velocity.Z);
         Quaternion yawOnly = Quaternion.Euler(0f, TargetRotation.Yaw, 0f);
         Vector3 vLocal = Quaternion.Inverse(yawOnly) * vWorld;
@@ -168,8 +170,6 @@ public class MagicianController : MonoBehaviour
         Vector2 Reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
         Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
         Vector3 D = AimRay.direction.normalized;
-        Debug.Log($"Camera Forward: {D}");
-
         GameManager.Conn.Reducers.SpawnThrowingCard(
             cameraPositionOffset: (DbVector3)CameraPositionOffset,
             cameraYawOffset: CameraYawOffset,

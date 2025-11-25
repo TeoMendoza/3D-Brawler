@@ -31,15 +31,31 @@ public static partial class Module
     public static void AdjustCollider(ReducerContext ctx, Magician Magician)
     {
         KinematicInformation KinematicInformation = Magician.KinematicInformation;
-        if (KinematicInformation.Grounded is true)
-        {
+
+        if (KinematicInformation.Grounded is true) {
             Magician.GjkCollider = KinematicInformation.Crouched is true ? MagicianCrouchingCollider : MagicianIdleCollider;
         }
 
-        else
-        {
+        else {
             Magician.GjkCollider = KinematicInformation.Falling is true ? MagicianFallingCollider : MagicianJumpingCollider;
         }
+    }
+
+    public static void AdjustGrounded(ReducerContext ctx, DbVector3 MoveVelocity, ref Magician Magician)
+    {
+        if (Magician.KinematicInformation.Grounded is true) {
+            Magician.KinematicInformation.Falling = false;
+            RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
+            RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
+            RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump"); 
+        }
+        else {
+            Magician.KinematicInformation.Falling = MoveVelocity.y <= 0f;
+            AddSubscriberUnique(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
+            AddSubscriberUnique(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
+            AddSubscriberUnique(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump");   
+        }
+
     }
 
 }
