@@ -172,7 +172,7 @@ public static partial class Module
         foreach (var charac in ctx.Db.magician.Iter())
         {
             var character = charac;
-            character.Velocity.y = character.Velocity.y > -10f ? character.Velocity.y -= timer.gravity * time : 10f;
+            character.Velocity.y = character.Velocity.y > -10f ? character.Velocity.y -= timer.gravity * time : -10f;
             ctx.Db.magician.identity.Update(character);
         }
     }
