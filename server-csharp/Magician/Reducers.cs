@@ -55,114 +55,105 @@ public static partial class Module
             DbVector3 MoveVelocity = character.IsColliding ? character.CorrectedVelocity : character.Velocity;
             character.Position = new DbVector3(character.Position.x + MoveVelocity.x * time, character.Position.y + MoveVelocity.y * time, character.Position.z + MoveVelocity.z * time);
 
-            AdjustCollider(ctx, charac);
+            AdjustCollider(ctx, ref character);
             AdjustGrounded(ctx, MoveVelocity, ref character);
 
-            character.IsColliding = false;
-            if (character.CollisionEntries.Count > 0)
+            List<ContactEPA> Contacts = [];
+            List<CollisionEntry> EntriesToRemove = [];
+            foreach (var Entry in character.CollisionEntries)
             {
-                List<ContactEPA> Contacts = [];
-                List<CollisionEntry> EntriesToRemove = [];
-                foreach (var Entry in character.CollisionEntries)
+                switch (Entry.Type)
                 {
-                    switch (Entry.Type)
-                    {
-                        case CollisionEntryType.Magician:
-                            
-                            Magician Player = ctx.Db.magician.Id.Find(Entry.Id) ?? throw new Exception("Colliding Magician Not Found");
-                            
-                            var ColliderA = character.GjkCollider.ConvexHulls;
-                            var PositionA = character.Position;
-                            float YawRadiansA = ToRadians(character.Rotation.Yaw);
-
-                            var ColliderB = Player.GjkCollider.ConvexHulls;
-                            var PositionB = Player.Position;
-                            float YawRadiansB = ToRadians(Player.Rotation.Yaw);
-
-                            if (Player.Id != character.Id && SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResult GjkResult))
-                            {
-                                DbVector3 GjkNormal = Negate(GjkResult.LastDirection);
-                                DbVector3 Normal = ComputeContactNormal(GjkNormal, PositionA, PositionB);
-                                Contacts.Add(new ContactEPA(Normal));
-                            }
-                            break;
-
-                        case CollisionEntryType.Map:
+                    case CollisionEntryType.Magician:
                         
-                            Map Map = ctx.Db.Map.Id.Find(Entry.Id) ?? throw new Exception("Colliding Map Piece Not Found");
+                        Magician Player = ctx.Db.magician.Id.Find(Entry.Id) ?? throw new Exception("Colliding Magician Not Found");
+                        
+                        var ColliderA = character.GjkCollider.ConvexHulls;
+                        var PositionA = character.Position;
+                        float YawRadiansA = ToRadians(character.Rotation.Yaw);
 
-                            var MapColliderA = character.GjkCollider.ConvexHulls;
-                            var MapPositionA = character.Position;
-                            float MapYawRadiansA = ToRadians(character.Rotation.Yaw);
+                        var ColliderB = Player.GjkCollider.ConvexHulls;
+                        var PositionB = Player.Position;
+                        float YawRadiansB = ToRadians(Player.Rotation.Yaw);
 
-                            var MapColliderB = Map.GjkCollider.ConvexHulls;
-                            var MapPositionB = new DbVector3(0,0,0);
-                            float MapYawRadiansB = 0f;
+                        if (Player.Id != character.Id && SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResult GjkResult))
+                        {
+                            DbVector3 GjkNormal = Negate(GjkResult.LastDirection);
+                            DbVector3 Normal = ComputeContactNormal(GjkNormal, PositionA, PositionB);
+                            Contacts.Add(new ContactEPA(Normal));
+                        }
+                        break;
 
-                            if (SolveGjk(MapColliderA, MapPositionA, MapYawRadiansA, MapColliderB, MapPositionB, MapYawRadiansB, out GjkResult MapGjkResult))
-                            {
-                                DbVector3 GjkNormal = Negate(MapGjkResult.LastDirection);
-                                DbVector3 Normal = ComputeContactNormal(GjkNormal, MapPositionA, MapPositionB);
-                                Contacts.Add(new ContactEPA(Normal)); 
-                            }
-                            break;
+                    case CollisionEntryType.Map:
+                        Map Map = ctx.Db.Map.Id.Find(Entry.Id) ?? throw new Exception("Colliding Map Piece Not Found");
 
-                        case CollisionEntryType.ThrowingCard: // Switch To GJK - Also, Need To Remove Collision Entry From All Other Players In Match Aswell, Not Just Hit Target
-                            ThrowingCard ThrowingCard = ctx.Db.throwing_cards.Id.Find(Entry.Id) ?? throw new Exception("Colliding Bullet Not Found");
-                            if (ThrowingCard.OwnerIdentity != character.identity && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(ThrowingCard.Collider), ThrowingCard.Collider, out Contact _contact))
-                            {
-                                ctx.Db.throwing_cards.Id.Delete(ThrowingCard.Id);
-                                if (character.CollisionEntries.Contains(Entry) is true) EntriesToRemove.Add(Entry);
-                            }
-                            break;
+                        var MapColliderA = character.GjkCollider.ConvexHulls;
+                        var MapPositionA = character.Position;
+                        float MapYawRadiansA = ToRadians(character.Rotation.Yaw);
 
-                        default:
-                            break;
-                    }
-                }
-                
-                character.CollisionEntries.RemoveAll(CollisionEntry => EntriesToRemove.Contains(CollisionEntry));
+                        var MapColliderB = Map.GjkCollider.ConvexHulls;
+                        var MapPositionB = new DbVector3(0,0,0);
+                        float MapYawRadiansB = 0f;
 
-                DbVector3 WorldUp = new(0f, 1f, 0f);
-                float MinGroundDot = MathF.Cos(ToRadians(50f));
+                        if (SolveGjk(MapColliderA, MapPositionA, MapYawRadiansA, MapColliderB, MapPositionB, MapYawRadiansB, out GjkResult MapGjkResult))
+                        {
+                            DbVector3 GjkNormal = Negate(MapGjkResult.LastDirection);
+                            DbVector3 Normal = ComputeContactNormal(GjkNormal, MapPositionA, MapPositionB);
+                            Contacts.Add(new ContactEPA(Normal)); 
+                        }
+                        break;
 
-                DbVector3 InputVelocity = character.Velocity;
-                DbVector3 CorrectedVelocity = InputVelocity;
+                    case CollisionEntryType.ThrowingCard: // Switch To GJK - Also, Need To Remove Collision Entry From All Other Players In Match Aswell, Not Just Hit Target
+                        ThrowingCard ThrowingCard = ctx.Db.throwing_cards.Id.Find(Entry.Id) ?? throw new Exception("Colliding Bullet Not Found");
+                        if (ThrowingCard.OwnerIdentity != character.identity && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(ThrowingCard.Collider), ThrowingCard.Collider, out Contact _contact))
+                        {
+                            ctx.Db.throwing_cards.Id.Delete(ThrowingCard.Id);
+                            if (character.CollisionEntries.Contains(Entry) is true) EntriesToRemove.Add(Entry);
+                        }
+                        break;
 
-                bool IsGrounded = false;
-                foreach (ContactEPA Contact in Contacts)
-                {
-                    DbVector3 Normal = Contact.Normal;
-
-                    float UpDot = Dot(Normal, WorldUp);
-                    bool IsWalkable = UpDot >= MinGroundDot && UpDot > 0f;
-
-                    if (IsWalkable && InputVelocity.y <= 0f) IsGrounded = true;
-
-                    if (!IsWalkable)
-                    {
-                        Normal.y = 0f;
-                        Normal = Normalize(Normal);
-                    }
-
-                    float Direction = Dot(Normal, CorrectedVelocity);
-                    if (Direction < 0f) CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, Direction));
-                }
-
-                character.KinematicInformation.Grounded = IsGrounded;
-                if (IsGrounded && InputVelocity.y <= 0f && CorrectedVelocity.y < 0f) CorrectedVelocity.y = 0f;
-
-                character.IsColliding = Contacts.Count > 0;
-                character.CorrectedVelocity = CorrectedVelocity;
-                if (IsGrounded && character.Velocity.y < 0f)
-                {
-                    character.Velocity.y = 0f;
+                    default:
+                        break;
                 }
             }
+            
+            character.CollisionEntries.RemoveAll(CollisionEntry => EntriesToRemove.Contains(CollisionEntry));
+
+            DbVector3 WorldUp = new(0f, 1f, 0f);
+            float MinGroundDot = MathF.Cos(ToRadians(50f));
+
+            DbVector3 InputVelocity = character.Velocity;
+            DbVector3 CorrectedVelocity = InputVelocity;
+
+            bool IsGrounded = false;
+            foreach (ContactEPA Contact in Contacts)
+            {
+                DbVector3 Normal = Contact.Normal;
+
+                float UpDot = Dot(Normal, WorldUp);
+                bool IsWalkable = UpDot >= MinGroundDot && UpDot > 0f;
+
+                if (IsWalkable) IsGrounded = true;
+                
+                if (!IsWalkable)
+                {
+                    Normal.y = 0f;
+                    Normal = Normalize(Normal);
+                }
+
+                float Direction = Dot(Normal, CorrectedVelocity);
+                if (Direction < 0f) CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, Direction));
+                
+            }
+
+            if (IsGrounded && InputVelocity.y <= 0f) character.Velocity.y = 0f;
+            
+            character.IsColliding = Contacts.Count > 0;
+            character.CorrectedVelocity = CorrectedVelocity;
+            character.KinematicInformation.Grounded = IsGrounded;
 
             ctx.Db.magician.identity.Update(character);
         }
-
     }
 
     [Reducer]

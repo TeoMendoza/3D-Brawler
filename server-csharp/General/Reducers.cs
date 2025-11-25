@@ -95,7 +95,7 @@ public static partial class Module
                 Id = 10000,
                 Name = "Test Magician",
                 MatchId = Match.Id,
-                Position = new DbVector3 { x = 20, y = 0, z = 0 },
+                Position = new DbVector3 { x = 20, y = 5, z = 0 },
                 Rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
                 Velocity = new DbVector3 { x = 0, y = 0, z = 0 },
                 KinematicInformation = new KinematicInformation(falling: false, crouched: false, grounded: true, sprinting: false),

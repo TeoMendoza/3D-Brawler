@@ -28,7 +28,7 @@ public static partial class Module
         return Closest;
     }
 
-    public static void AdjustCollider(ReducerContext ctx, Magician Magician)
+    public static void AdjustCollider(ReducerContext ctx, ref Magician Magician)
     {
         KinematicInformation KinematicInformation = Magician.KinematicInformation;
 

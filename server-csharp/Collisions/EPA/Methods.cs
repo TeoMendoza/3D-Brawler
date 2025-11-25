@@ -257,11 +257,21 @@ public static partial class Module
 
     static DbVector3 ComputeContactNormal(DbVector3 RawNormal, DbVector3 PositionA, DbVector3 PositionB)
     {
+        DbVector3 WorldUp = new(0f, 1f, 0f);
+        float MinGroundDot = MathF.Cos(ToRadians(50f));
+
         DbVector3 Normal = Normalize(RawNormal);
 
         DbVector3 RelativeBToA = Sub(PositionA, PositionB);
-        if (Dot(Normal, RelativeBToA) < 0f) Normal = Negate(Normal);
+        if (Dot(Normal, RelativeBToA) < 0f) 
+            Normal = Negate(Normal);
+        
+
+        float UpDot = Dot(Normal, WorldUp);
+        if (MathF.Abs(UpDot) > MinGroundDot && UpDot < 0f)
+            Normal = Negate(Normal);
+        
 
         return Normal;
-    } 
+    }
 }

@@ -138,8 +138,6 @@ public class MagicianController : MonoBehaviour
         Animator.SetBool("Falling", Falling);
         Animator.SetBool("Grounded", Grounded);
 
-        Debug.Log($"Falling: {Falling}, Grounded: {Grounded}");
-
         Vector3 vWorld = new(newChar.Velocity.X, 0f, newChar.Velocity.Z);
         Quaternion yawOnly = Quaternion.Euler(0f, TargetRotation.Yaw, 0f);
         Vector3 vLocal = Quaternion.Inverse(yawOnly) * vWorld;
