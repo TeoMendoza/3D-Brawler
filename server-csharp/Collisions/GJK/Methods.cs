@@ -287,4 +287,18 @@ public static partial class Module
         SearchDirection = Negate(PointSingle);
         return false;
     }
+
+    static float ComputePenetrationDepthApprox(List<ConvexHullCollider> ColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ColliderB, DbVector3 PositionB, float YawRadiansB, DbVector3 Normal)
+    {
+        DbVector3 SupportA = SupportWorldComplex(ColliderA, PositionA, YawRadiansA, Negate(Normal));
+        DbVector3 SupportB = SupportWorldComplex(ColliderB, PositionB, YawRadiansB, Normal);
+
+        float DistanceA = Dot(SupportA, Normal);
+        float DistanceB = Dot(SupportB, Normal);
+
+        float Gap = DistanceB - DistanceA;
+        if (Gap >= 0f) return 0f;
+
+        return -Gap;
+    }
 }

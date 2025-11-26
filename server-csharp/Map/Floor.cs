@@ -9,12 +9,12 @@ public static partial class Module
     {
         new DbVector3(-100f, -0.25f, -100f),
         new DbVector3(-100f, -0.25f,  100f),
-        new DbVector3(-100f, 0.1f, -100f),
-        new DbVector3(-100f, 0.1f,  100f),
+        new DbVector3(-100f, 0.0f, -100f),
+        new DbVector3(-100f, 0.0f,  100f),
         new DbVector3( 100f, -0.25f, -100f),
         new DbVector3( 100f, -0.25f,  100f),
-        new DbVector3( 100f, 0.1f, -100f),
-        new DbVector3( 100f, 0.1f,  100f),
+        new DbVector3( 100f, 0.0f, -100f),
+        new DbVector3( 100f, 0.0f,  100f),
     };
 
     public static readonly ConvexHullCollider FloorConvexHull0 = new ConvexHullCollider

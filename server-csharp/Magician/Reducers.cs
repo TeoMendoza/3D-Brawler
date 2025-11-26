@@ -77,10 +77,13 @@ public static partial class Module
                         float YawRadiansB = ToRadians(Player.Rotation.Yaw);
 
                         if (Player.Id != character.Id && SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResult GjkResult))
-                        {
+                        {    
                             DbVector3 GjkNormal = Negate(GjkResult.LastDirection);
                             DbVector3 Normal = ComputeContactNormal(GjkNormal, PositionA, PositionB);
-                            Contacts.Add(new ContactEPA(Normal));
+                            float PenetrationDepth = ComputePenetrationDepthApprox(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, Normal);
+
+                            Contacts.Add(new ContactEPA(Normal, PenetrationDepth));
+                            
                         }
                         break;
 
@@ -99,7 +102,9 @@ public static partial class Module
                         {
                             DbVector3 GjkNormal = Negate(MapGjkResult.LastDirection);
                             DbVector3 Normal = ComputeContactNormal(GjkNormal, MapPositionA, MapPositionB);
-                            Contacts.Add(new ContactEPA(Normal)); 
+                            float PenetrationDepth = ComputePenetrationDepthApprox(MapColliderA, MapPositionA, MapYawRadiansA, MapColliderB, MapPositionB, MapYawRadiansB, Normal);
+
+                            Contacts.Add(new ContactEPA(Normal, PenetrationDepth)); 
                         }
                         break;
 
@@ -121,33 +126,77 @@ public static partial class Module
 
             DbVector3 WorldUp = new(0f, 1f, 0f);
             float MinGroundDot = MathF.Cos(ToRadians(50f));
+            float AxisEpsilon = 1e-3f;
+            float DepthEpsilon = 1e-4f;
+            float MaxDepth = 0.25f;
+            float CorrectionFactor = 0.4f;
 
             DbVector3 InputVelocity = character.Velocity;
             DbVector3 CorrectedVelocity = InputVelocity;
 
             bool IsGrounded = false;
+            float MaxPenetrationDepth = 0f;
+            DbVector3 BestPositionNormal = WorldUp;
+            bool HasPositionContact = false;
+
             foreach (ContactEPA Contact in Contacts)
             {
                 DbVector3 Normal = Contact.Normal;
+                DbVector3 PositionNormal = Normal;
 
                 float UpDot = Dot(Normal, WorldUp);
+
+                if (UpDot > 1f - AxisEpsilon)
+                {
+                    Normal = WorldUp;
+                    UpDot = 1f;
+                }
+
                 bool IsWalkable = UpDot >= MinGroundDot && UpDot > 0f;
 
-                if (IsWalkable) IsGrounded = true;
-                
-                if (!IsWalkable)
+                if (IsWalkable)
+                {
+                    IsGrounded = true;
+                }
+                else
                 {
                     Normal.y = 0f;
                     Normal = Normalize(Normal);
                 }
 
                 float Direction = Dot(Normal, CorrectedVelocity);
-                if (Direction < 0f) CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, Direction));
-                
+                if (Direction < 0f)
+                {
+                    CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, Direction));
+                }
+
+                float Depth = Contact.PenetrationDepth;
+                if (Depth > MaxPenetrationDepth)
+                {
+                    MaxPenetrationDepth = Depth;
+                    BestPositionNormal = PositionNormal;
+                    HasPositionContact = true;
+                }
             }
 
-            if (IsGrounded && InputVelocity.y <= 0f) character.Velocity.y = 0f;
-            
+            if (IsGrounded && CorrectedVelocity.y < 0f)
+            {
+                CorrectedVelocity.y = 0f;
+            }
+
+            if (IsGrounded && InputVelocity.y <= 0f)
+            {
+                character.Velocity.y = 0f;
+            }
+
+            if (HasPositionContact && MaxPenetrationDepth > DepthEpsilon)
+            {
+                if (MaxPenetrationDepth > MaxDepth) MaxPenetrationDepth = MaxDepth;
+
+                DbVector3 PositionCorrection = Mul(BestPositionNormal, MaxPenetrationDepth * CorrectionFactor);
+                character.Position = Add(character.Position, PositionCorrection);
+            }
+
             character.IsColliding = Contacts.Count > 0;
             character.CorrectedVelocity = CorrectedVelocity;
             character.KinematicInformation.Grounded = IsGrounded;

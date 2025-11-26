@@ -4,9 +4,10 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-    public struct ContactEPA(DbVector3 Normal)
+    public struct ContactEPA(DbVector3 Normal, float PenetrationDepth)
     {
         public DbVector3 Normal = Normal; // Object B -> A
+        public float PenetrationDepth = PenetrationDepth;
     }
 
     public struct EpaFace

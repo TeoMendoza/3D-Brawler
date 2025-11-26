@@ -4,194 +4,194 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-    public static bool EpaSolve(GjkResult Gjk, List<ConvexHullCollider> ColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ColliderB, DbVector3 PositionB, float YawRadiansB, out ContactEPA Contact)
-    {
-        const int MaxIterations = 16;
-        const float Epsilon = 1e-4f;
+    // public static bool EpaSolve(GjkResult Gjk, List<ConvexHullCollider> ColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ColliderB, DbVector3 PositionB, float YawRadiansB, out ContactEPA Contact)
+    // {
+    //     const int MaxIterations = 16;
+    //     const float Epsilon = 1e-4f;
 
-        Contact = new ContactEPA(new DbVector3(0f, 0f, 0f));
+    //     Contact = new ContactEPA(new DbVector3(0f, 0f, 0f));
 
-        List<GjkVertex> PolytopeVertices = Gjk.Simplex;
-        if (PolytopeVertices == null || PolytopeVertices.Count < 4)
-        {
-            return false;
-        }
+    //     List<GjkVertex> PolytopeVertices = Gjk.Simplex;
+    //     if (PolytopeVertices == null || PolytopeVertices.Count < 4)
+    //     {
+    //         return false;
+    //     }
 
-        List<EpaFace> Faces = new List<EpaFace>();
-        AddFace(PolytopeVertices, Faces, 0, 1, 2);
-        AddFace(PolytopeVertices, Faces, 0, 3, 1);
-        AddFace(PolytopeVertices, Faces, 0, 2, 3);
-        AddFace(PolytopeVertices, Faces, 1, 3, 2);
+    //     List<EpaFace> Faces = new List<EpaFace>();
+    //     AddFace(PolytopeVertices, Faces, 0, 1, 2);
+    //     AddFace(PolytopeVertices, Faces, 0, 3, 1);
+    //     AddFace(PolytopeVertices, Faces, 0, 2, 3);
+    //     AddFace(PolytopeVertices, Faces, 1, 3, 2);
 
-        for (int Iteration = 0; Iteration < MaxIterations; Iteration++)
-        {
-            int ClosestFaceIndex = -1;
-            float ClosestDistance = float.MaxValue;
+    //     for (int Iteration = 0; Iteration < MaxIterations; Iteration++)
+    //     {
+    //         int ClosestFaceIndex = -1;
+    //         float ClosestDistance = float.MaxValue;
 
-            for (int FaceIndex = 0; FaceIndex < Faces.Count; FaceIndex++)
-            {
-                EpaFace Face = Faces[FaceIndex];
-                if (Face.Obsolete)
-                {
-                    continue;
-                }
+    //         for (int FaceIndex = 0; FaceIndex < Faces.Count; FaceIndex++)
+    //         {
+    //             EpaFace Face = Faces[FaceIndex];
+    //             if (Face.Obsolete)
+    //             {
+    //                 continue;
+    //             }
 
-                if (Face.Distance < ClosestDistance)
-                {
-                    ClosestDistance = Face.Distance;
-                    ClosestFaceIndex = FaceIndex;
-                }
-            }
+    //             if (Face.Distance < ClosestDistance)
+    //             {
+    //                 ClosestDistance = Face.Distance;
+    //                 ClosestFaceIndex = FaceIndex;
+    //             }
+    //         }
 
-            if (ClosestFaceIndex < 0)
-            {
-                return false;
-            }
+    //         if (ClosestFaceIndex < 0)
+    //         {
+    //             return false;
+    //         }
 
-            EpaFace ClosestFace = Faces[ClosestFaceIndex];
-            DbVector3 SearchDirection = ClosestFace.Normal;
+    //         EpaFace ClosestFace = Faces[ClosestFaceIndex];
+    //         DbVector3 SearchDirection = ClosestFace.Normal;
 
-            GjkVertex NewVertex = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, SearchDirection);
+    //         GjkVertex NewVertex = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, SearchDirection);
 
-            float Projection = Dot(NewVertex.MinkowskiPoint, SearchDirection);
-            float Improvement = Projection - ClosestFace.Distance;
+    //         float Projection = Dot(NewVertex.MinkowskiPoint, SearchDirection);
+    //         float Improvement = Projection - ClosestFace.Distance;
 
-            if (Improvement < Epsilon)
-            {
-                DbVector3 Normal = ClosestFace.Normal;
-                float LengthSquared = Dot(Normal, Normal);
+    //         if (Improvement < Epsilon)
+    //         {
+    //             DbVector3 Normal = ClosestFace.Normal;
+    //             float LengthSquared = Dot(Normal, Normal);
 
-                if (LengthSquared > 1e-12f)
-                {
-                    float InverseLength = 1f / Sqrt(LengthSquared);
-                    Normal = Mul(Normal, InverseLength);
-                }
-                else
-                {
-                    Normal = NormalizeSmallVector(Gjk.LastDirection, new DbVector3(0f, 1f, 0f));
-                }
+    //             if (LengthSquared > 1e-12f)
+    //             {
+    //                 float InverseLength = 1f / Sqrt(LengthSquared);
+    //                 Normal = Mul(Normal, InverseLength);
+    //             }
+    //             else
+    //             {
+    //                 Normal = NormalizeSmallVector(Gjk.LastDirection, new DbVector3(0f, 1f, 0f));
+    //             }
 
-                Normal.y = 0f;
-                float HorizontalLengthSquared = Dot(Normal, Normal);
-                if (HorizontalLengthSquared > 1e-12f)
-                {
-                    float InverseHorizontalLength = 1f / Sqrt(HorizontalLengthSquared);
-                    Normal = Mul(Normal, InverseHorizontalLength);
-                }
+    //             Normal.y = 0f;
+    //             float HorizontalLengthSquared = Dot(Normal, Normal);
+    //             if (HorizontalLengthSquared > 1e-12f)
+    //             {
+    //                 float InverseHorizontalLength = 1f / Sqrt(HorizontalLengthSquared);
+    //                 Normal = Mul(Normal, InverseHorizontalLength);
+    //             }
 
-                DbVector3 RelativeBToA = Sub(PositionA, PositionB);
-                if (Dot(Normal, RelativeBToA) < 0f)
-                {
-                    Normal = Negate(Normal);
-                }
+    //             DbVector3 RelativeBToA = Sub(PositionA, PositionB);
+    //             if (Dot(Normal, RelativeBToA) < 0f)
+    //             {
+    //                 Normal = Negate(Normal);
+    //             }
 
-                Contact = new ContactEPA(Normal);
-                return true;
-            }
+    //             Contact = new ContactEPA(Normal);
+    //             return true;
+    //         }
 
-            int NewVertexIndex = PolytopeVertices.Count;
-            PolytopeVertices.Add(NewVertex);
+    //         int NewVertexIndex = PolytopeVertices.Count;
+    //         PolytopeVertices.Add(NewVertex);
 
-            List<EpaEdge> Edges = new List<EpaEdge>();
+    //         List<EpaEdge> Edges = new List<EpaEdge>();
 
-            for (int FaceIndex = 0; FaceIndex < Faces.Count; FaceIndex++)
-            {
-                EpaFace Face = Faces[FaceIndex];
-                if (Face.Obsolete)
-                {
-                    continue;
-                }
+    //         for (int FaceIndex = 0; FaceIndex < Faces.Count; FaceIndex++)
+    //         {
+    //             EpaFace Face = Faces[FaceIndex];
+    //             if (Face.Obsolete)
+    //             {
+    //                 continue;
+    //             }
 
-                DbVector3 FacePoint = PolytopeVertices[Face.IndexA].MinkowskiPoint;
-                DbVector3 ToNewPoint = Sub(NewVertex.MinkowskiPoint, FacePoint);
-                float DotValue = Dot(Face.Normal, ToNewPoint);
+    //             DbVector3 FacePoint = PolytopeVertices[Face.IndexA].MinkowskiPoint;
+    //             DbVector3 ToNewPoint = Sub(NewVertex.MinkowskiPoint, FacePoint);
+    //             float DotValue = Dot(Face.Normal, ToNewPoint);
 
-                if (DotValue > 0f)
-                {
-                    Face.Obsolete = true;
-                    Faces[FaceIndex] = Face;
+    //             if (DotValue > 0f)
+    //             {
+    //                 Face.Obsolete = true;
+    //                 Faces[FaceIndex] = Face;
 
-                    AddEdge(Edges, Face.IndexA, Face.IndexB);
-                    AddEdge(Edges, Face.IndexB, Face.IndexC);
-                    AddEdge(Edges, Face.IndexC, Face.IndexA);
-                }
-            }
+    //                 AddEdge(Edges, Face.IndexA, Face.IndexB);
+    //                 AddEdge(Edges, Face.IndexB, Face.IndexC);
+    //                 AddEdge(Edges, Face.IndexC, Face.IndexA);
+    //             }
+    //         }
 
-            for (int FaceIndex = Faces.Count - 1; FaceIndex >= 0; FaceIndex--)
-            {
-                if (Faces[FaceIndex].Obsolete)
-                {
-                    Faces.RemoveAt(FaceIndex);
-                }
-            }
+    //         for (int FaceIndex = Faces.Count - 1; FaceIndex >= 0; FaceIndex--)
+    //         {
+    //             if (Faces[FaceIndex].Obsolete)
+    //             {
+    //                 Faces.RemoveAt(FaceIndex);
+    //             }
+    //         }
 
-            for (int EdgeIndex = 0; EdgeIndex < Edges.Count; EdgeIndex++)
-            {
-                EpaEdge Edge = Edges[EdgeIndex];
-                if (Edge.Obsolete)
-                {
-                    continue;
-                }
+    //         for (int EdgeIndex = 0; EdgeIndex < Edges.Count; EdgeIndex++)
+    //         {
+    //             EpaEdge Edge = Edges[EdgeIndex];
+    //             if (Edge.Obsolete)
+    //             {
+    //                 continue;
+    //             }
 
-                AddFace(PolytopeVertices, Faces, Edge.IndexA, Edge.IndexB, NewVertexIndex);
-            }
-        }
+    //             AddFace(PolytopeVertices, Faces, Edge.IndexA, Edge.IndexB, NewVertexIndex);
+    //         }
+    //     }
 
-        int FinalClosestFaceIndex = -1;
-        float FinalClosestDistance = float.MaxValue;
+    //     int FinalClosestFaceIndex = -1;
+    //     float FinalClosestDistance = float.MaxValue;
 
-        for (int FaceIndex = 0; FaceIndex < Faces.Count; FaceIndex++)
-        {
-            EpaFace Face = Faces[FaceIndex];
-            if (Face.Obsolete)
-            {
-                continue;
-            }
+    //     for (int FaceIndex = 0; FaceIndex < Faces.Count; FaceIndex++)
+    //     {
+    //         EpaFace Face = Faces[FaceIndex];
+    //         if (Face.Obsolete)
+    //         {
+    //             continue;
+    //         }
 
-            if (Face.Distance < FinalClosestDistance)
-            {
-                FinalClosestDistance = Face.Distance;
-                FinalClosestFaceIndex = FaceIndex;
-            }
-        }
+    //         if (Face.Distance < FinalClosestDistance)
+    //         {
+    //             FinalClosestDistance = Face.Distance;
+    //             FinalClosestFaceIndex = FaceIndex;
+    //         }
+    //     }
 
-        if (FinalClosestFaceIndex >= 0)
-        {
-            EpaFace Face = Faces[FinalClosestFaceIndex];
+    //     if (FinalClosestFaceIndex >= 0)
+    //     {
+    //         EpaFace Face = Faces[FinalClosestFaceIndex];
 
-            DbVector3 Normal = Face.Normal;
-            float LengthSquared = Dot(Normal, Normal);
+    //         DbVector3 Normal = Face.Normal;
+    //         float LengthSquared = Dot(Normal, Normal);
 
-            if (LengthSquared > 1e-12f)
-            {
-                float InverseLength = 1f / Sqrt(LengthSquared);
-                Normal = Mul(Normal, InverseLength);
-            }
-            else
-            {
-                Normal = NormalizeSmallVector(Gjk.LastDirection, new DbVector3(0f, 1f, 0f));
-            }
+    //         if (LengthSquared > 1e-12f)
+    //         {
+    //             float InverseLength = 1f / Sqrt(LengthSquared);
+    //             Normal = Mul(Normal, InverseLength);
+    //         }
+    //         else
+    //         {
+    //             Normal = NormalizeSmallVector(Gjk.LastDirection, new DbVector3(0f, 1f, 0f));
+    //         }
 
-            Normal.y = 0f;
-            float HorizontalLengthSquared = Dot(Normal, Normal);
-            if (HorizontalLengthSquared > 1e-12f)
-            {
-                float InverseHorizontalLength = 1f / Sqrt(HorizontalLengthSquared);
-                Normal = Mul(Normal, InverseHorizontalLength);
-            }
+    //         Normal.y = 0f;
+    //         float HorizontalLengthSquared = Dot(Normal, Normal);
+    //         if (HorizontalLengthSquared > 1e-12f)
+    //         {
+    //             float InverseHorizontalLength = 1f / Sqrt(HorizontalLengthSquared);
+    //             Normal = Mul(Normal, InverseHorizontalLength);
+    //         }
 
-            DbVector3 RelativeBToA = Sub(PositionA, PositionB);
-            if (Dot(Normal, RelativeBToA) < 0f)
-            {
-                Normal = Negate(Normal);
-            }
+    //         DbVector3 RelativeBToA = Sub(PositionA, PositionB);
+    //         if (Dot(Normal, RelativeBToA) < 0f)
+    //         {
+    //             Normal = Negate(Normal);
+    //         }
 
-            Contact = new ContactEPA(Normal);
-            return false;
-        }
+    //         Contact = new ContactEPA(Normal);
+    //         return false;
+    //     }
 
-        return false;
-    }
+    //     return false;
+    // }
 
 
     static void AddFace(List<GjkVertex> Vertices, List<EpaFace> Faces, int IndexA, int IndexB, int IndexC)
