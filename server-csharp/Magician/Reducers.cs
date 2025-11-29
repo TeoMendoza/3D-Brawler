@@ -43,9 +43,8 @@ public static partial class Module
         ctx.Db.magician.identity.Update(character);
     }
 
-
     [Reducer]
-    public static void MoveMagicians(ReducerContext ctx, Move_All_Magicians_Timer timer)
+    public static void MoveMagicians2(ReducerContext ctx, Move_All_Magicians_Timer timer)
     {   
         var time = timer.tick_rate;
         foreach (var charac in ctx.Db.magician.Iter())
@@ -105,15 +104,6 @@ public static partial class Module
                             float PenetrationDepth = ComputePenetrationDepthApprox(MapColliderA, MapPositionA, MapYawRadiansA, MapColliderB, MapPositionB, MapYawRadiansB, Normal);
 
                             Contacts.Add(new ContactEPA(Normal, PenetrationDepth)); 
-                        }
-                        break;
-
-                    case CollisionEntryType.ThrowingCard: // Switch To GJK - Also, Need To Remove Collision Entry From All Other Players In Match Aswell, Not Just Hit Target
-                        ThrowingCard ThrowingCard = ctx.Db.throwing_cards.Id.Find(Entry.Id) ?? throw new Exception("Colliding Bullet Not Found");
-                        if (ThrowingCard.OwnerIdentity != character.identity && TryOverlap(GetColliderShape(character.Collider), character.Collider, GetColliderShape(ThrowingCard.Collider), ThrowingCard.Collider, out Contact _contact))
-                        {
-                            ctx.Db.throwing_cards.Id.Delete(ThrowingCard.Id);
-                            if (character.CollisionEntries.Contains(Entry) is true) EntriesToRemove.Add(Entry);
                         }
                         break;
 

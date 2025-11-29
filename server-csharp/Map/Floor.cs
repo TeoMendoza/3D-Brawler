@@ -7,12 +7,12 @@ public static partial class Module
 
     public static readonly List<DbVector3> FloorConvexHull0Vertices = new List<DbVector3>
     {
-        new DbVector3(-100f, -0.25f, -100f),
-        new DbVector3(-100f, -0.25f,  100f),
+        new DbVector3(-100f, -1f, -100f),
+        new DbVector3(-100f, -1f,  100f),
         new DbVector3(-100f, 0.0f, -100f),
         new DbVector3(-100f, 0.0f,  100f),
-        new DbVector3( 100f, -0.25f, -100f),
-        new DbVector3( 100f, -0.25f,  100f),
+        new DbVector3( 100f, -1f, -100f),
+        new DbVector3( 100f, -1f,  100f),
         new DbVector3( 100f, 0.0f, -100f),
         new DbVector3( 100f, 0.0f,  100f),
     };

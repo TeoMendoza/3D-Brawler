@@ -43,6 +43,7 @@ public static partial class Module
 
     public static void AdjustGrounded(ReducerContext ctx, DbVector3 MoveVelocity, ref Magician Magician)
     {
+
         if (Magician.KinematicInformation.Grounded is true) {
             Magician.KinematicInformation.Falling = false;
             RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");

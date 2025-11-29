@@ -14,17 +14,17 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void MoveMagiciansHandler(ReducerEventContext ctx, MoveAllMagiciansTimer timer);
-        public event MoveMagiciansHandler? OnMoveMagicians;
+        public delegate void MoveMagicians2Handler(ReducerEventContext ctx, MoveAllMagiciansTimer timer);
+        public event MoveMagicians2Handler? OnMoveMagicians2;
 
-        public void MoveMagicians(MoveAllMagiciansTimer timer)
+        public void MoveMagicians2(MoveAllMagiciansTimer timer)
         {
-            conn.InternalCallReducer(new Reducer.MoveMagicians(timer), this.SetCallReducerFlags.MoveMagiciansFlags);
+            conn.InternalCallReducer(new Reducer.MoveMagicians2(timer), this.SetCallReducerFlags.MoveMagicians2Flags);
         }
 
-        public bool InvokeMoveMagicians(ReducerEventContext ctx, Reducer.MoveMagicians args)
+        public bool InvokeMoveMagicians2(ReducerEventContext ctx, Reducer.MoveMagicians2 args)
         {
-            if (OnMoveMagicians == null)
+            if (OnMoveMagicians2 == null)
             {
                 if (InternalOnUnhandledReducerError != null)
                 {
@@ -36,7 +36,7 @@ namespace SpacetimeDB.Types
                 }
                 return false;
             }
-            OnMoveMagicians(
+            OnMoveMagicians2(
                 ctx,
                 args.Timer
             );
@@ -48,28 +48,28 @@ namespace SpacetimeDB.Types
     {
         [SpacetimeDB.Type]
         [DataContract]
-        public sealed partial class MoveMagicians : Reducer, IReducerArgs
+        public sealed partial class MoveMagicians2 : Reducer, IReducerArgs
         {
-            [DataMember(Name = "Timer")]
+            [DataMember(Name = "timer")]
             public MoveAllMagiciansTimer Timer;
 
-            public MoveMagicians(MoveAllMagiciansTimer Timer)
+            public MoveMagicians2(MoveAllMagiciansTimer Timer)
             {
                 this.Timer = Timer;
             }
 
-            public MoveMagicians()
+            public MoveMagicians2()
             {
                 this.Timer = new();
             }
 
-            string IReducerArgs.ReducerName => "MoveMagicians";
+            string IReducerArgs.ReducerName => "MoveMagicians2";
         }
     }
 
     public sealed partial class SetReducerFlags
     {
-        internal CallReducerFlags MoveMagiciansFlags;
-        public void MoveMagicians(CallReducerFlags flags) => MoveMagiciansFlags = flags;
+        internal CallReducerFlags MoveMagicians2Flags;
+        public void MoveMagicians2(CallReducerFlags flags) => MoveMagicians2Flags = flags;
     }
 }
