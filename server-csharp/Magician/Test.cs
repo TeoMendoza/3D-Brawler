@@ -56,6 +56,7 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
 
                 switch (Entry.Type)
                 {
+                    
                     case CollisionEntryType.Magician:
                     {
                         Magician Other = Ctx.Db.magician.Id.Find(Entry.Id) ?? throw new Exception("Colliding Magician Not Found");
@@ -65,60 +66,55 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
                         ColliderB = Other.GjkCollider.ConvexHulls;
 
                         PositionB = Other.Position;
-                        VelocityB = Other.IsColliding ? Other.CorrectedVelocity : Other.Velocity;
+                        VelocityB = new DbVector3(0f, 0f, 0f);
                         YawRadiansB = ToRadians(Other.Rotation.Yaw);
 
-                        // 1) Authoritative overlap check
                         bool IntersectsExact = SolveGjk(
                             ColliderA, PositionA, YawRadiansA,
                             ColliderB, PositionB, YawRadiansB,
-                            out GjkResult MagicianGjkResult
+                            out GjkResult magicianGjkResult
                         );
 
                         if (IntersectsExact)
                         {
-                            // Already overlapping, go through overlap/contact path, no CCD
                             HasOverlap = true;
                             OverlappingEntries.Add(Entry);
                             continue;
                         }
 
-                        // 2) Not overlapping → distance + CCD TOI
                         if (!SolveGjkDistance(
                                 ColliderA, PositionA, YawRadiansA,
                                 ColliderB, PositionB, YawRadiansB,
-                                out GjkDistanceResult MagicianDistanceResult))
+                                out GjkDistanceResult magicianDistanceResult))
                         {
                             continue;
                         }
 
-                        float SeparationDistanceMagician = MagicianDistanceResult.Distance;
-                        DbVector3 SeparationDirectionMagician = MagicianDistanceResult.SeparationDirection;
+                        float separationDistanceMagician = magicianDistanceResult.Distance;
+                        DbVector3 separationDirectionMagician = magicianDistanceResult.SeparationDirection;
 
-                        // Orient separation dir from A → B in world space
-                        DbVector3 FromMagicianToOther = Sub(PositionB, PositionA);
-                        if (Dot(SeparationDirectionMagician, FromMagicianToOther) < 0f)
+                        DbVector3 fromCharacterToOther = Sub(PositionB, PositionA);
+                        if (Dot(separationDirectionMagician, fromCharacterToOther) < 0f)
                         {
-                            SeparationDirectionMagician = Mul(SeparationDirectionMagician, -1f);
+                            separationDirectionMagician = Mul(separationDirectionMagician, -1f);
                         }
 
-                        DbVector3 RelativeVelocityMagician = Sub(VelocityA, VelocityB);
-                        float ClosingMagician = Dot(RelativeVelocityMagician, SeparationDirectionMagician);
-                        if (ClosingMagician <= 0f) continue;
+                        DbVector3 relativeVelocityMagician = Sub(VelocityA, VelocityB);
+                        float closingMagician = Dot(relativeVelocityMagician, separationDirectionMagician);
+                        if (closingMagician <= 0f) continue;
 
-                        float TimeToHitMagician = (SeparationDistanceMagician + CcdSlop) / ClosingMagician;
-                        if (TimeToHitMagician < 0f || TimeToHitMagician > RemainingTime) continue;
+                        float timeToHitMagician = (separationDistanceMagician + CcdSlop) / closingMagician;
+                        if (timeToHitMagician < 0f || timeToHitMagician > RemainingTime) continue;
 
-                        if (!HasHit || TimeToHitMagician < EarliestTime)
+                        if (!HasHit || timeToHitMagician < EarliestTime)
                         {
                             HasHit = true;
-                            EarliestTime = TimeToHitMagician;
+                            EarliestTime = timeToHitMagician;
                             EarliestEntry = Entry;
                         }
 
                         break;
                     }
-
 
                     case CollisionEntryType.Map:
                     {
@@ -131,14 +127,21 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
                         VelocityB = new DbVector3(0f, 0f, 0f);
                         YawRadiansB = 0f;
 
-                        if (!SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkDistanceResult MapDistanceResult)) continue;
+                        bool IntersectsExact = SolveGjk(
+                            ColliderA, PositionA, YawRadiansA,
+                            ColliderB, PositionB, YawRadiansB,
+                            out GjkResult MapGjkResult
+                        );
 
-                        if (MapDistanceResult.Intersects)
+                        if (IntersectsExact)
                         {
+                            // Already overlapping, go through overlap/contact path, no CCD
                             HasOverlap = true;
                             OverlappingEntries.Add(Entry);
                             continue;
                         }
+
+                        if (!SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkDistanceResult MapDistanceResult)) continue;
 
                         float SeparationDistanceMap = MapDistanceResult.Distance;
                         DbVector3 SeparationDirectionMap = MapDistanceResult.SeparationDirection;
@@ -193,6 +196,9 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
             {
                 DbVector3 FreeMoveVelocity = Character.IsColliding ? Character.CorrectedVelocity : Character.Velocity;
 
+                DbVector3 OldPositionFree = Character.Position;
+                float MoveTimeFree = RemainingTime;
+
                 Character.Position = new DbVector3(
                     Character.Position.x + FreeMoveVelocity.x * RemainingTime,
                     Character.Position.y + FreeMoveVelocity.y * RemainingTime,
@@ -203,10 +209,14 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
                 Character.CorrectedVelocity = FreeMoveVelocity;
 
                 RemainingTime = 0f;
+
                 break;
             }
 
             DbVector3 HitStepVelocity = Character.IsColliding ? Character.CorrectedVelocity : Character.Velocity;
+
+            DbVector3 OldPositionHit = Character.Position;
+            float MoveTimeHit = EarliestTime;
 
             Character.Position = new DbVector3(
                 Character.Position.x + HitStepVelocity.x * EarliestTime,
@@ -517,8 +527,8 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
             Direction = new DbVector3(0f, 0f, 1f);
         }
 
-        DbVector3 SupportA = SupportWorldComplex(ColliderA, PositionA, YawRadiansA, Negate(Direction));
-        DbVector3 SupportB = SupportWorldComplex(ColliderB, PositionB, YawRadiansB, Direction);
+        DbVector3 SupportA = SupportWorldComplex(ColliderA, PositionA, YawRadiansA, Direction);
+        DbVector3 SupportB = SupportWorldComplex(ColliderB, PositionB, YawRadiansB, Negate(Direction));
 
         float DistanceA = Dot(SupportA, Direction);
         float DistanceB = Dot(SupportB, Direction);
