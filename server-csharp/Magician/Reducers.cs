@@ -54,7 +54,7 @@ public static partial class Module
             DbVector3 MoveVelocity = character.IsColliding ? character.CorrectedVelocity : character.Velocity;
             character.Position = new DbVector3(character.Position.x + MoveVelocity.x * time, character.Position.y + MoveVelocity.y * time, character.Position.z + MoveVelocity.z * time);
 
-            AdjustCollider(ctx, ref character);
+            //AdjustCollider(ctx, ref character);
             AdjustGrounded(ctx, MoveVelocity, ref character);
 
             List<ContactEPA> Contacts = [];

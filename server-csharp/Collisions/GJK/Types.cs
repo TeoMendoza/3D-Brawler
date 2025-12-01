@@ -11,9 +11,10 @@ public static partial class Module
     }
 
     [SpacetimeDB.Type]
-    public partial struct ConvexHullCollider(List<DbVector3> verticesLocal)
+    public partial struct ConvexHullCollider(List<DbVector3> verticesLocal, float margin)
     {
         public List<DbVector3> VerticesLocal = verticesLocal;
+        public float Margin = margin;
     }
 
     public struct GjkVertex(DbVector3 SupportPointA, DbVector3 SupportPointB)

@@ -68,18 +68,34 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
                         VelocityB = Other.IsColliding ? Other.CorrectedVelocity : Other.Velocity;
                         YawRadiansB = ToRadians(Other.Rotation.Yaw);
 
-                        if (!SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkDistanceResult MagicianDistanceResult)) continue;
+                        // 1) Authoritative overlap check
+                        bool IntersectsExact = SolveGjk(
+                            ColliderA, PositionA, YawRadiansA,
+                            ColliderB, PositionB, YawRadiansB,
+                            out GjkResult MagicianGjkResult
+                        );
 
-                        if (MagicianDistanceResult.Intersects)
+                        if (IntersectsExact)
                         {
+                            // Already overlapping, go through overlap/contact path, no CCD
                             HasOverlap = true;
                             OverlappingEntries.Add(Entry);
+                            continue;
+                        }
+
+                        // 2) Not overlapping → distance + CCD TOI
+                        if (!SolveGjkDistance(
+                                ColliderA, PositionA, YawRadiansA,
+                                ColliderB, PositionB, YawRadiansB,
+                                out GjkDistanceResult MagicianDistanceResult))
+                        {
                             continue;
                         }
 
                         float SeparationDistanceMagician = MagicianDistanceResult.Distance;
                         DbVector3 SeparationDirectionMagician = MagicianDistanceResult.SeparationDirection;
 
+                        // Orient separation dir from A → B in world space
                         DbVector3 FromMagicianToOther = Sub(PositionB, PositionA);
                         if (Dot(SeparationDirectionMagician, FromMagicianToOther) < 0f)
                         {
@@ -102,6 +118,7 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
 
                         break;
                     }
+
 
                     case CollisionEntryType.Map:
                     {

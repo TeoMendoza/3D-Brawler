@@ -120,8 +120,27 @@ public static partial class Module
 
         DbVector3 BestVertex = Vertices[BestVertexIndex];
 
+        // Margin inflation (logical skin)
+        float Margin = Collider.Margin;
+        if (Margin > 0f)
+        {
+            float DirLenSq = Dot(Direction, Direction);
+            if (DirLenSq > 1e-8f)
+            {
+                float InvLen = 1.0f / MathF.Sqrt(DirLenSq);
+                DbVector3 DirNorm = new(Direction.x * InvLen, Direction.y * InvLen, Direction.z * InvLen);
+
+                BestVertex = new DbVector3(
+                    BestVertex.x + DirNorm.x * Margin,
+                    BestVertex.y + DirNorm.y * Margin,
+                    BestVertex.z + DirNorm.z * Margin
+                );
+            }
+        }
+
         return BestVertex;
     }
+
 
     static DbVector3 RotateAroundYAxis(DbVector3 Vector, float YawRadians)
     {

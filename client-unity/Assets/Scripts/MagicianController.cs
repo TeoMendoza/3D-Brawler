@@ -79,8 +79,8 @@ public class MagicianController : MonoBehaviour
 
         if (Input.GetKey(KeyCode.W)) req.Velocity.Z += 2f;
         if (Input.GetKey(KeyCode.S)) req.Velocity.Z -= 2f;
-        if (Input.GetKey(KeyCode.D)) req.Velocity.X += 1f;
-        if (Input.GetKey(KeyCode.A)) req.Velocity.X -= 1f;
+        if (Input.GetKey(KeyCode.D)) req.Velocity.X += 1.5f;
+        if (Input.GetKey(KeyCode.A)) req.Velocity.X -= 1.5f;
         if (Input.GetKey(KeyCode.LeftShift)) req.Sprint = true;
         if (Input.GetKeyDown(KeyCode.Space)) req.Jump = true;
         if (Input.GetKey(KeyCode.LeftControl)) req.Crouch = true;

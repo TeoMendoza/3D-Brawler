@@ -28,18 +28,18 @@ public static partial class Module
         return Closest;
     }
 
-    public static void AdjustCollider(ReducerContext ctx, ref Magician Magician)
-    {
-        KinematicInformation KinematicInformation = Magician.KinematicInformation;
+    // public static void AdjustCollider(ReducerContext ctx, ref Magician Magician)
+    // {
+    //     KinematicInformation KinematicInformation = Magician.KinematicInformation;
 
-        if (KinematicInformation.Grounded is true) {
-            Magician.GjkCollider = KinematicInformation.Crouched is true ? MagicianCrouchingCollider : MagicianIdleCollider;
-        }
+    //     if (KinematicInformation.Grounded is true) {
+    //         Magician.GjkCollider = KinematicInformation.Crouched is true ? MagicianCrouchingCollider : MagicianIdleCollider;
+    //     }
 
-        else {
-            Magician.GjkCollider = KinematicInformation.Falling is true ? MagicianFallingCollider : MagicianJumpingCollider;
-        }
-    }
+    //     else {
+    //         Magician.GjkCollider = KinematicInformation.Falling is true ? MagicianFallingCollider : MagicianJumpingCollider;
+    //     }
+    // }
 
     public static void AdjustGrounded(ReducerContext ctx, DbVector3 MoveVelocity, ref Magician Magician)
     {
