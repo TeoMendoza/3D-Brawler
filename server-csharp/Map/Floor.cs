@@ -20,7 +20,7 @@ public static partial class Module
     public static readonly ConvexHullCollider FloorConvexHull0 = new ConvexHullCollider
     {
         VerticesLocal = FloorConvexHull0Vertices,
-        Margin = 0.05f
+        Margin = 0f
     };
 
     public static readonly List<ConvexHullCollider> PlaneConvexHulls = new List<ConvexHullCollider>

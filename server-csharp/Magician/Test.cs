@@ -58,63 +58,133 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
                 {
                     
                     case CollisionEntryType.Magician:
-                    {
-                        Magician Other = Ctx.Db.magician.Id.Find(Entry.Id) ?? throw new Exception("Colliding Magician Not Found");
-                        if (Other.Id == Character.Id) continue;
+{
+    Magician Other = Ctx.Db.magician.Id.Find(Entry.Id) ?? throw new Exception("Colliding Magician Not Found");
+    if (Other.Id == Character.Id) continue;
 
-                        ColliderA = Character.GjkCollider.ConvexHulls;
-                        ColliderB = Other.GjkCollider.ConvexHulls;
+    ColliderA = Character.GjkCollider.ConvexHulls;
+    ColliderB = Other.GjkCollider.ConvexHulls;
 
-                        PositionB = Other.Position;
-                        VelocityB = new DbVector3(0f, 0f, 0f);
-                        YawRadiansB = ToRadians(Other.Rotation.Yaw);
+    PositionB = Other.Position;
+    VelocityB = new DbVector3(0f, 0f, 0f);
+    YawRadiansB = ToRadians(Other.Rotation.Yaw);
 
-                        bool IntersectsExact = SolveGjk(
-                            ColliderA, PositionA, YawRadiansA,
-                            ColliderB, PositionB, YawRadiansB,
-                            out GjkResult magicianGjkResult
-                        );
+    bool IntersectsExact = SolveGjk(
+        ColliderA, PositionA, YawRadiansA,
+        ColliderB, PositionB, YawRadiansB,
+        out GjkResult MagicianGjkResult
+    );
 
-                        if (IntersectsExact)
-                        {
-                            HasOverlap = true;
-                            OverlappingEntries.Add(Entry);
-                            continue;
-                        }
+    if (IntersectsExact)
+    {
+        HasOverlap = true;
+        OverlappingEntries.Add(Entry);
+        break;
+    }
 
-                        if (!SolveGjkDistance(
-                                ColliderA, PositionA, YawRadiansA,
-                                ColliderB, PositionB, YawRadiansB,
-                                out GjkDistanceResult magicianDistanceResult))
-                        {
-                            continue;
-                        }
+    if (!SolveGjkDistance(
+            ColliderA, PositionA, YawRadiansA,
+            ColliderB, PositionB, YawRadiansB,
+            out GjkDistanceResult MagicianDistanceResult))
+    {
+        break;
+    }
 
-                        float separationDistanceMagician = magicianDistanceResult.Distance;
-                        DbVector3 separationDirectionMagician = magicianDistanceResult.SeparationDirection;
+    float SeparationDistanceMagician = MagicianDistanceResult.Distance;
+    DbVector3 SeparationDirectionMagician = MagicianDistanceResult.SeparationDirection;
 
-                        DbVector3 fromCharacterToOther = Sub(PositionB, PositionA);
-                        if (Dot(separationDirectionMagician, fromCharacterToOther) < 0f)
-                        {
-                            separationDirectionMagician = Mul(separationDirectionMagician, -1f);
-                        }
+    // Center direction A -> B (3D and horizontal)
+    DbVector3 FromCharacterToOther = Sub(PositionB, PositionA);
+    float FromCharacterToOtherLenSq = Dot(FromCharacterToOther, FromCharacterToOther);
+    DbVector3 FromCharacterToOtherDir =
+        FromCharacterToOtherLenSq > 1e-8f
+            ? Normalize(FromCharacterToOther)
+            : new DbVector3(0f, 0f, 0f);
 
-                        DbVector3 relativeVelocityMagician = Sub(VelocityA, VelocityB);
-                        float closingMagician = Dot(relativeVelocityMagician, separationDirectionMagician);
-                        if (closingMagician <= 0f) continue;
+    DbVector3 HorizontalCenterOffset = new DbVector3(FromCharacterToOther.x, 0f, FromCharacterToOther.z);
+    float HorizontalCenterLenSq = Dot(HorizontalCenterOffset, HorizontalCenterOffset);
+    DbVector3 HorizontalCenterDir =
+        HorizontalCenterLenSq > 1e-8f
+            ? Normalize(HorizontalCenterOffset)
+            : new DbVector3(0f, 0f, 0f);
 
-                        float timeToHitMagician = (separationDistanceMagician + CcdSlop) / closingMagician;
-                        if (timeToHitMagician < 0f || timeToHitMagician > RemainingTime) continue;
+    // Make GJK separation roughly point from A to B
+    if (Dot(SeparationDirectionMagician, FromCharacterToOther) < 0f)
+    {
+        SeparationDirectionMagician = Mul(SeparationDirectionMagician, -1f);
+    }
 
-                        if (!HasHit || timeToHitMagician < EarliestTime)
-                        {
-                            HasHit = true;
-                            EarliestTime = timeToHitMagician;
-                            EarliestEntry = Entry;
-                        }
+    DbVector3 RelativeVelocityMagician = VelocityA;
+    float RelativeSpeedSqMagician = Dot(RelativeVelocityMagician, RelativeVelocityMagician);
+    float RelativeSpeedMagician = RelativeSpeedSqMagician > 1e-6f ? MathF.Sqrt(RelativeSpeedSqMagician) : 0f;
 
-                        break;
-                    }
+    float ClosingMagician = Dot(RelativeVelocityMagician, SeparationDirectionMagician);
+
+    // Center-based debug values (proposed alternative)
+    float ClosingCenterMagician = Dot(RelativeVelocityMagician, HorizontalCenterDir);
+    float ToiGjkMagician =
+        ClosingMagician > 1e-6f
+            ? (SeparationDistanceMagician + CcdSlop) / ClosingMagician
+            : float.PositiveInfinity;
+    float ToiCenterMagician =
+        ClosingCenterMagician > 1e-6f
+            ? (SeparationDistanceMagician + CcdSlop) / ClosingCenterMagician
+            : float.PositiveInfinity;
+
+    float AlignmentMagician = Dot(SeparationDirectionMagician, HorizontalCenterDir);
+    bool IsVeryCloseMagician = SeparationDistanceMagician < 0.03f;
+    bool BadlyAlignedMagician = MathF.Abs(AlignmentMagician) < 0.7f;
+    bool IsSuspiciousMagician = IsVeryCloseMagician && BadlyAlignedMagician;
+
+    if (ClosingMagician <= 0f)
+    {
+        if (IsSuspiciousMagician)
+        {
+            Log.Info(
+                $"[CCD DBG] Suspicious (Closing<=0) Magician {Character.Id} vs {Other.Id} | " +
+                $"Sep={SeparationDistanceMagician:F4} Align={AlignmentMagician:F4} " +
+                $"ClosingGjk={ClosingMagician:F6} ToiGjk={ToiGjkMagician:F6} " +
+                $"ClosingCenter={ClosingCenterMagician:F6} ToiCenter={ToiCenterMagician:F6} " +
+                $"SepDir=({SeparationDirectionMagician.x:F3},{SeparationDirectionMagician.y:F3},{SeparationDirectionMagician.z:F3}) " +
+                $"CenterDir=({HorizontalCenterDir.x:F3},{HorizontalCenterDir.y:F3},{HorizontalCenterDir.z:F3}) " +
+                $"RelVel=({RelativeVelocityMagician.x:F3},{RelativeVelocityMagician.y:F3},{RelativeVelocityMagician.z:F3})"
+            );
+        }
+
+        break;
+    }
+
+    float TimeToHitMagician = (SeparationDistanceMagician + CcdSlop) / ClosingMagician;
+
+    if (TimeToHitMagician < 0f || TimeToHitMagician > RemainingTime)
+    {
+        if (IsSuspiciousMagician)
+        {
+            Log.Info(
+                $"[CCD DBG] Suspicious (TOI out of range) Magician {Character.Id} vs {Other.Id} | " +
+                $"Sep={SeparationDistanceMagician:F4} Align={AlignmentMagician:F4} " +
+                $"ClosingGjk={ClosingMagician:F6} ToiGjk={TimeToHitMagician:F6} " +
+                $"ClosingCenter={ClosingCenterMagician:F6} ToiCenter={ToiCenterMagician:F6} " +
+                $"SepDir=({SeparationDirectionMagician.x:F3},{SeparationDirectionMagician.y:F3},{SeparationDirectionMagician.z:F3}) " +
+                $"CenterDir=({HorizontalCenterDir.x:F3},{HorizontalCenterDir.y:F3},{HorizontalCenterDir.z:F3}) " +
+                $"RelVel=({RelativeVelocityMagician.x:F3},{RelativeVelocityMagician.y:F3},{RelativeVelocityMagician.z:F3})"
+            );
+        }
+
+        break;
+    }
+
+    // No logs here, only state update.
+    if (!HasHit || TimeToHitMagician < EarliestTime)
+    {
+        HasHit = true;
+        EarliestTime = TimeToHitMagician;
+        EarliestEntry = Entry;
+    }
+
+    break;
+}
+
 
                     case CollisionEntryType.Map:
                     {
@@ -152,7 +222,7 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
                             SeparationDirectionMap = Mul(SeparationDirectionMap, -1f);
                         }
 
-                        DbVector3 RelativeVelocityMap = Sub(VelocityA, VelocityB);
+                        DbVector3 RelativeVelocityMap = VelocityA;
                         float ClosingMap = Dot(RelativeVelocityMap, SeparationDirectionMap);
                         if (ClosingMap <= 0f) continue;
 
