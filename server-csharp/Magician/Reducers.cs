@@ -57,7 +57,7 @@ public static partial class Module
             //AdjustCollider(ctx, ref character);
             AdjustGrounded(ctx, MoveVelocity, ref character);
 
-            List<ContactEPA> Contacts = [];
+            List<CollisionContact> Contacts = [];
             List<CollisionEntry> EntriesToRemove = [];
             foreach (var Entry in character.CollisionEntries)
             {
@@ -81,7 +81,7 @@ public static partial class Module
                             DbVector3 Normal = ComputeContactNormal(GjkNormal, PositionA, PositionB);
                             float PenetrationDepth = ComputePenetrationDepthApprox(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, Normal);
 
-                            Contacts.Add(new ContactEPA(Normal, PenetrationDepth));
+                            Contacts.Add(new CollisionContact(Normal, PenetrationDepth));
                             
                         }
                         break;
@@ -103,7 +103,7 @@ public static partial class Module
                             DbVector3 Normal = ComputeContactNormal(GjkNormal, MapPositionA, MapPositionB);
                             float PenetrationDepth = ComputePenetrationDepthApprox(MapColliderA, MapPositionA, MapYawRadiansA, MapColliderB, MapPositionB, MapYawRadiansB, Normal);
 
-                            Contacts.Add(new ContactEPA(Normal, PenetrationDepth)); 
+                            Contacts.Add(new CollisionContact(Normal, PenetrationDepth)); 
                         }
                         break;
 
@@ -129,7 +129,7 @@ public static partial class Module
             DbVector3 BestPositionNormal = WorldUp;
             bool HasPositionContact = false;
 
-            foreach (ContactEPA Contact in Contacts)
+            foreach (CollisionContact Contact in Contacts)
             {
                 DbVector3 Normal = Contact.Normal;
                 DbVector3 PositionNormal = Normal;

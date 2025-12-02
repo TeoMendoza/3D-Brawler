@@ -29,7 +29,7 @@ public static partial class Module
     public static readonly ConvexHullCollider IdleConvexHull0 = new ConvexHullCollider
     {
         VerticesLocal = IdleConvexHull0Vertices,
-        Margin = 0.025f
+        Margin = 0.005f
     };
 
     public static readonly List<ConvexHullCollider> MagicianIdleConvexHulls = new List<ConvexHullCollider>
