@@ -197,7 +197,7 @@ public class MagicianController : MonoBehaviour
             {
                 var Entry = new CollisionEntry(Type: CollisionEntryType.Magician, Id: Player.Id);
                 GameManager.Conn.Reducers.AddCollisionEntryMagician(entry: Entry, targetIdentity: Identity);
-                
+                Debug.Log($"Magician Added To Entries With Id: {Player.Id}");
             }
         }
 
@@ -230,6 +230,7 @@ public class MagicianController : MonoBehaviour
             {
                 var Entry = new CollisionEntry(Type: CollisionEntryType.Magician, Id: Player.Id);
                 GameManager.Conn.Reducers.RemoveCollisionEntryMagician(entry: Entry, targetIdentity: Identity);
+                Debug.Log($"Magician Removed From Entries With Id: {Player.Id}");
             }
             
         }

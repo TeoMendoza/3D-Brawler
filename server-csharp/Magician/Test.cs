@@ -45,7 +45,6 @@ public static partial class Module
 
                 DbVector3 PositionAStart = Character.Position;
                 float YawRadiansAStart = ToRadians(Character.Rotation.Yaw);
-
                 foreach (CollisionEntry CollisionEntry in Character.CollisionEntries)
                 {
                     if (ResolvedEntriesThisTick.Contains(CollisionEntry)) continue;
@@ -78,6 +77,7 @@ public static partial class Module
 
                             PositionB = OtherMagician.Position;
                             YawRadiansB = ToRadians(OtherMagician.Rotation.Yaw);
+                            DbVector3 VelocityB = OtherMagician.IsColliding ? OtherMagician.CorrectedVelocity : OtherMagician.Velocity;
 
                             GjkDistanceResult DistanceResultMagician;
                             bool DistanceSolvedMagician = SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out DistanceResultMagician);
@@ -86,10 +86,14 @@ public static partial class Module
                             float SeparationDistanceMagician = DistanceResultMagician.Distance;
                             DbVector3 SeparationDirectionMagician = DistanceResultMagician.SeparationDirection;
 
-                            DbVector3 FromCharacterToOther = Sub(PositionB, PositionA);
-                            if (Dot(SeparationDirectionMagician, FromCharacterToOther) < 0f) SeparationDirectionMagician = Mul(SeparationDirectionMagician, -1f);
+                            if (Character.Id == 1) {
+                                Log.Info($"Position A: {PositionA}, Position B: {PositionB}, Seperation Direction: {SeparationDirectionMagician}, Seperation Distance: {SeparationDistanceMagician}, Velocity A: {VelocityA}, Velocity B: {VelocityB}");
+                            }
 
-                            DbVector3 RelativeVelocityMagician = VelocityA;
+                            DbVector3 FromCharacterToOther = Sub(PositionB, PositionA);
+                            if (Dot(SeparationDirectionMagician, FromCharacterToOther) < 0f) SeparationDirectionMagician = Negate(SeparationDirectionMagician);
+
+                            DbVector3 RelativeVelocityMagician = Sub(VelocityA, VelocityB);
                             float RelativeSpeedSquaredMagician = Dot(RelativeVelocityMagician, RelativeVelocityMagician);
                             if (RelativeSpeedSquaredMagician < 1e-6f) break;
 
@@ -279,7 +283,7 @@ public static partial class Module
         float AxisEpsilon = 1e-3f;
         float DepthEpsilon = 1e-4f;
         float MaxDepth = 0.25f;
-        float CorrectionFactor = 0.8f;
+        float CorrectionFactor = 1f;
         float TargetPenetration = 0.005f;
 
         DbVector3 CorrectedVelocity = InputVelocity;
