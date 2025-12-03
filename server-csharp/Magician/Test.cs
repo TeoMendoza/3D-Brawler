@@ -12,6 +12,7 @@ public static partial class Module
         float MinTimeStep = 1e-4f;
         int MaxSubsteps = 10;
         float CcdSlop = 0.025f;
+        float WonkySeparationThreshold = 0.01f;
 
         foreach (var CharacterRow in Ctx.Db.magician.Iter())
         {
@@ -35,6 +36,9 @@ public static partial class Module
                 bool HasEarliestHit = false;
                 float EarliestCollisionTime = RemainingTime;
                 CollisionEntry EarliestCollisionEntry = default;
+
+                DbVector3 EarliestSeparationDirection = default;
+                bool HasEarliestSeparationDirection = false;
 
                 List<CollisionContact> ContactsThisStep = new List<CollisionContact>();
                 List<CollisionEntry> ContactEntriesThisStep = new List<CollisionEntry>();
@@ -101,6 +105,8 @@ public static partial class Module
                                 HasEarliestHit = true;
                                 EarliestCollisionTime = CandidateHitTimeMagician;
                                 EarliestCollisionEntry = CollisionEntry;
+                                EarliestSeparationDirection = SeparationDirectionMagician;
+                                HasEarliestSeparationDirection = true;
                             }
 
                             break;
@@ -194,7 +200,8 @@ public static partial class Module
                 ContactsThisStep.Clear();
                 ContactEntriesThisStep.Clear();
 
-                bool HasContactAfterMove = TryBuildContactForEntry(Ctx, ref Character, EarliestCollisionEntry, ContactsThisStep);
+                bool HasContactAfterMove = false;
+                HasContactAfterMove = TryBuildContactForEntry(Ctx, ref Character, EarliestCollisionEntry, ContactsThisStep);
                 if (HasContactAfterMove)
                 {
                     ContactEntriesThisStep.Add(EarliestCollisionEntry);
@@ -209,6 +216,8 @@ public static partial class Module
             Ctx.Db.magician.identity.Update(Character);
         }
     }
+
+
 
     private static bool TryBuildContactForEntry(ReducerContext Ctx, ref Magician CharacterLocal, CollisionEntry CollisionEntry, List<CollisionContact> Contacts)
     {

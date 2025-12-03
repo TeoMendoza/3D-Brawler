@@ -201,10 +201,12 @@ public static partial class Module
 
             if (DotAB_AO <= 0f && DotAC_AO <= 0f)
             {
+                GjkVertex VertexA = Simplex[2];
                 Simplex.Clear();
-                Simplex.Add(Simplex[2]);
+                Simplex.Add(VertexA);
                 SearchDirection = VectorToOriginFromA;
                 return false;
+
             }
 
             if (DotAB_AO > 0f)

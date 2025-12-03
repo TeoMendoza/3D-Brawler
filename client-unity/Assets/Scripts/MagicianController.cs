@@ -131,13 +131,11 @@ public class MagicianController : MonoBehaviour
 
         DbVector3 MoveVelocity = newChar.IsColliding ? newChar.CorrectedVelocity : newChar.Velocity;
 
-        if (wasGrounded && Grounded is false)
+        if (wasGrounded && Grounded is false && MoveVelocity.Y > 0)
             Animator.SetTrigger("Jump");
 
         Animator.SetBool("Attacking", Attacking);
         Animator.SetBool("Crouching", Crouching);
-        Animator.SetBool("Jumping", Falling is false && Grounded is false);
-        //Debug.Log($"Jumping: {Falling is false && Grounded is false}");
         Animator.SetBool("Falling", Falling);
         Animator.SetBool("Grounded", Grounded);
 

@@ -6,25 +6,42 @@ public static partial class Module
 {
 
     public static readonly List<DbVector3> IdleConvexHull0Vertices = new List<DbVector3>
-    {
-        new DbVector3( 0.35f,    0f,      0f),
-        new DbVector3( 0.2475f,  0f,  0.2475f),
-        new DbVector3( 0f,       0f,   0.35f),
-        new DbVector3(-0.2475f,  0f,  0.2475f),
-        new DbVector3(-0.35f,    0f,      0f),
-        new DbVector3(-0.2475f,  0f, -0.2475f),
-        new DbVector3( 0f,       0f,  -0.35f),
-        new DbVector3( 0.2475f,  0f, -0.2475f),
+{
+    new DbVector3( 0.350000f,  0.0f,  0.000000f),
+    new DbVector3( 0.323358f,  0.0f,  0.133939f),
+    new DbVector3( 0.247487f,  0.0f,  0.247487f),
+    new DbVector3( 0.133939f,  0.0f,  0.323358f),
+    new DbVector3( 0.000000f,  0.0f,  0.350000f),
+    new DbVector3(-0.133939f,  0.0f,  0.323358f),
+    new DbVector3(-0.247487f,  0.0f,  0.247487f),
+    new DbVector3(-0.323358f,  0.0f,  0.133939f),
+    new DbVector3(-0.350000f,  0.0f,  0.000000f),
+    new DbVector3(-0.323358f,  0.0f, -0.133939f),
+    new DbVector3(-0.247487f,  0.0f, -0.247487f),
+    new DbVector3(-0.133939f,  0.0f, -0.323358f),
+    new DbVector3(-0.000000f,  0.0f, -0.350000f),
+    new DbVector3( 0.133939f,  0.0f, -0.323358f),
+    new DbVector3( 0.247487f,  0.0f, -0.247487f),
+    new DbVector3( 0.323358f,  0.0f, -0.133939f),
 
-        new DbVector3( 0.35f,    1.7f,      0f),
-        new DbVector3( 0.2475f,  1.7f,  0.2475f),
-        new DbVector3( 0f,       1.7f,   0.35f),
-        new DbVector3(-0.2475f,  1.7f,  0.2475f),
-        new DbVector3(-0.35f,    1.7f,      0f),
-        new DbVector3(-0.2475f,  1.7f, -0.2475f),
-        new DbVector3( 0f,       1.7f,  -0.35f),
-        new DbVector3( 0.2475f,  1.7f, -0.2475f),
-    };
+    new DbVector3( 0.350000f,  1.7f,  0.000000f),
+    new DbVector3( 0.323358f,  1.7f,  0.133939f),
+    new DbVector3( 0.247487f,  1.7f,  0.247487f),
+    new DbVector3( 0.133939f,  1.7f,  0.323358f),
+    new DbVector3( 0.000000f,  1.7f,  0.350000f),
+    new DbVector3(-0.133939f,  1.7f,  0.323358f),
+    new DbVector3(-0.247487f,  1.7f,  0.247487f),
+    new DbVector3(-0.323358f,  1.7f,  0.133939f),
+    new DbVector3(-0.350000f,  1.7f,  0.000000f),
+    new DbVector3(-0.323358f,  1.7f, -0.133939f),
+    new DbVector3(-0.247487f,  1.7f, -0.247487f),
+    new DbVector3(-0.133939f,  1.7f, -0.323358f),
+    new DbVector3(-0.000000f,  1.7f, -0.350000f),
+    new DbVector3( 0.133939f,  1.7f, -0.323358f),
+    new DbVector3( 0.247487f,  1.7f, -0.247487f),
+    new DbVector3( 0.323358f,  1.7f, -0.133939f),
+};
+
 
     public static readonly ConvexHullCollider IdleConvexHull0 = new ConvexHullCollider
     {
