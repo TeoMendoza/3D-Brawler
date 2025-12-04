@@ -86,35 +86,39 @@ public static partial class Module
                             );
                             if (DistanceSolvedMagician is false) break;
 
-                            float SeparationDistance3D = DistanceResultMagician.Distance;
-                            DbVector3 SeparationDirection3D = DistanceResultMagician.SeparationDirection;
+                            float SeparationDistanceMagician = DistanceResultMagician.Distance;
+                            DbVector3 SeparationDirectionMagician = DistanceResultMagician.SeparationDirection;
 
-                            DbVector3 SeparationVector3D = Mul(SeparationDirection3D, SeparationDistance3D);
-                            DbVector3 SeparationVectorHorizontal = new DbVector3(SeparationVector3D.x, 0f, SeparationVector3D.z);
-                            float SeparationHorizontalLengthSquared = Dot(SeparationVectorHorizontal, SeparationVectorHorizontal);
-                            if (SeparationHorizontalLengthSquared < 1e-6f) break;
-
-                            float SeparationDistanceHorizontal = MathF.Sqrt(SeparationHorizontalLengthSquared);
-                            DbVector3 SeparationDirectionHorizontal = Mul(SeparationVectorHorizontal, 1f / SeparationDistanceHorizontal);
+                            DbVector3 FromCharacterToOther = Sub(PositionB, PositionA);
+                            if (Dot(SeparationDirectionMagician, FromCharacterToOther) < 0f)
+                            {
+                                SeparationDirectionMagician = Mul(SeparationDirectionMagician, -1f);
+                            }
 
                             DbVector3 RelativeVelocityMagician = Sub(VelocityA, VelocityB);
                             float RelativeSpeedSquaredMagician = Dot(RelativeVelocityMagician, RelativeVelocityMagician);
                             if (RelativeSpeedSquaredMagician < 1e-6f) break;
 
-                            float ClosingSpeedMagician = Dot(RelativeVelocityMagician, SeparationDirectionHorizontal);
+                            float ClosingSpeedMagician = Dot(RelativeVelocityMagician, SeparationDirectionMagician);
                             if (ClosingSpeedMagician <= 0f) break;
 
-                            float CandidateHitTimeMagician = SeparationDistanceHorizontal / ClosingSpeedMagician;
+                            float CandidateHitTimeMagician = SeparationDistanceMagician / ClosingSpeedMagician;
                             bool IsValidTimeMagician = CandidateHitTimeMagician >= 0f && CandidateHitTimeMagician <= RemainingTime;
                             bool WillBecomeEarliestMagician = IsValidTimeMagician && (HasEarliestHit is false || CandidateHitTimeMagician < EarliestCollisionTime);
+
+                            DbVector3 PointOnAMagician = DistanceResultMagician.PointOnA;
+                            DbVector3 PointOnBMagician = DistanceResultMagician.PointOnB;
+                            float VerticalGapMagician = MathF.Abs(PointOnAMagician.y - PointOnBMagician.y);
 
                             if (Character.Id == 1)
                             {
                                 Log.Info(
                                     $"[Mag CCD] Char={Character.Id}, Other={OtherMagician.Id}, " +
-                                    $"SepH={SeparationDistanceHorizontal}, Closing={ClosingSpeedMagician}, " +
+                                    $"Sep={SeparationDistanceMagician}, Closing={ClosingSpeedMagician}, " +
                                     $"Candidate={CandidateHitTimeMagician}, Remaining={RemainingTime}, " +
-                                    $"Valid={IsValidTimeMagician}, Chosen={WillBecomeEarliestMagician}"
+                                    $"Valid={IsValidTimeMagician}, Chosen={WillBecomeEarliestMagician}, " +
+                                    $"PointA={PointOnAMagician}, PointB={PointOnBMagician}, " +
+                                    $"VertGap={VerticalGapMagician}, SepDir={SeparationDirectionMagician}"
                                 );
                             }
 
@@ -129,6 +133,8 @@ public static partial class Module
 
                             break;
                         }
+
+
 
                         case CollisionEntryType.Map:
                         {
@@ -214,19 +220,24 @@ public static partial class Module
                 );
 
                 RemainingTime -= EarliestCollisionTime;
-
                 ContactsThisStep.Clear();
 
-                bool HasContactAfterMove = false; 
-                HasContactAfterMove = TryBuildContactForEntry(Ctx, ref Character, EarliestCollisionEntry, ContactsThisStep); 
-                if (HasContactAfterMove) 
-                { 
-                    ContactEntriesThisStep.Add(EarliestCollisionEntry); 
-                    ResolveContacts(ref Character, ContactsThisStep, CollisionStepVelocity); 
+                // bool HasContactAfterMove = TryBuildContactForEntry(Ctx, ref Character, EarliestCollisionEntry, ContactsThisStep); 
+                // if (HasContactAfterMove) 
+                // { 
+                //     ResolveContacts(ref Character, ContactsThisStep, CollisionStepVelocity); 
 
-                    if (ResolvedEntriesThisTick.Contains(EarliestCollisionEntry) is false) 
-                        ResolvedEntriesThisTick.Add(EarliestCollisionEntry); 
-                } 
+                //     if (ResolvedEntriesThisTick.Contains(EarliestCollisionEntry) is false) 
+                //         ResolvedEntriesThisTick.Add(EarliestCollisionEntry); 
+                // }
+
+                if (TryBuildArtificialGjkContactForEntry(Ctx, ref Character, EarliestCollisionEntry, ContactsThisStep))
+                {
+                    ResolveContacts(ref Character, ContactsThisStep, CollisionStepVelocity);
+
+                    if (ResolvedEntriesThisTick.Contains(EarliestCollisionEntry) is false)
+                        ResolvedEntriesThisTick.Add(EarliestCollisionEntry);
+                }
 
             }
 
@@ -236,6 +247,55 @@ public static partial class Module
             Ctx.Db.magician.identity.Update(Character);
         }
     }
+
+
+    static bool TryBuildArtificialGjkContactForEntry(ReducerContext Ctx, ref Magician Character, CollisionEntry Entry, List<CollisionContact> ContactsThisStep)
+    {
+        DbVector3 PositionA = Character.Position;
+        float YawRadiansA = ToRadians(Character.Rotation.Yaw);
+
+        List<ConvexHullCollider> ColliderA = Character.GjkCollider.ConvexHulls;
+        List<ConvexHullCollider> ColliderB;
+        DbVector3 PositionB;
+        float YawRadiansB;
+
+        switch (Entry.Type)
+        {
+            case CollisionEntryType.Magician:
+            {
+                Magician Other = Ctx.Db.magician.Id.Find(Entry.Id) ?? throw new Exception("Colliding Magician Not Found");
+                if (Other.Id == Character.Id) return false;
+
+                ColliderB = Other.GjkCollider.ConvexHulls;
+                PositionB = Other.Position;
+                YawRadiansB = ToRadians(Other.Rotation.Yaw);
+                break;
+            }
+
+            case CollisionEntryType.Map:
+            {
+                Map MapPiece = Ctx.Db.Map.Id.Find(Entry.Id) ?? throw new Exception("Colliding Map Piece Not Found");
+
+                ColliderB = MapPiece.GjkCollider.ConvexHulls;
+                PositionB = new DbVector3(0f, 0f, 0f);
+                YawRadiansB = 0f;
+                break;
+            }
+
+            default:
+                return false;
+        }
+
+        if(SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkDistanceResult Result) is false) return false;
+        if (Result.Distance < 0.25f) return false;
+
+        DbVector3 RawNormal = Negate(Result.SeparationDirection);
+        DbVector3 ContactNormal = ComputeContactNormal(RawNormal, PositionA, PositionB);
+
+        ContactsThisStep.Add(new CollisionContact(ContactNormal, 0f));
+        return true;
+    }
+
 
     private static bool TryBuildContactForEntry(ReducerContext Ctx, ref Magician CharacterLocal, CollisionEntry CollisionEntry, List<CollisionContact> Contacts)
     {
@@ -380,12 +440,7 @@ public static partial class Module
     {
         List<GjkVertex> Simplex = new List<GjkVertex>(4);
 
-        DbVector3 InitialDirection = Sub(PositionB, PositionA);
-        if (NearZero(InitialDirection))
-        {
-            InitialDirection = new DbVector3(0f, 0f, 1f);
-        }
-
+        DbVector3 InitialDirection = new(0.7f, 0.4f, 0.6f);
         DbVector3 SearchDirection = Normalize(InitialDirection);
 
         GjkVertex InitialVertex = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, SearchDirection);
