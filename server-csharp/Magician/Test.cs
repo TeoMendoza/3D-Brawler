@@ -4,15 +4,13 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-   
+    
     [Reducer]
     public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Timer)
     {
         float TickTime = Timer.tick_rate;
         float MinTimeStep = 1e-4f;
-        int MaxSubsteps = 10;
-        float CcdSlop = 0.025f;
-        float WonkySeparationThreshold = 0.01f;
+        int MaxSubsteps = 4;
 
         foreach (var CharacterRow in Ctx.Db.magician.Iter())
         {
@@ -37,24 +35,15 @@ public static partial class Module
                 float EarliestCollisionTime = RemainingTime;
                 CollisionEntry EarliestCollisionEntry = default;
 
-                DbVector3 EarliestSeparationDirection = default;
-                bool HasEarliestSeparationDirection = false;
+                DbVector3 PositionAStart = Character.Position;
+                float YawRadiansAStart = ToRadians(Character.Rotation.Yaw);
 
                 List<CollisionContact> ContactsThisStep = new List<CollisionContact>();
                 List<CollisionEntry> ContactEntriesThisStep = new List<CollisionEntry>();
 
-                DbVector3 PositionAStart = Character.Position;
-                float YawRadiansAStart = ToRadians(Character.Rotation.Yaw);
                 foreach (CollisionEntry CollisionEntry in Character.CollisionEntries)
                 {
                     if (ResolvedEntriesThisTick.Contains(CollisionEntry)) continue;
-
-                    bool EntryHasContact = TryBuildContactForEntry(Ctx, ref Character, CollisionEntry, ContactsThisStep);
-                    if (EntryHasContact)
-                    {
-                        ContactEntriesThisStep.Add(CollisionEntry);
-                        continue;
-                    }
 
                     DbVector3 PositionA = PositionAStart;
                     DbVector3 VelocityA = CurrentStepVelocity;
@@ -64,6 +53,12 @@ public static partial class Module
                     float YawRadiansB;
                     List<ConvexHullCollider> ColliderA;
                     List<ConvexHullCollider> ColliderB;
+
+                    if (TryBuildContactForEntry(Ctx, ref Character, CollisionEntry, ContactsThisStep))
+                    {
+                        ContactEntriesThisStep.Add(CollisionEntry);
+                        continue;
+                    }
 
                     switch (CollisionEntry.Type)
                     {
@@ -80,37 +75,56 @@ public static partial class Module
                             DbVector3 VelocityB = OtherMagician.IsColliding ? OtherMagician.CorrectedVelocity : OtherMagician.Velocity;
 
                             GjkDistanceResult DistanceResultMagician;
-                            bool DistanceSolvedMagician = SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out DistanceResultMagician);
+                            bool DistanceSolvedMagician = SolveGjkDistance(
+                                ColliderA,
+                                PositionA,
+                                YawRadiansA,
+                                ColliderB,
+                                PositionB,
+                                YawRadiansB,
+                                out DistanceResultMagician
+                            );
                             if (DistanceSolvedMagician is false) break;
 
-                            float SeparationDistanceMagician = DistanceResultMagician.Distance;
-                            DbVector3 SeparationDirectionMagician = DistanceResultMagician.SeparationDirection;
+                            float SeparationDistance3D = DistanceResultMagician.Distance;
+                            DbVector3 SeparationDirection3D = DistanceResultMagician.SeparationDirection;
 
-                            if (Character.Id == 1) {
-                                Log.Info($"Position A: {PositionA}, Position B: {PositionB}, Seperation Direction: {SeparationDirectionMagician}, Seperation Distance: {SeparationDistanceMagician}, Velocity A: {VelocityA}, Velocity B: {VelocityB}");
-                            }
+                            DbVector3 SeparationVector3D = Mul(SeparationDirection3D, SeparationDistance3D);
+                            DbVector3 SeparationVectorHorizontal = new DbVector3(SeparationVector3D.x, 0f, SeparationVector3D.z);
+                            float SeparationHorizontalLengthSquared = Dot(SeparationVectorHorizontal, SeparationVectorHorizontal);
+                            if (SeparationHorizontalLengthSquared < 1e-6f) break;
 
-                            DbVector3 FromCharacterToOther = Sub(PositionB, PositionA);
-                            if (Dot(SeparationDirectionMagician, FromCharacterToOther) < 0f) SeparationDirectionMagician = Negate(SeparationDirectionMagician);
+                            float SeparationDistanceHorizontal = MathF.Sqrt(SeparationHorizontalLengthSquared);
+                            DbVector3 SeparationDirectionHorizontal = Mul(SeparationVectorHorizontal, 1f / SeparationDistanceHorizontal);
 
                             DbVector3 RelativeVelocityMagician = Sub(VelocityA, VelocityB);
                             float RelativeSpeedSquaredMagician = Dot(RelativeVelocityMagician, RelativeVelocityMagician);
                             if (RelativeSpeedSquaredMagician < 1e-6f) break;
 
-                            float ClosingSpeedMagician = Dot(RelativeVelocityMagician, SeparationDirectionMagician);
+                            float ClosingSpeedMagician = Dot(RelativeVelocityMagician, SeparationDirectionHorizontal);
                             if (ClosingSpeedMagician <= 0f) break;
 
-                            float CandidateHitTimeMagician = (SeparationDistanceMagician + CcdSlop) / ClosingSpeedMagician;
-                            if (CandidateHitTimeMagician < 0f) break;
-                            if (CandidateHitTimeMagician > RemainingTime) break;
+                            float CandidateHitTimeMagician = SeparationDistanceHorizontal / ClosingSpeedMagician;
+                            bool IsValidTimeMagician = CandidateHitTimeMagician >= 0f && CandidateHitTimeMagician <= RemainingTime;
+                            bool WillBecomeEarliestMagician = IsValidTimeMagician && (HasEarliestHit is false || CandidateHitTimeMagician < EarliestCollisionTime);
+
+                            if (Character.Id == 1)
+                            {
+                                Log.Info(
+                                    $"[Mag CCD] Char={Character.Id}, Other={OtherMagician.Id}, " +
+                                    $"SepH={SeparationDistanceHorizontal}, Closing={ClosingSpeedMagician}, " +
+                                    $"Candidate={CandidateHitTimeMagician}, Remaining={RemainingTime}, " +
+                                    $"Valid={IsValidTimeMagician}, Chosen={WillBecomeEarliestMagician}"
+                                );
+                            }
+
+                            if (IsValidTimeMagician is false) break;
 
                             if (HasEarliestHit is false || CandidateHitTimeMagician < EarliestCollisionTime)
                             {
                                 HasEarliestHit = true;
                                 EarliestCollisionTime = CandidateHitTimeMagician;
                                 EarliestCollisionEntry = CollisionEntry;
-                                EarliestSeparationDirection = SeparationDirectionMagician;
-                                HasEarliestSeparationDirection = true;
                             }
 
                             break;
@@ -143,7 +157,7 @@ public static partial class Module
                             float ClosingSpeedMap = Dot(RelativeVelocityMap, SeparationDirectionMap);
                             if (ClosingSpeedMap <= 0f) break;
 
-                            float CandidateHitTimeMap = (SeparationDistanceMap + CcdSlop) / ClosingSpeedMap;
+                            float CandidateHitTimeMap = SeparationDistanceMap / ClosingSpeedMap;
                             if (CandidateHitTimeMap < 0f) break;
                             if (CandidateHitTimeMap > RemainingTime) break;
 
@@ -161,7 +175,7 @@ public static partial class Module
                             break;
                     }
                 }
-
+                
                 if (ContactsThisStep.Count > 0)
                 {
                     ResolveContacts(ref Character, ContactsThisStep, CurrentStepVelocity);
@@ -202,16 +216,18 @@ public static partial class Module
                 RemainingTime -= EarliestCollisionTime;
 
                 ContactsThisStep.Clear();
-                ContactEntriesThisStep.Clear();
 
-                bool HasContactAfterMove = false;
-                HasContactAfterMove = TryBuildContactForEntry(Ctx, ref Character, EarliestCollisionEntry, ContactsThisStep);
-                if (HasContactAfterMove)
-                {
-                    ContactEntriesThisStep.Add(EarliestCollisionEntry);
-                    ResolveContacts(ref Character, ContactsThisStep, CollisionStepVelocity);
-                    if (ResolvedEntriesThisTick.Contains(EarliestCollisionEntry) is false) ResolvedEntriesThisTick.Add(EarliestCollisionEntry);
-                }
+                bool HasContactAfterMove = false; 
+                HasContactAfterMove = TryBuildContactForEntry(Ctx, ref Character, EarliestCollisionEntry, ContactsThisStep); 
+                if (HasContactAfterMove) 
+                { 
+                    ContactEntriesThisStep.Add(EarliestCollisionEntry); 
+                    ResolveContacts(ref Character, ContactsThisStep, CollisionStepVelocity); 
+
+                    if (ResolvedEntriesThisTick.Contains(EarliestCollisionEntry) is false) 
+                        ResolvedEntriesThisTick.Add(EarliestCollisionEntry); 
+                } 
+
             }
 
             DbVector3 FinalStepVelocity = Character.IsColliding ? Character.CorrectedVelocity : Character.Velocity;
@@ -220,8 +236,6 @@ public static partial class Module
             Ctx.Db.magician.identity.Update(Character);
         }
     }
-
-
 
     private static bool TryBuildContactForEntry(ReducerContext Ctx, ref Magician CharacterLocal, CollisionEntry CollisionEntry, List<CollisionContact> Contacts)
     {
