@@ -270,7 +270,15 @@ public static partial class Module
         float UpDot = Dot(Normal, WorldUp);
         if (MathF.Abs(UpDot) > MinGroundDot && UpDot < 0f)
             Normal = Negate(Normal);
-        
+
+        if (UpDot > MinGroundDot)
+            Normal = WorldUp;
+
+        else if (MathF.Abs(UpDot) < 0.1f) 
+        {
+            Normal.y = 0f;
+            Normal = Normalize(Normal);
+        }
 
         return Normal;
     }

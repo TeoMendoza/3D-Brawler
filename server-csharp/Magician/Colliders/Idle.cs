@@ -7,65 +7,50 @@ public static partial class Module
 
 
     public static readonly List<DbVector3> IdleConvexHull0Vertices = new List<DbVector3>
-    {
-        new DbVector3( 0.300000f,  0.000000f,  0.000000f),
-        new DbVector3( 0.277164f,  0.000000f,  0.114805f),
-        new DbVector3( 0.212132f,  0.000000f,  0.212132f),
-        new DbVector3( 0.114805f,  0.000000f,  0.277164f),
-        new DbVector3( 0.000000f,  0.000000f,  0.300000f),
-        new DbVector3(-0.114805f,  0.000000f,  0.277164f),
-        new DbVector3(-0.212132f,  0.000000f,  0.212132f),
-        new DbVector3(-0.277164f,  0.000000f,  0.114805f),
-        new DbVector3(-0.300000f,  0.000000f,  0.000000f),
-        new DbVector3(-0.277164f,  0.000000f, -0.114805f),
-        new DbVector3(-0.212132f,  0.000000f, -0.212132f),
-        new DbVector3(-0.114805f,  0.000000f, -0.277164f),
-        new DbVector3(-0.000000f,  0.000000f, -0.300000f),
-        new DbVector3( 0.114805f,  0.000000f, -0.277164f),
-        new DbVector3( 0.212132f,  0.000000f, -0.212132f),
-        new DbVector3( 0.277164f,  0.000000f, -0.114805f),
+{
+    // Bottom Ring (Y = 0.05, Radius = 0.25)
+    new DbVector3( 0.250000f,  0.050000f,  0.000000f),
+    new DbVector3( 0.230970f,  0.050000f,  0.095671f),
+    new DbVector3( 0.176777f,  0.050000f,  0.176777f),
+    new DbVector3( 0.095671f,  0.050000f,  0.230970f),
+    new DbVector3( 0.000000f,  0.050000f,  0.250000f),
+    new DbVector3(-0.095671f,  0.050000f,  0.230970f),
+    new DbVector3(-0.176777f,  0.050000f,  0.176777f),
+    new DbVector3(-0.230970f,  0.050000f,  0.095671f),
+    new DbVector3(-0.250000f,  0.050000f,  0.000000f),
+    new DbVector3(-0.230970f,  0.050000f, -0.095671f),
+    new DbVector3(-0.176777f,  0.050000f, -0.176777f),
+    new DbVector3(-0.095671f,  0.050000f, -0.230970f),
+    new DbVector3(-0.000000f,  0.050000f, -0.250000f),
+    new DbVector3( 0.095671f,  0.050000f, -0.230970f),
+    new DbVector3( 0.176777f,  0.050000f, -0.176777f),
+    new DbVector3( 0.230970f,  0.050000f, -0.095671f),
 
-        new DbVector3( 0.350000f,  0.850000f,  0.000000f),
-        new DbVector3( 0.323358f,  0.850000f,  0.133939f),
-        new DbVector3( 0.247487f,  0.850000f,  0.247487f),
-        new DbVector3( 0.133939f,  0.850000f,  0.323358f),
-        new DbVector3( 0.000000f,  0.850000f,  0.350000f),
-        new DbVector3(-0.133939f,  0.850000f,  0.323358f),
-        new DbVector3(-0.247487f,  0.850000f,  0.247487f),
-        new DbVector3(-0.323358f,  0.850000f,  0.133939f),
-        new DbVector3(-0.350000f,  0.850000f,  0.000000f),
-        new DbVector3(-0.323358f,  0.850000f, -0.133939f),
-        new DbVector3(-0.247487f,  0.850000f, -0.247487f),
-        new DbVector3(-0.133939f,  0.850000f, -0.323358f),
-        new DbVector3(-0.000000f,  0.850000f, -0.350000f),
-        new DbVector3( 0.133939f,  0.850000f, -0.323358f),
-        new DbVector3( 0.247487f,  0.850000f, -0.247487f),
-        new DbVector3( 0.323358f,  0.850000f, -0.133939f),
-
-        new DbVector3( 0.300000f,  1.700000f,  0.000000f),
-        new DbVector3( 0.277164f,  1.700000f,  0.114805f),
-        new DbVector3( 0.212132f,  1.700000f,  0.212132f),
-        new DbVector3( 0.114805f,  1.700000f,  0.277164f),
-        new DbVector3( 0.000000f,  1.700000f,  0.300000f),
-        new DbVector3(-0.114805f,  1.700000f,  0.277164f),
-        new DbVector3(-0.212132f,  1.700000f,  0.212132f),
-        new DbVector3(-0.277164f,  1.700000f,  0.114805f),
-        new DbVector3(-0.300000f,  1.700000f,  0.000000f),
-        new DbVector3(-0.277164f,  1.700000f, -0.114805f),
-        new DbVector3(-0.212132f,  1.700000f, -0.212132f),
-        new DbVector3(-0.114805f,  1.700000f, -0.277164f),
-        new DbVector3(-0.000000f,  1.700000f, -0.300000f),
-        new DbVector3( 0.114805f,  1.700000f, -0.277164f),
-        new DbVector3( 0.212132f,  1.700000f, -0.212132f),
-        new DbVector3( 0.277164f,  1.700000f, -0.114805f),
-    };
+    // Top Ring (Y = 1.65, Radius = 0.25)
+    new DbVector3( 0.250000f,  1.650000f,  0.000000f),
+    new DbVector3( 0.230970f,  1.650000f,  0.095671f),
+    new DbVector3( 0.176777f,  1.650000f,  0.176777f),
+    new DbVector3( 0.095671f,  1.650000f,  0.230970f),
+    new DbVector3( 0.000000f,  1.650000f,  0.250000f),
+    new DbVector3(-0.095671f,  1.650000f,  0.230970f),
+    new DbVector3(-0.176777f,  1.650000f,  0.176777f),
+    new DbVector3(-0.230970f,  1.650000f,  0.095671f),
+    new DbVector3(-0.250000f,  1.650000f,  0.000000f),
+    new DbVector3(-0.230970f,  1.650000f, -0.095671f),
+    new DbVector3(-0.176777f,  1.650000f, -0.176777f),
+    new DbVector3(-0.095671f,  1.650000f, -0.230970f),
+    new DbVector3(-0.000000f,  1.650000f, -0.250000f),
+    new DbVector3( 0.095671f,  1.650000f, -0.230970f),
+    new DbVector3( 0.176777f,  1.650000f, -0.176777f),
+    new DbVector3( 0.230970f,  1.650000f, -0.095671f),
+};
 
 
 
     public static readonly ConvexHullCollider IdleConvexHull0 = new ConvexHullCollider
     {
         VerticesLocal = IdleConvexHull0Vertices,
-        Margin = 0.005f
+        Margin = 0f
     };
 
     public static readonly List<ConvexHullCollider> MagicianIdleConvexHulls = new List<ConvexHullCollider>
