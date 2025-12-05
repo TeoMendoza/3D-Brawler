@@ -54,12 +54,14 @@ public static partial class Module
                     List<ConvexHullCollider> ColliderA;
                     List<ConvexHullCollider> ColliderB;
 
+                    // 1. Check for STATIC Overlap first
                     if (TryBuildContactForEntry(Ctx, ref Character, CollisionEntry, ContactsThisStep))
                     {
                         ContactEntriesThisStep.Add(CollisionEntry);
                         continue;
                     }
 
+                    // 2. Perform CCD Sweep
                     switch (CollisionEntry.Type)
                     {
                         case CollisionEntryType.Magician:
@@ -69,31 +71,32 @@ public static partial class Module
 
                             ColliderA = Character.GjkCollider.ConvexHulls;
                             ColliderB = OtherMagician.GjkCollider.ConvexHulls;
-
                             PositionB = OtherMagician.Position;
                             YawRadiansB = ToRadians(OtherMagician.Rotation.Yaw);
-
                             DbVector3 VelocityB = OtherMagician.IsColliding ? OtherMagician.CorrectedVelocity : OtherMagician.Velocity;
 
                             GjkDistanceResult Dist;
-                            bool Ok = SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out Dist);
-                            if (Ok is false) break;
+                            if (SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out Dist) is false) break;
 
                             float Sep = Dist.Distance;
-                            DbVector3 SepDir = Dist.SeparationDirection;
-
-                            // Ensure SepDir points from A to B
-                            DbVector3 FromAtoB = Sub(PositionB, PositionA);
-                            if (Dot(SepDir, FromAtoB) < 0f) SepDir = Mul(SepDir, -1f);
+                            
+                            // FIX: Unconditional Negate (GJK A->B. We want B->A Normal).
+                            DbVector3 Normal = Negate(Dist.SeparationDirection);
 
                             DbVector3 RelVel = Sub(VelocityA, VelocityB);
                             float RelSpeedSq = Dot(RelVel, RelVel);
                             if (RelSpeedSq < 1e-6f) break;
 
-                            float Closing = Dot(RelVel, SepDir);
-                            if (Closing <= 0f) break;
+                            // Check Closing Speed against the Normal (B->A)
+                            // If moving INTO wall, Dot is Negative.
+                            float Closing = Dot(RelVel, Normal);
+                            
+                            // If Closing >= 0, we are moving AWAY or PARALLEL. Break.
+                            if (Closing >= 0f) break;
 
-                            float HitTime = Sep / Closing;
+                            // Time = Distance / Speed. (Negate Closing to make it positive)
+                            float HitTime = Sep / -Closing;
+                            
                             if (HitTime < 0f) break;
                             if (HitTime > RemainingTime) break;
 
@@ -103,7 +106,6 @@ public static partial class Module
                                 EarliestCollisionTime = HitTime;
                                 EarliestCollisionEntry = CollisionEntry;
                             }
-
                             break;
                         }
 
@@ -113,29 +115,30 @@ public static partial class Module
 
                             ColliderA = Character.GjkCollider.ConvexHulls;
                             ColliderB = MapPiece.GjkCollider.ConvexHulls;
-
                             PositionB = new DbVector3(0f, 0f, 0f);
                             YawRadiansB = 0f;
 
                             GjkDistanceResult DistanceResultMap;
-                            bool DistanceSolvedMap = SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out DistanceResultMap);
-                            if (DistanceSolvedMap is false) break;
+                            if (SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out DistanceResultMap) is false) break;
 
                             float SeparationDistanceMap = DistanceResultMap.Distance;
-                            DbVector3 SeparationDirectionMap = DistanceResultMap.SeparationDirection;
-
-                            // Ensure SeparationDirectionMap points from A to B
-                            DbVector3 FromCharacterToMap = Sub(PositionB, PositionA);
-                            if (Dot(SeparationDirectionMap, FromCharacterToMap) < 0f) SeparationDirectionMap = Mul(SeparationDirectionMap, -1f);
+                            
+                            // FIX: Unconditional Negate (Fixes the Map Origin Bug)
+                            // Do NOT check Sub(PositionB, PositionA) here!
+                            DbVector3 Normal = Negate(DistanceResultMap.SeparationDirection);
 
                             DbVector3 RelativeVelocityMap = VelocityA;
                             float RelativeSpeedSquaredMap = Dot(RelativeVelocityMap, RelativeVelocityMap);
                             if (RelativeSpeedSquaredMap < 1e-6f) break;
 
-                            float ClosingSpeedMap = Dot(RelativeVelocityMap, SeparationDirectionMap);
-                            if (ClosingSpeedMap <= 0f) break;
+                            // Check Closing Speed against Normal (B->A)
+                            float ClosingSpeedMap = Dot(RelativeVelocityMap, Normal);
+                            
+                            // If >= 0, moving away. Break.
+                            if (ClosingSpeedMap >= 0f) break;
 
-                            float CandidateHitTimeMap = SeparationDistanceMap / ClosingSpeedMap;
+                            float CandidateHitTimeMap = SeparationDistanceMap / -ClosingSpeedMap;
+                            
                             if (CandidateHitTimeMap < 0f) break;
                             if (CandidateHitTimeMap > RemainingTime) break;
 
@@ -145,15 +148,13 @@ public static partial class Module
                                 EarliestCollisionTime = CandidateHitTimeMap;
                                 EarliestCollisionEntry = CollisionEntry;
                             }
-
                             break;
                         }
-
-                        default:
-                            break;
+                        default: break;
                     }
                 }
                 
+                // 3. Resolve Static Contacts
                 if (ContactsThisStep.Count > 0)
                 {
                     ResolveContacts(ref Character, ContactsThisStep, CurrentStepVelocity);
@@ -162,27 +163,26 @@ public static partial class Module
                     {
                         if (ResolvedEntriesThisTick.Contains(ContactEntry) is false) ResolvedEntriesThisTick.Add(ContactEntry);
                     }
-
+                    // Continue to next substep (Re-evaluate collisions at new position)
                     continue;
                 }
 
+                // 4. No Collision? Move freely.
                 if (HasEarliestHit is false)
                 {
                     DbVector3 FreeMoveVelocity = Character.IsColliding ? Character.CorrectedVelocity : Character.Velocity;
-
                     Character.Position = new DbVector3(
                         Character.Position.x + FreeMoveVelocity.x * RemainingTime,
                         Character.Position.y + FreeMoveVelocity.y * RemainingTime,
                         Character.Position.z + FreeMoveVelocity.z * RemainingTime
                     );
-
                     Character.IsColliding = false;
                     Character.CorrectedVelocity = FreeMoveVelocity;
-
                     RemainingTime = 0f;
                     break;
                 }
 
+                // 5. CCD Collision Detected. Advance to impact.
                 DbVector3 CollisionStepVelocity = Character.IsColliding ? Character.CorrectedVelocity : Character.Velocity;
 
                 Character.Position = new DbVector3(
@@ -194,13 +194,13 @@ public static partial class Module
                 RemainingTime -= EarliestCollisionTime;
                 ContactsThisStep.Clear();
 
+                // 6. Build Artificial Contact (Skin) and Resolve
                 if (TryBuildArtificialGjkContactForEntry(Ctx, ref Character, EarliestCollisionEntry, ContactsThisStep))
                 {
                     ResolveContacts(ref Character, ContactsThisStep, CollisionStepVelocity);
 
                     if (ResolvedEntriesThisTick.Contains(EarliestCollisionEntry) is false)
                         ResolvedEntriesThisTick.Add(EarliestCollisionEntry);
-                    
                 }
             }
 
@@ -214,7 +214,8 @@ public static partial class Module
 
     static bool TryBuildArtificialGjkContactForEntry(ReducerContext Ctx, ref Magician Character, CollisionEntry Entry, List<CollisionContact> ContactsThisStep)
     {
-        float NearSeparationThreshold = 0.05f;
+        float SkinThickness = 0.05f;
+        float DetectionThreshold = 0.08f;
 
         DbVector3 VelocityA = Character.IsColliding ? Character.CorrectedVelocity : Character.Velocity;
         
@@ -260,13 +261,17 @@ public static partial class Module
             return false;
 
         float Separation = DistanceResult.Distance;
-        if (Separation > NearSeparationThreshold)
+        if (Separation > DetectionThreshold)
             return false;
 
-        DbVector3 StableAxis = DistanceResult.SeparationDirection;
-        DbVector3 ContactNormal = ComputeContactNormal(StableAxis, PositionA, PositionB);
+        DbVector3 SeparationDir = DistanceResult.SeparationDirection;
+        DbVector3 PointOnA = DistanceResult.PointOnA;
+        DbVector3 PointOnB = DistanceResult.PointOnB;
+
+        DbVector3 RawNormal = Negate(SeparationDir); 
+        DbVector3 ContactNormal = ComputeContactNormal(RawNormal, PointOnA, PointOnB);
         
-        float ArtificialPenetration = NearSeparationThreshold - Separation;
+        float ArtificialPenetration = SkinThickness - Separation;
         if (ArtificialPenetration < 0f) ArtificialPenetration = 0f;
 
         ContactsThisStep.Clear();
@@ -299,12 +304,21 @@ public static partial class Module
             bool IntersectsMagician = SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResultMagician);
             if (IntersectsMagician is false) return false;
 
-            DbVector3 GjkNormal = Negate(GjkResultMagician.LastDirection);
-            DbVector3 ContactNormal = ComputeContactNormal(GjkNormal, PositionA, PositionB);
-            float PenetrationDepth = ComputePenetrationDepthApprox(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, ContactNormal);
+            GjkVertex SkinPoints = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, GjkResultMagician.LastDirection);
+            DbVector3 PointOnA = SkinPoints.SupportPointA;
+            DbVector3 PointOnB = SkinPoints.SupportPointB;
+
+            DbVector3 RawNormal = Negate(GjkResultMagician.LastDirection); 
+            DbVector3 ContactNormal = ComputeContactNormal(RawNormal, PointOnA, PointOnB);
+            
+            float DistanceA = Dot(PointOnA, ContactNormal);
+            float DistanceB = Dot(PointOnB, ContactNormal);
+            float Gap = DistanceB - DistanceA;
+            float PenetrationDepth = (Gap > 0f) ? Gap : 0f;
 
             Contacts.Add(new CollisionContact(ContactNormal, PenetrationDepth));
             return true;
+    
         }
 
         if (CollisionEntry.Type == CollisionEntryType.Map)
@@ -317,13 +331,20 @@ public static partial class Module
             DbVector3 PositionB = new DbVector3(0f, 0f, 0f);
             float YawRadiansB = 0f;
 
-            GjkResult GjkResultMap;
-            bool IntersectsMap = SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResultMap);
+            bool IntersectsMap = SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResult GjkResultMap);
             if (IntersectsMap is false) return false;
+            
+            GjkVertex SkinPoints = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, GjkResultMap.LastDirection);
+            DbVector3 PointOnA = SkinPoints.SupportPointA;
+            DbVector3 PointOnB = SkinPoints.SupportPointB;
 
-            DbVector3 GjkNormal = Negate(GjkResultMap.LastDirection);
-            DbVector3 ContactNormal = ComputeContactNormal(GjkNormal, PositionA, PositionB);
-            float PenetrationDepth = ComputePenetrationDepthApprox(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, ContactNormal);
+            DbVector3 RawNormal = Negate(GjkResultMap.LastDirection); 
+            DbVector3 ContactNormal = ComputeContactNormal(RawNormal, PointOnA, PointOnB);
+            
+            float DistanceA = Dot(PointOnA, ContactNormal);
+            float DistanceB = Dot(PointOnB, ContactNormal);
+            float Gap = DistanceB - DistanceA;
+            float PenetrationDepth = (Gap > 0f) ? Gap : 0f;
 
             Contacts.Add(new CollisionContact(ContactNormal, PenetrationDepth));
             return true;
@@ -335,59 +356,67 @@ public static partial class Module
     public static void ResolveContacts(ref Magician CharacterLocal, List<CollisionContact> Contacts, DbVector3 InputVelocity)
     {
         DbVector3 WorldUp = new(0f, 1f, 0f);
-        float MinGroundDot = MathF.Cos(ToRadians(50f));
-        float AxisEpsilon = 1e-3f;
+        
+        // Thresholds
+        float MinGroundDot = 0.7f; // Must match ComputeContactNormal (approx 45 deg)
         float DepthEpsilon = 1e-4f;
         float MaxDepth = 0.25f;
-        float CorrectionFactor = 0.4f;
-        float TargetPenetration = 0f;
+        
+        // Tuning (Soft & Precise)
+        float CorrectionFactor = 0.5f; 
+        float TargetPenetration = 0.01f; 
+        float ClimbVelocityThreshold = 0.2f;
 
         DbVector3 CorrectedVelocity = InputVelocity;
-
         bool IsGrounded = false;
+
         float MaxPenetrationDepth = 0f;
         DbVector3 BestPositionNormal = WorldUp;
         bool HasPositionContact = false;
 
         foreach (CollisionContact Contact in Contacts)
         {
-            DbVector3 ContactNormalWorld = Contact.Normal;
-            DbVector3 PositionNormal = ContactNormalWorld;
+            DbVector3 Normal = Contact.Normal; 
 
-            float UpDot = Dot(ContactNormalWorld, WorldUp);
+            // 1. Update Ground Flag
+            float UpDot = Dot(Normal, WorldUp);
+            if (UpDot >= MinGroundDot) 
+                IsGrounded = true;
+            
+            // 2. Velocity Resolution
+            float NormalVelocityComponent = Dot(Normal, CorrectedVelocity);
+            if (NormalVelocityComponent < 0f) 
+                CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, NormalVelocityComponent));
+            
 
-            if (UpDot > 1f - AxisEpsilon)
+            // 3. Track Deepest Penetration for Position Correction
+            if (Contact.PenetrationDepth > MaxPenetrationDepth)
             {
-                ContactNormalWorld = WorldUp;
-                UpDot = 1f;
-            }
-
-            bool IsWalkable = UpDot >= MinGroundDot && UpDot > 0f;
-            if (IsWalkable) IsGrounded = true;
-
-            if (IsWalkable is false)
-            {
-                ContactNormalWorld.y = 0f;
-                ContactNormalWorld = Normalize(ContactNormalWorld);
-            }
-
-            float NormalVelocityComponent = Dot(ContactNormalWorld, CorrectedVelocity);
-            if (NormalVelocityComponent < 0f) CorrectedVelocity = Sub(CorrectedVelocity, Mul(ContactNormalWorld, NormalVelocityComponent));
-
-            float PenetrationDepth = Contact.PenetrationDepth;
-            if (PenetrationDepth > MaxPenetrationDepth)
-            {
-                MaxPenetrationDepth = PenetrationDepth;
-                BestPositionNormal = PositionNormal;
+                MaxPenetrationDepth = Contact.PenetrationDepth;
+                BestPositionNormal = Normal;
                 HasPositionContact = true;
             }
         }
 
-        if (IsGrounded && CorrectedVelocity.y < 0f) CorrectedVelocity.y = 0f;
+        // 4. Grounding cleanup (Prevents jittery sliding down flat surfaces)
+        if (IsGrounded)
+        {
+            if (CorrectedVelocity.y <= ClimbVelocityThreshold) 
+                CorrectedVelocity.y = -1f; 
+        
+            float HorizInputSq = InputVelocity.x * InputVelocity.x + InputVelocity.z * InputVelocity.z;
+            if (HorizInputSq < 0.001f)
+            {
+                CorrectedVelocity.x = 0f;
+                CorrectedVelocity.z = 0f;
+            }  
 
-        if (IsGrounded && InputVelocity.y <= 0f)
-            CharacterLocal.Velocity = new DbVector3(CharacterLocal.Velocity.x, 0f, CharacterLocal.Velocity.z);
+            if (InputVelocity.y <= 0f)
+                CharacterLocal.Velocity = CorrectedVelocity;
+            
+        }
 
+        // 5. Apply Position Correction
         if (HasPositionContact && MaxPenetrationDepth > DepthEpsilon)
         {
             if (MaxPenetrationDepth > MaxDepth) MaxPenetrationDepth = MaxDepth;

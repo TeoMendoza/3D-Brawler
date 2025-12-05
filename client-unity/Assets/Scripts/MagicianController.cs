@@ -131,7 +131,7 @@ public class MagicianController : MonoBehaviour
 
         DbVector3 MoveVelocity = newChar.IsColliding ? newChar.CorrectedVelocity : newChar.Velocity;
 
-        if (wasGrounded && Grounded is false && MoveVelocity.Y > 0)
+        if (wasGrounded && Grounded is false && MoveVelocity.Y > 2f)
             Animator.SetTrigger("Jump");
 
         Animator.SetBool("Attacking", Attacking);
@@ -142,12 +142,30 @@ public class MagicianController : MonoBehaviour
         Vector3 vWorld = new(MoveVelocity.X, 0f, MoveVelocity.Z);
         Quaternion yawOnly = Quaternion.Euler(0f, TargetRotation.Yaw, 0f);
         Vector3 vLocal = Quaternion.Inverse(yawOnly) * vWorld;
-        float forward = vLocal.z;
-        float side = vLocal.x;
+        float forwardInput = vLocal.z;
+        float sideInput = vLocal.x;
 
-        const float damp = 0.12f;
-        Animator.SetFloat("ForwardSpeed", forward, damp, Time.deltaTime);
-        Animator.SetFloat("HorizontalSpeed", side, damp, Time.deltaTime);
+        if (Mathf.Abs(forwardInput) < 0.1f) forwardInput = 0f;
+        if (Mathf.Abs(sideInput) < 0.1f) sideInput = 0f;
+
+        // 2. SNAP FORWARD
+        if (forwardInput > 2.5f) forwardInput = 4.0f;
+        else if (forwardInput < -2.5f) forwardInput = -4.0f;
+        else if (Mathf.Abs(forwardInput) > 0.1f) 
+        {
+            // If moving at all, and not sprinting, force Walk (2.0)
+            forwardInput = 2.0f * Mathf.Sign(forwardInput);
+        }
+
+        // 3. SNAP SIDE
+        if (Mathf.Abs(sideInput) > 0.1f) 
+        {
+            sideInput = 1.5f * Mathf.Sign(sideInput);
+        }
+
+        // 4. DAMP
+        Animator.SetFloat("ForwardSpeed", forwardInput, 0.15f, Time.deltaTime);
+        Animator.SetFloat("HorizontalSpeed", sideInput, 0.15f, Time.deltaTime);
     }
 
 

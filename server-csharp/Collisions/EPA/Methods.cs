@@ -255,30 +255,43 @@ public static partial class Module
     }
 
 
-    static DbVector3 ComputeContactNormal(DbVector3 RawNormal, DbVector3 PositionA, DbVector3 PositionB)
+    static DbVector3 ComputeContactNormal(DbVector3 RawNormal, DbVector3 PointOnA, DbVector3 PointOnB)
     {
+        DbVector3 Normal = RawNormal;
+        if (Dot(Normal, Normal) < 1e-6f) return new DbVector3(0, 1, 0);
+        Normal = Normalize(Normal);
+
+        // REMOVED: The Geometric Alignment check.
+        // Why: When objects penetrate (sink), PointOnA drops below PointOnB.
+        // The vector A->B flips direction, causing this check to incorrectly flip the Normal.
+        // Since we trust GJK output now, we don't need this.
+
         DbVector3 WorldUp = new(0f, 1f, 0f);
-        float MinGroundDot = MathF.Cos(ToRadians(50f));
-
-        DbVector3 Normal = Normalize(RawNormal);
-
-        DbVector3 RelativeBToA = Sub(PositionA, PositionB);
-        if (Dot(Normal, RelativeBToA) < 0f) 
-            Normal = Negate(Normal);
-        
-
+        float MinGroundDot = 0.7f; // 45 degrees
         float UpDot = Dot(Normal, WorldUp);
-        if (MathF.Abs(UpDot) > MinGroundDot && UpDot < 0f)
-            Normal = Negate(Normal);
-
+        
+        // We can relax or remove VerticalDiff because 'UpDot' is the ultimate source of truth.
+        // If the physics engine says the force is Up, it's a floor.
+        
+        // FLOOR CASE
         if (UpDot > MinGroundDot)
+        {
             Normal = WorldUp;
-
-        else if (MathF.Abs(UpDot) < 0.1f) 
+        }
+        // CEILING CASE
+        else if (UpDot < -MinGroundDot)
+        {
+            Normal = new DbVector3(0f, -1f, 0f);
+        }
+        // WALL CASE (Vertical)
+        else if (MathF.Abs(UpDot) < 0.05f)
         {
             Normal.y = 0f;
             Normal = Normalize(Normal);
         }
+
+        // SLOPE CASE (Default)
+        // Returns RawNormal
 
         return Normal;
     }

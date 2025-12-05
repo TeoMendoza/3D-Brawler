@@ -6,44 +6,59 @@ public static partial class Module
 {
 
 
-    public static readonly List<DbVector3> IdleConvexHull0Vertices = new List<DbVector3>
-{
-    // Bottom Ring (Y = 0.05, Radius = 0.25)
-    new DbVector3( 0.250000f,  0.050000f,  0.000000f),
-    new DbVector3( 0.230970f,  0.050000f,  0.095671f),
-    new DbVector3( 0.176777f,  0.050000f,  0.176777f),
-    new DbVector3( 0.095671f,  0.050000f,  0.230970f),
-    new DbVector3( 0.000000f,  0.050000f,  0.250000f),
-    new DbVector3(-0.095671f,  0.050000f,  0.230970f),
-    new DbVector3(-0.176777f,  0.050000f,  0.176777f),
-    new DbVector3(-0.230970f,  0.050000f,  0.095671f),
-    new DbVector3(-0.250000f,  0.050000f,  0.000000f),
-    new DbVector3(-0.230970f,  0.050000f, -0.095671f),
-    new DbVector3(-0.176777f,  0.050000f, -0.176777f),
-    new DbVector3(-0.095671f,  0.050000f, -0.230970f),
-    new DbVector3(-0.000000f,  0.050000f, -0.250000f),
-    new DbVector3( 0.095671f,  0.050000f, -0.230970f),
-    new DbVector3( 0.176777f,  0.050000f, -0.176777f),
-    new DbVector3( 0.230970f,  0.050000f, -0.095671f),
+   public static readonly List<DbVector3> IdleConvexHull0Vertices = new List<DbVector3>
+    {
+        // --- BOTTOM POLE (The Anchor) ---
+        // At height 0.05. This is the single point that will stand on the floor.
+        // Minimizes jitter completely.
+        new DbVector3( 0.000000f,  0.050000f,  0.000000f),
 
-    // Top Ring (Y = 1.65, Radius = 0.25)
-    new DbVector3( 0.250000f,  1.650000f,  0.000000f),
-    new DbVector3( 0.230970f,  1.650000f,  0.095671f),
-    new DbVector3( 0.176777f,  1.650000f,  0.176777f),
-    new DbVector3( 0.095671f,  1.650000f,  0.230970f),
-    new DbVector3( 0.000000f,  1.650000f,  0.250000f),
-    new DbVector3(-0.095671f,  1.650000f,  0.230970f),
-    new DbVector3(-0.176777f,  1.650000f,  0.176777f),
-    new DbVector3(-0.230970f,  1.650000f,  0.095671f),
-    new DbVector3(-0.250000f,  1.650000f,  0.000000f),
-    new DbVector3(-0.230970f,  1.650000f, -0.095671f),
-    new DbVector3(-0.176777f,  1.650000f, -0.176777f),
-    new DbVector3(-0.095671f,  1.650000f, -0.230970f),
-    new DbVector3(-0.000000f,  1.650000f, -0.250000f),
-    new DbVector3( 0.095671f,  1.650000f, -0.230970f),
-    new DbVector3( 0.176777f,  1.650000f, -0.176777f),
-    new DbVector3( 0.230970f,  1.650000f, -0.095671f),
-};
+        // --- BOTTOM "TIP" RING (Rounding the feet) ---
+        // Height: ~0.12  Radius: ~0.17
+        new DbVector3( 0.176777f,  0.123223f,  0.000000f),
+        new DbVector3( 0.125000f,  0.123223f,  0.125000f),
+        new DbVector3( 0.000000f,  0.123223f,  0.176777f),
+        new DbVector3(-0.125000f,  0.123223f,  0.125000f),
+        new DbVector3(-0.176777f,  0.123223f,  0.000000f),
+        new DbVector3(-0.125000f,  0.123223f, -0.125000f),
+        new DbVector3( 0.000000f,  0.123223f, -0.176777f),
+        new DbVector3( 0.125000f,  0.123223f, -0.125000f),
+
+        // --- BOTTOM EQUATOR (Full Width) ---
+        // Height: 0.30 (Center of bottom sphere) Radius: 0.25
+        new DbVector3( 0.250000f,  0.300000f,  0.000000f),
+        new DbVector3( 0.176777f,  0.300000f,  0.176777f),
+        new DbVector3( 0.000000f,  0.300000f,  0.250000f),
+        new DbVector3(-0.176777f,  0.300000f,  0.176777f),
+        new DbVector3(-0.250000f,  0.300000f,  0.000000f),
+        new DbVector3(-0.176777f,  0.300000f, -0.176777f),
+        new DbVector3( 0.000000f,  0.300000f, -0.250000f),
+        new DbVector3( 0.176777f,  0.300000f, -0.176777f),
+
+        // --- TOP EQUATOR ---
+        // Height: 1.40 (Center of top sphere)
+        new DbVector3( 0.250000f,  1.400000f,  0.000000f),
+        new DbVector3( 0.176777f,  1.400000f,  0.176777f),
+        new DbVector3( 0.000000f,  1.400000f,  0.250000f),
+        new DbVector3(-0.176777f,  1.400000f,  0.176777f),
+        new DbVector3(-0.250000f,  1.400000f,  0.000000f),
+        new DbVector3(-0.176777f,  1.400000f, -0.176777f),
+        new DbVector3( 0.000000f,  1.400000f, -0.250000f),
+        new DbVector3( 0.176777f,  1.400000f, -0.176777f),
+
+        // --- TOP "TIP" RING ---
+        new DbVector3( 0.176777f,  1.576777f,  0.000000f),
+        new DbVector3( 0.125000f,  1.576777f,  0.125000f),
+        new DbVector3( 0.000000f,  1.576777f,  0.176777f),
+        new DbVector3(-0.125000f,  1.576777f,  0.125000f),
+        new DbVector3(-0.176777f,  1.576777f,  0.000000f),
+        new DbVector3(-0.125000f,  1.576777f, -0.125000f),
+        new DbVector3( 0.000000f,  1.576777f, -0.176777f),
+        new DbVector3( 0.125000f,  1.576777f, -0.125000f),
+
+        // --- TOP POLE ---
+        new DbVector3( 0.000000f,  1.650000f,  0.000000f),
+    };
 
 
 

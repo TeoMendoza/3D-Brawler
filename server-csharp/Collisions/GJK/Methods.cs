@@ -7,7 +7,8 @@ public static partial class Module
     public static bool SolveGjk(List<ConvexHullCollider> ColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ColliderB, DbVector3 PositionB, float YawRadiansB, out GjkResult Result, int MaxIterations = 32)
     {
         List<GjkVertex> Simplex = new List<GjkVertex>(4);
-        DbVector3 SearchDirection = new(0f, 0f, 1f);
+        // Initial search direction: A->B (assuming B is roughly forward)
+        DbVector3 SearchDirection = new(0f, 0f, 1f); 
 
         GjkVertex InitialVertex = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, SearchDirection);
         float InitialDot = Dot(InitialVertex.MinkowskiPoint, SearchDirection);
@@ -18,7 +19,8 @@ public static partial class Module
             {
                 Intersects = false,
                 Simplex = Simplex,
-                LastDirection = SearchDirection
+                // CHANGE: Negate so it returns A->B
+                LastDirection = Negate(SearchDirection) 
             };
             return false;
         }
@@ -37,7 +39,8 @@ public static partial class Module
                 {
                     Intersects = false,
                     Simplex = Simplex,
-                    LastDirection = SearchDirection
+                    // CHANGE: Negate so it returns A->B
+                    LastDirection = Negate(SearchDirection)
                 };
                 return false;
             }
@@ -50,7 +53,8 @@ public static partial class Module
                 {
                     Intersects = true,
                     Simplex = Simplex,
-                    LastDirection = SearchDirection
+                    // CHANGE: Negate so it returns A->B
+                    LastDirection = Negate(SearchDirection)
                 };
                 return true;
             }
@@ -60,7 +64,8 @@ public static partial class Module
         {
             Intersects = false,
             Simplex = Simplex,
-            LastDirection = SearchDirection
+            // CHANGE: Negate so it returns A->B
+            LastDirection = Negate(SearchDirection)
         };
         return false;
     }
@@ -311,6 +316,7 @@ public static partial class Module
 
     static float ComputePenetrationDepthApprox(List<ConvexHullCollider> ColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ColliderB, DbVector3 PositionB, float YawRadiansB, DbVector3 Normal)
     {
+        // A uses -Normal (Backwards), B uses +Normal (Forwards)
         DbVector3 SupportA = SupportWorldComplex(ColliderA, PositionA, YawRadiansA, Negate(Normal));
         DbVector3 SupportB = SupportWorldComplex(ColliderB, PositionB, YawRadiansB, Normal);
 
@@ -318,8 +324,10 @@ public static partial class Module
         float DistanceB = Dot(SupportB, Normal);
 
         float Gap = DistanceB - DistanceA;
-        if (Gap >= 0f) return 0f;
 
-        return -Gap;
+        // FIX: If Gap is positive, we are overlapping. Return the Gap.
+        // If Gap is negative, we are separated. Return 0.
+        if (Gap <= 0f) return 0f;
+        return Gap;
     }
 }

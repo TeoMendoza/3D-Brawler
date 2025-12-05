@@ -51,7 +51,7 @@ public static partial class Module
             RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump"); 
         }
         else {
-            Magician.KinematicInformation.Falling = MoveVelocity.y <= 0f;
+            Magician.KinematicInformation.Falling = MoveVelocity.y < -2.0f;
             AddSubscriberUnique(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
             AddSubscriberUnique(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
             AddSubscriberUnique(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump");   
