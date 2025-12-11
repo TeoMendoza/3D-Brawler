@@ -75,6 +75,7 @@ public static partial class Module
 
     public static readonly ComplexCollider MagicianIdleCollider = new ComplexCollider
     {
-        ConvexHulls = MagicianIdleConvexHulls
+        ConvexHulls = MagicianIdleConvexHulls,
+        CenterPoint = new DbVector3(0f, 0.85f, 0f)
     };
 }

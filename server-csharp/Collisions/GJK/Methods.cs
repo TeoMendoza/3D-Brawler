@@ -7,20 +7,25 @@ public static partial class Module
     public static bool SolveGjk(List<ConvexHullCollider> ColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ColliderB, DbVector3 PositionB, float YawRadiansB, out GjkResult Result, int MaxIterations = 32)
     {
         List<GjkVertex> Simplex = new List<GjkVertex>(4);
-        // Initial search direction: A->B (assuming B is roughly forward)
-        DbVector3 SearchDirection = new(0f, 0f, 1f); 
+        DbVector3 SearchDirection = new DbVector3(0f, 0f, 1f);
 
         GjkVertex InitialVertex = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, SearchDirection);
         float InitialDot = Dot(InitialVertex.MinkowskiPoint, SearchDirection);
 
         if (InitialDot <= 0f)
         {
+            DbVector3 ClosestPointA;
+            DbVector3 ClosestPointB;
+
+            ComputeWitnessPointsFromSimplex(Simplex, out ClosestPointA, out ClosestPointB);
+
             Result = new GjkResult
             {
                 Intersects = false,
                 Simplex = Simplex,
-                // CHANGE: Negate so it returns A->B
-                LastDirection = Negate(SearchDirection) 
+                LastDirection = Negate(SearchDirection),
+                ClosestPointA = ClosestPointA,
+                ClosestPointB = ClosestPointB
             };
             return false;
         }
@@ -35,12 +40,18 @@ public static partial class Module
 
             if (SupportDot <= 0f)
             {
+                DbVector3 ClosestPointA;
+                DbVector3 ClosestPointB;
+
+                ComputeWitnessPointsFromSimplex(Simplex, out ClosestPointA, out ClosestPointB);
+
                 Result = new GjkResult
                 {
                     Intersects = false,
                     Simplex = Simplex,
-                    // CHANGE: Negate so it returns A->B
-                    LastDirection = Negate(SearchDirection)
+                    LastDirection = Negate(SearchDirection),
+                    ClosestPointA = ClosestPointA,
+                    ClosestPointB = ClosestPointB
                 };
                 return false;
             }
@@ -49,27 +60,172 @@ public static partial class Module
 
             if (UpdateSimplex(ref Simplex, ref SearchDirection))
             {
+                DbVector3 ClosestPointA;
+                DbVector3 ClosestPointB;
+
+                ComputeWitnessPointsFromSimplex(Simplex, out ClosestPointA, out ClosestPointB);
+
                 Result = new GjkResult
                 {
                     Intersects = true,
                     Simplex = Simplex,
-                    // CHANGE: Negate so it returns A->B
-                    LastDirection = Negate(SearchDirection)
+                    LastDirection = Negate(SearchDirection),
+                    ClosestPointA = ClosestPointA,
+                    ClosestPointB = ClosestPointB
                 };
                 return true;
             }
         }
 
-        Result = new GjkResult
         {
-            Intersects = false,
-            Simplex = Simplex,
-            // CHANGE: Negate so it returns A->B
-            LastDirection = Negate(SearchDirection)
-        };
-        return false;
+            DbVector3 ClosestPointA;
+            DbVector3 ClosestPointB;
+
+            ComputeWitnessPointsFromSimplex(Simplex, out ClosestPointA, out ClosestPointB);
+
+            Result = new GjkResult
+            {
+                Intersects = false,
+                Simplex = Simplex,
+                LastDirection = Negate(SearchDirection),
+                ClosestPointA = ClosestPointA,
+                ClosestPointB = ClosestPointB
+            };
+            return false;
+        }
     }
 
+    static void ComputeWitnessPointsFromSimplex(List<GjkVertex> Simplex, out DbVector3 ClosestPointA, out DbVector3 ClosestPointB)
+    {
+        int Count = Simplex.Count;
+
+        if (Count == 0)
+        {
+            ClosestPointA = new DbVector3(0f, 0f, 0f);
+            ClosestPointB = new DbVector3(0f, 0f, 0f);
+            return;
+        }
+
+        if (Count == 1)
+        {
+            GjkVertex V = Simplex[0];
+            ClosestPointA = V.SupportPointA;
+            ClosestPointB = V.SupportPointB;
+            return;
+        }
+
+        int BestIndexI = 0;
+        int BestIndexJ = 1;
+        float BestDistanceSquared = float.PositiveInfinity;
+
+        for (int I = 0; I < Count; I++)
+        {
+            DbVector3 Wi = Simplex[I].MinkowskiPoint;
+            float DistanceSquaredI = Dot(Wi, Wi);
+
+            if (DistanceSquaredI < BestDistanceSquared)
+            {
+                BestDistanceSquared = DistanceSquaredI;
+                BestIndexI = I;
+                BestIndexJ = I;
+            }
+
+            for (int J = I + 1; J < Count; J++)
+            {
+                DbVector3 W0 = Simplex[I].MinkowskiPoint;
+                DbVector3 W1 = Simplex[J].MinkowskiPoint;
+
+                DbVector3 Edge = Sub(W1, W0);
+                float EdgeLengthSquared = Dot(Edge, Edge);
+
+                if (EdgeLengthSquared <= 1e-12f)
+                {
+                    continue;
+                }
+
+                DbVector3 NegativeW0 = Negate(W0);
+                float T = Dot(NegativeW0, Edge) / EdgeLengthSquared;
+
+                if (T < 0f)
+                {
+                    T = 0f;
+                }
+                else if (T > 1f)
+                {
+                    T = 1f;
+                }
+
+                DbVector3 ClosestMinkowski = new DbVector3(
+                    W0.x + Edge.x * T,
+                    W0.y + Edge.y * T,
+                    W0.z + Edge.z * T
+                );
+
+                float DistanceSquared = Dot(ClosestMinkowski, ClosestMinkowski);
+
+                if (DistanceSquared < BestDistanceSquared)
+                {
+                    BestDistanceSquared = DistanceSquared;
+                    BestIndexI = I;
+                    BestIndexJ = J;
+                }
+            }
+        }
+
+        if (BestIndexI == BestIndexJ)
+        {
+            GjkVertex V = Simplex[BestIndexI];
+            ClosestPointA = V.SupportPointA;
+            ClosestPointB = V.SupportPointB;
+        }
+        else
+        {
+            GjkVertex V0 = Simplex[BestIndexI];
+            GjkVertex V1 = Simplex[BestIndexJ];
+
+            DbVector3 W0 = V0.MinkowskiPoint;
+            DbVector3 W1 = V1.MinkowskiPoint;
+            DbVector3 Edge = Sub(W1, W0);
+
+            float EdgeLengthSquared = Dot(Edge, Edge);
+
+            if (EdgeLengthSquared <= 1e-12f)
+            {
+                ClosestPointA = V0.SupportPointA;
+                ClosestPointB = V0.SupportPointB;
+                return;
+            }
+
+            DbVector3 NegativeW0 = Negate(W0);
+            float T = Dot(NegativeW0, Edge) / EdgeLengthSquared;
+
+            if (T < 0f)
+            {
+                T = 0f;
+            }
+            else if (T > 1f)
+            {
+                T = 1f;
+            }
+
+            DbVector3 SupportA0 = V0.SupportPointA;
+            DbVector3 SupportA1 = V1.SupportPointA;
+            DbVector3 SupportB0 = V0.SupportPointB;
+            DbVector3 SupportB1 = V1.SupportPointB;
+
+            ClosestPointA = new DbVector3(
+                SupportA0.x + (SupportA1.x - SupportA0.x) * T,
+                SupportA0.y + (SupportA1.y - SupportA0.y) * T,
+                SupportA0.z + (SupportA1.z - SupportA0.z) * T
+            );
+
+            ClosestPointB = new DbVector3(
+                SupportB0.x + (SupportB1.x - SupportB0.x) * T,
+                SupportB0.y + (SupportB1.y - SupportB0.y) * T,
+                SupportB0.z + (SupportB1.z - SupportB0.z) * T
+            );
+        }
+    }
 
     static GjkVertex SupportPairWorld(List<ConvexHullCollider> ComplexColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ComplexColliderB, DbVector3 PositionB, float YawRadiansB, DbVector3 DirectionWorld)
     {

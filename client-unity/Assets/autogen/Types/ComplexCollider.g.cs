@@ -17,15 +17,22 @@ namespace SpacetimeDB.Types
     {
         [DataMember(Name = "ConvexHulls")]
         public System.Collections.Generic.List<ConvexHullCollider> ConvexHulls;
+        [DataMember(Name = "CenterPoint")]
+        public DbVector3 CenterPoint;
 
-        public ComplexCollider(System.Collections.Generic.List<ConvexHullCollider> ConvexHulls)
+        public ComplexCollider(
+            System.Collections.Generic.List<ConvexHullCollider> ConvexHulls,
+            DbVector3 CenterPoint
+        )
         {
             this.ConvexHulls = ConvexHulls;
+            this.CenterPoint = CenterPoint;
         }
 
         public ComplexCollider()
         {
             this.ConvexHulls = new();
+            this.CenterPoint = new();
         }
     }
 }

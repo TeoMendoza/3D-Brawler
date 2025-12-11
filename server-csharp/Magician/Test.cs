@@ -75,42 +75,26 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
                         DbVector3 VelocityB = OtherMagician.IsColliding ? OtherMagician.CorrectedVelocity : OtherMagician.Velocity;
 
                         GjkDistanceResult Dist;
-                        if (SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out Dist) is false)
-                        {
-                            Log.Info($"[CCD DBG] Skip Magician {Character.Id} vs {OtherMagician.Id} Reason=1");
-                            break;
-                        }
-
+                        if (SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out Dist) is false) break;
+                        
                         float Sep = Dist.Distance;
                         DbVector3 Normal = Negate(Dist.SeparationDirection);
 
                         DbVector3 RelVel = Sub(VelocityA, VelocityB);
                         float RelSpeedSq = Dot(RelVel, RelVel);
                         if (RelSpeedSq < 1e-6f)
-                        {
-                            Log.Info($"[CCD DBG] Skip Magician {Character.Id} vs {OtherMagician.Id} Reason=2");
                             break;
-                        }
-
+                        
                         float Closing = Dot(RelVel, Normal);
                         if (Closing >= 0f)
-                        {
-                            Log.Info($"[CCD DBG] Skip Magician {Character.Id} vs {OtherMagician.Id} Reason=3");
                             break;
-                        }
-
+                        
                         float HitTime = Sep / -Closing;
-
                         if (HitTime < 0f)
-                        {
-                            Log.Info($"[CCD DBG] Skip Magician {Character.Id} vs {OtherMagician.Id} Reason=4");
                             break;
-                        }
+                        
                         if (HitTime > RemainingTime)
-                        {
-                            Log.Info($"[CCD DBG] Skip Magician {Character.Id} vs {OtherMagician.Id} Reason=5");
                             break;
-                        }
 
                         if (HasEarliestHit is false || HitTime < EarliestCollisionTime)
                         {
@@ -131,43 +115,27 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
                         YawRadiansB = 0f;
 
                         GjkDistanceResult DistanceResultMap;
-                        if (SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out DistanceResultMap) is false)
-                        {
-                            Log.Info($"[CCD DBG] Skip Map Magician {Character.Id} vs Map {MapPiece.Id} Reason=6");
-                            break;
-                        }
-
+                        if (SolveGjkDistance(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out DistanceResultMap) is false) break;
+                        
                         float SeparationDistanceMap = DistanceResultMap.Distance;
                         DbVector3 Normal = Negate(DistanceResultMap.SeparationDirection);
 
                         DbVector3 RelativeVelocityMap = VelocityA;
                         float RelativeSpeedSquaredMap = Dot(RelativeVelocityMap, RelativeVelocityMap);
                         if (RelativeSpeedSquaredMap < 1e-6f)
-                        {
-                            Log.Info($"[CCD DBG] Skip Map Magician {Character.Id} vs Map {MapPiece.Id} Reason=7");
                             break;
-                        }
-
+                        
                         float ClosingSpeedMap = Dot(RelativeVelocityMap, Normal);
                         if (ClosingSpeedMap >= 0f)
-                        {
-                            Log.Info($"[CCD DBG] Skip Map Magician {Character.Id} vs Map {MapPiece.Id} Reason=8");
                             break;
-                        }
-
+                        
                         float CandidateHitTimeMap = SeparationDistanceMap / -ClosingSpeedMap;
-
                         if (CandidateHitTimeMap < 0f)
-                        {
-                            Log.Info($"[CCD DBG] Skip Map Magician {Character.Id} vs Map {MapPiece.Id} Reason=9");
                             break;
-                        }
+                        
                         if (CandidateHitTimeMap > RemainingTime)
-                        {
-                            Log.Info($"[CCD DBG] Skip Map Magician {Character.Id} vs Map {MapPiece.Id} Reason=10");
                             break;
-                        }
-
+                        
                         if (HasEarliestHit is false || CandidateHitTimeMap < EarliestCollisionTime)
                         {
                             HasEarliestHit = true;
@@ -184,7 +152,7 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
 
             if (ContactsThisStep.Count > 0)
             {
-                ResolveContacts(ref Character, ContactsThisStep, CurrentStepVelocity);
+                ResolveContacts(ref Character, ContactsThisStep, Character.Velocity);
 
                 foreach (CollisionEntry ContactEntry in ContactEntriesThisStep)
                 {
@@ -225,40 +193,15 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
 
             if (ContactsThisStep.Count > 0)
             {
-                ResolveContacts(ref Character, ContactsThisStep, CollisionStepVelocity);
+                ResolveContacts(ref Character, ContactsThisStep, Character.Velocity);
 
                 if (!ResolvedEntriesThisTick.Contains(EarliestCollisionEntry))
                     ResolvedEntriesThisTick.Add(EarliestCollisionEntry);
             }
         }
 
-#if DEBUG
-        foreach (var CollisionEntry in Character.CollisionEntries)
-        {
-            if (CollisionEntry.Type != CollisionEntryType.Magician) continue;
-            if (ResolvedEntriesThisTick.Contains(CollisionEntry)) continue;
-
-            Magician OtherMagician = Ctx.Db.magician.Id.Find(CollisionEntry.Id);
-            if (OtherMagician == null || OtherMagician.Id == Character.Id) continue;
-
-            List<ConvexHullCollider> ColliderA = Character.GjkCollider.ConvexHulls;
-            List<ConvexHullCollider> ColliderB = OtherMagician.GjkCollider.ConvexHulls;
-
-            DbVector3 PositionA = Character.Position;
-            DbVector3 PositionB = OtherMagician.Position;
-
-            float YawA = ToRadians(Character.Rotation.Yaw);
-            float YawB = ToRadians(OtherMagician.Rotation.Yaw);
-
-            if (SolveGjk(ColliderA, PositionA, YawA, ColliderB, PositionB, YawB, out GjkResult OverlapResult))
-            {
-                Log.Info($"[CCD DBG] MISSED OVERLAP Magician {Character.Id} vs {OtherMagician.Id}");
-            }
-        }
-#endif
-
         DbVector3 FinalStepVelocity = Character.IsColliding ? Character.CorrectedVelocity : Character.Velocity;
-        float GroundStickVelocityThreshold = 0.5f;
+        float GroundStickVelocityThreshold = 2f;
         bool GroundedThisTick = Character.KinematicInformation.Grounded;
 
         if (GroundedThisTick is false && WasGrounded is true && MathF.Abs(FinalStepVelocity.y) < GroundStickVelocityThreshold)
@@ -270,19 +213,17 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
     }
 }
 
-
-
     static bool TryBuildArtificialGjkContactForEntry(ReducerContext Ctx, ref Magician Character, CollisionEntry Entry, List<CollisionContact> ContactsThisStep)
     {
         float SkinThickness = 0.05f;
         float DetectionThreshold = 0.075f;
 
-        DbVector3 VelocityA = Character.IsColliding ? Character.CorrectedVelocity : Character.Velocity;
-        
-        List<ConvexHullCollider> ColliderA = Character.GjkCollider.ConvexHulls;
+        ComplexCollider ColliderAComplex = Character.GjkCollider;
+        ComplexCollider ColliderBComplex;
+
+        List<ConvexHullCollider> ColliderA = ColliderAComplex.ConvexHulls;
         List<ConvexHullCollider> ColliderB;
         DbVector3 PositionB;
-        DbVector3 VelocityB;
         float YawA = ToRadians(Character.Rotation.Yaw);
         float YawB;
 
@@ -293,10 +234,10 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
                 Magician OtherMagician = Ctx.Db.magician.Id.Find(Entry.Id) ?? throw new Exception("Colliding Magician Not Found");
                 if (OtherMagician.Id == Character.Id) return false;
 
-                ColliderB = OtherMagician.GjkCollider.ConvexHulls;
+                ColliderBComplex = OtherMagician.GjkCollider;
+                ColliderB = ColliderBComplex.ConvexHulls;
                 PositionB = OtherMagician.Position;
                 YawB = ToRadians(OtherMagician.Rotation.Yaw);
-                VelocityB = OtherMagician.IsColliding ? OtherMagician.CorrectedVelocity : OtherMagician.Velocity;
                 break;
             }
 
@@ -304,10 +245,10 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
             {
                 Map MapPiece = Ctx.Db.Map.Id.Find(Entry.Id) ?? throw new Exception("Colliding Map Piece Not Found");
 
-                ColliderB = MapPiece.GjkCollider.ConvexHulls;
+                ColliderBComplex = MapPiece.GjkCollider;
+                ColliderB = ColliderBComplex.ConvexHulls;
                 PositionB = new DbVector3(0f, 0f, 0f);
                 YawB = 0f;
-                VelocityB = new DbVector3(0f, 0f, 0f);
                 break;
             }
 
@@ -324,13 +265,11 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
         if (Separation > DetectionThreshold)
             return false;
 
-        DbVector3 SeparationDir = DistanceResult.SeparationDirection;
-        DbVector3 PointOnA = DistanceResult.PointOnA;
-        DbVector3 PointOnB = DistanceResult.PointOnB;
+        DbVector3 CenterAWorld = GetColliderCenterWorld(ColliderAComplex, PositionA, YawA);
+        DbVector3 CenterBWorld = GetColliderCenterWorld(ColliderBComplex, PositionB, YawB);
 
-        DbVector3 RawNormal = Negate(SeparationDir); 
-        DbVector3 ContactNormal = ComputeContactNormal(RawNormal, PointOnA, PointOnB);
-        
+        DbVector3 ContactNormal = ComputeContactNormal(DistanceResult.SeparationDirection, CenterAWorld, CenterBWorld);
+
         float ArtificialPenetration = SkinThickness - Separation;
         if (ArtificialPenetration < 0f) ArtificialPenetration = 0f;
 
@@ -344,11 +283,12 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
         return true;
     }
 
+
     private static bool TryBuildContactForEntry(ReducerContext Ctx, ref Magician CharacterLocal, CollisionEntry CollisionEntry, List<CollisionContact> Contacts)
     {
         DbVector3 PositionA = CharacterLocal.Position;
         float YawRadiansA = ToRadians(CharacterLocal.Rotation.Yaw);
-
+        DbVector3 VelocityA = CharacterLocal.IsColliding ? CharacterLocal.CorrectedVelocity : CharacterLocal.Velocity;;
         if (CollisionEntry.Type == CollisionEntryType.Magician)
         {
             Magician OtherMagician = Ctx.Db.magician.Id.Find(CollisionEntry.Id) ?? throw new Exception("Colliding Magician Not Found");
@@ -359,18 +299,20 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
 
             DbVector3 PositionB = OtherMagician.Position;
             float YawRadiansB = ToRadians(OtherMagician.Rotation.Yaw);
+            DbVector3 VelocityB = OtherMagician.IsColliding ? OtherMagician.CorrectedVelocity : OtherMagician.Velocity;
 
-            GjkResult GjkResultMagician;
-            bool IntersectsMagician = SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResultMagician);
+            bool IntersectsMagician = SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResult GjkResultMagician);
             if (IntersectsMagician is false) return false;
 
             GjkVertex SkinPoints = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, GjkResultMagician.LastDirection);
             DbVector3 PointOnA = SkinPoints.SupportPointA;
             DbVector3 PointOnB = SkinPoints.SupportPointB;
 
-            //DbVector3 RawNormal = Negate(GjkResultMagician.LastDirection); // DONT NEGATE BECAUSE SOLVE'S A -> B IS ALREADY IN DIRECTION OF NORMAL ORIENTATION
-            DbVector3 ContactNormal = ComputeContactNormal(GjkResultMagician.LastDirection, PointOnA, PointOnB);
-            
+            DbVector3 CenterAWorld = GetColliderCenterWorld(CharacterLocal.GjkCollider, PositionA, YawRadiansA);
+            DbVector3 CenterBWorld = GetColliderCenterWorld(OtherMagician.GjkCollider, PositionB, YawRadiansB);
+
+            DbVector3 ContactNormal = ComputeContactNormal(GjkResultMagician.LastDirection, CenterAWorld, CenterBWorld);
+
             float DistanceA = Dot(PointOnA, ContactNormal);
             float DistanceB = Dot(PointOnB, ContactNormal);
             float Gap = DistanceB - DistanceA;
@@ -390,6 +332,7 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
 
             DbVector3 PositionB = new DbVector3(0f, 0f, 0f);
             float YawRadiansB = 0f;
+            DbVector3 VelocityB = new DbVector3(0f, 0f, 0f);
 
             bool IntersectsMap = SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResult GjkResultMap);
             if (IntersectsMap is false) return false;
@@ -398,9 +341,11 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
             DbVector3 PointOnA = SkinPoints.SupportPointA;
             DbVector3 PointOnB = SkinPoints.SupportPointB;
 
-            DbVector3 RawNormal = Negate(GjkResultMap.LastDirection); 
-            DbVector3 ContactNormal = ComputeContactNormal(RawNormal, PointOnA, PointOnB);
-            
+            DbVector3 CenterAWorld = GetColliderCenterWorld(CharacterLocal.GjkCollider, PositionA, YawRadiansA);
+            DbVector3 CenterBWorld = GetColliderCenterWorld(MapPiece.GjkCollider, PositionB, YawRadiansB);
+
+            DbVector3 ContactNormal = ComputeContactNormal(GjkResultMap.LastDirection, CenterAWorld, CenterBWorld);
+
             float DistanceA = Dot(PointOnA, ContactNormal);
             float DistanceB = Dot(PointOnB, ContactNormal);
             float Gap = DistanceB - DistanceA;
@@ -461,19 +406,12 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
         // 4. Grounding cleanup (Prevents jittery sliding down flat surfaces)
         if (IsGrounded)
         {
-            if (CorrectedVelocity.y <= ClimbVelocityThreshold) 
-                CorrectedVelocity.y = -1f;
-        
             float HorizInputSq = InputVelocity.x * InputVelocity.x + InputVelocity.z * InputVelocity.z;
             if (HorizInputSq < 0.001f)
             {
                 CorrectedVelocity.x = 0f;
                 CorrectedVelocity.z = 0f;
-            }  
-
-            if (InputVelocity.y <= 0f)
-                CharacterLocal.Velocity.y = 0f;
-            
+            }     
         }
 
         // 5. Apply Position Correction
@@ -643,5 +581,12 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
 
         SeparationDirection = Direction;
     }
+
+    static DbVector3 GetColliderCenterWorld(ComplexCollider collider, DbVector3 position, float yawRadians)
+    {
+        DbVector3 rotatedCenter = RotateAroundYAxis(collider.CenterPoint, yawRadians);
+        return Add(position, rotatedCenter);
+    }
+
 
 }

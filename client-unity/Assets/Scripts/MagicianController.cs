@@ -2,8 +2,6 @@ using SpacetimeDB;
 using UnityEngine;
 using SpacetimeDB.Types;
 using Unity.Cinemachine;
-//using System.Numerics;
-// using System.Numerics;
 
 public class MagicianController : MonoBehaviour
 {
@@ -14,18 +12,18 @@ public class MagicianController : MonoBehaviour
     public string Name;
     public uint MatchId;
     public Vector3 TargetPosition;
-    public DbRotation2 TargetRotation = new(0, 0);
+    public DbRotation2 TargetRotation = new DbRotation2(0, 0);
     public KinematicInformation KinematicInformation;
     public Animator Animator;
     private Camera mainCamera;
     public Transform CardThrowHand;
-    float yaw = 0f; 
+    float yaw = 0f;
     float pitch = 0f;
     private readonly float sensX = 200f;
     private readonly float sensY = 100f;
     private readonly float minPitch = -50f;
     private readonly float maxPitch = 75f;
-    readonly float pitchSmooth = 0.08f; // seconds
+    readonly float pitchSmooth = 0.08f;
     float pitchCurrent;
     float pitchVel;
 
@@ -55,7 +53,7 @@ public class MagicianController : MonoBehaviour
 
         CameraYawOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.y);
         CameraPitchOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.x);
-        Vector2 Reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
+        Vector2 Reticle = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
         Vector3 D = AimRay.direction.normalized;
 
@@ -66,16 +64,14 @@ public class MagicianController : MonoBehaviour
         CameraPitchOffset = Mathf.Asin(Mathf.Clamp(LocalDir.y, -1f, 1f));
     }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         GameManager.Conn.Db.Magician.OnUpdate += HandleMagicianUpdate;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        MovementRequest req = new(Velocity: new DbVector3(0, 0, 0), Sprint: false, Jump: false, Crouch: false, Aim: new DbRotation2(0, 0));
+        MovementRequest req = new MovementRequest(Velocity: new DbVector3(0, 0, 0), Sprint: false, Jump: false, Crouch: false, Aim: new DbRotation2(0, 0));
 
         if (Input.GetKey(KeyCode.W)) req.Velocity.Z += 2f;
         if (Input.GetKey(KeyCode.S)) req.Velocity.Z -= 2f;
@@ -87,30 +83,41 @@ public class MagicianController : MonoBehaviour
 
         float mx = Input.GetAxis("Mouse X");
         float my = Input.GetAxis("Mouse Y");
-        
+
         yaw = Mathf.Repeat(yaw + mx * sensX * Time.deltaTime, 360f);
         pitch = Mathf.Clamp(pitch - my * sensY * Time.deltaTime, minPitch, maxPitch);
 
         req.Aim = new DbRotation2(yaw, pitch);
-        GameManager.Conn.Reducers.HandleMovementRequestMagician(req);
-
-        // Action Requests (States)
-        if (Input.GetMouseButton(0)) // Left Mouse Button
-        {  
-            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(request: new ActionRequestMagician (State: MagicianState.Attack));
+        
+        if (Id != 10000) // So Test Player Doesn't Animate Too
+        {
+            DbVector3 AnimVelocity = req.Velocity;
+            if (req.Sprint) AnimVelocity = new DbVector3(AnimVelocity.X * 2f, AnimVelocity.Y, AnimVelocity.Z * 2f);
+            Vector3 vWorld = new(AnimVelocity.X, 0f, AnimVelocity.Z);
+            Quaternion yawOnly = Quaternion.Euler(0f, yaw, 0f);
+            Vector3 vLocal = Quaternion.Inverse(yawOnly) * vWorld;
+            float forwardInput = vLocal.z;
+            float sideInput = vLocal.x;
+            Animator.SetFloat("ForwardSpeed", forwardInput, 0.15f, Time.deltaTime);
+            Animator.SetFloat("HorizontalSpeed", sideInput, 0.15f, Time.deltaTime);
         }
         
+
+        GameManager.Conn.Reducers.HandleMovementRequestMagician(req);
+
+        if (Input.GetMouseButton(0))
+        {
+            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack));
+        }
     }
-    
+
     void LateUpdate()
     {
-        // Jitter Handling
         float k = 1f - Mathf.Exp(-12f * Time.deltaTime);
-        transform.position = UnityEngine.Vector3.Lerp(transform.position, TargetPosition, k);
+        transform.position = Vector3.Lerp(transform.position, TargetPosition, k);
 
-        // Rotation & Camera Adjustment
-        var targetYaw = TargetRotation.Yaw;
-        var targetRot = UnityEngine.Quaternion.Euler(0f, targetYaw, 0f);
+        float targetYaw = TargetRotation.Yaw;
+        Quaternion targetRot = Quaternion.Euler(0f, targetYaw, 0f);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 1f - Mathf.Exp(-12f * Time.deltaTime));
 
         pitchCurrent = Mathf.SmoothDampAngle(pitchCurrent, TargetRotation.Pitch, ref pitchVel, pitchSmooth);
@@ -129,46 +136,16 @@ public class MagicianController : MonoBehaviour
         bool Falling = newChar.KinematicInformation.Falling;
         bool Attacking = newChar.State is MagicianState.Attack;
 
-        DbVector3 MoveVelocity = newChar.IsColliding ? newChar.CorrectedVelocity : newChar.Velocity;
+        DbVector3 PhysicalVelocity = newChar.IsColliding ? newChar.CorrectedVelocity : newChar.Velocity;
 
-        if (wasGrounded && Grounded is false && MoveVelocity.Y > 2f)
+        if (wasGrounded && Grounded is false && PhysicalVelocity.Y > 2f)
             Animator.SetTrigger("Jump");
 
         Animator.SetBool("Attacking", Attacking);
         Animator.SetBool("Crouching", Crouching);
         Animator.SetBool("Falling", Falling);
         Animator.SetBool("Grounded", Grounded);
-
-        Vector3 vWorld = new(MoveVelocity.X, 0f, MoveVelocity.Z);
-        Quaternion yawOnly = Quaternion.Euler(0f, TargetRotation.Yaw, 0f);
-        Vector3 vLocal = Quaternion.Inverse(yawOnly) * vWorld;
-        float forwardInput = vLocal.z;
-        float sideInput = vLocal.x;
-
-        if (Mathf.Abs(forwardInput) < 0.1f) forwardInput = 0f;
-        if (Mathf.Abs(sideInput) < 0.1f) sideInput = 0f;
-
-        // 2. SNAP FORWARD
-        if (forwardInput > 2.5f) forwardInput = 4.0f;
-        else if (forwardInput < -2.5f) forwardInput = -4.0f;
-        else if (Mathf.Abs(forwardInput) > 0.1f) 
-        {
-            // If moving at all, and not sprinting, force Walk (2.0)
-            forwardInput = 2.0f * Mathf.Sign(forwardInput);
-        }
-
-        // 3. SNAP SIDE
-        if (Mathf.Abs(sideInput) > 0.1f) 
-        {
-            sideInput = 1.5f * Mathf.Sign(sideInput);
-        }
-
-        // 4. DAMP
-        Animator.SetFloat("ForwardSpeed", forwardInput, 0.15f, Time.deltaTime);
-        Animator.SetFloat("HorizontalSpeed", sideInput, 0.15f, Time.deltaTime);
     }
-
-
 
     public void Delete(EventContext context)
     {
@@ -184,16 +161,11 @@ public class MagicianController : MonoBehaviour
         Quaternion Rotation = Quaternion.Euler(0, TargetRotation.Yaw, 0);
         HandPositionOffset = Quaternion.Inverse(Rotation) * (HandWorldPosition - CharacterWorldPosition);
 
-        Vector2 Reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
+        Vector2 Reticle = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
         Vector3 D = AimRay.direction.normalized;
-        GameManager.Conn.Reducers.SpawnThrowingCard(
-            cameraPositionOffset: (DbVector3)CameraPositionOffset,
-            cameraYawOffset: CameraYawOffset,
-            cameraPitchOffset: CameraPitchOffset,
-            handPositionOffset: (DbVector3)HandPositionOffset,
-            maxDistance: MaxDistance
-        );
+
+        GameManager.Conn.Reducers.SpawnThrowingCard(cameraPositionOffset: (DbVector3)CameraPositionOffset, cameraYawOffset: CameraYawOffset, cameraPitchOffset: CameraPitchOffset, handPositionOffset: (DbVector3)HandPositionOffset, maxDistance: MaxDistance);
 
         if (Input.GetMouseButton(0) is false)
         {
@@ -203,74 +175,66 @@ public class MagicianController : MonoBehaviour
 
     public void CardThrowFinished()
     {
-        GameManager.Conn.Reducers.HandleActionChangeRequestMagician(request: new ActionRequestMagician(State: MagicianState.Default));
+        GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Default));
     }
-    
+
     public void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("Magician"))
         {
-            var Player = other.gameObject.GetComponent<MagicianController>();
+            MagicianController Player = other.gameObject.GetComponent<MagicianController>();
             if (Player.Id != Id)
             {
-                var Entry = new CollisionEntry(Type: CollisionEntryType.Magician, Id: Player.Id);
-                GameManager.Conn.Reducers.AddCollisionEntryMagician(entry: Entry, targetIdentity: Identity);
-                Debug.Log($"Magician Added To Entries With Id: {Player.Id}");
+                CollisionEntry Entry = new CollisionEntry(Type: CollisionEntryType.Magician, Id: Player.Id);
+                GameManager.Conn.Reducers.AddCollisionEntryMagician(Entry, Identity);
             }
         }
 
         else if (other.gameObject.CompareTag("ThrowingCard"))
         {
-            var Projectile = other.gameObject.GetComponent<ThrowingCardController>();
+            ThrowingCardController Projectile = other.gameObject.GetComponent<ThrowingCardController>();
             if (Projectile.OwnerIdentity != Identity)
             {
-                var Entry = new CollisionEntry(Type: CollisionEntryType.ThrowingCard, Id: Projectile.Id);
-                GameManager.Conn.Reducers.AddCollisionEntryMagician(entry: Entry, targetIdentity: Identity);
+                CollisionEntry Entry = new CollisionEntry(Type: CollisionEntryType.ThrowingCard, Id: Projectile.Id);
+                GameManager.Conn.Reducers.AddCollisionEntryMagician(Entry, Identity);
             }
         }
 
         else if (other.gameObject.CompareTag("Map"))
         {
-            var Map = other.gameObject.GetComponent<FloorController>();
-            
-            var Entry = new CollisionEntry(Type: CollisionEntryType.Map, Id: Map.Id);
-            GameManager.Conn.Reducers.AddCollisionEntryMagician(entry: Entry, targetIdentity: Identity);
+            FloorController Map = other.gameObject.GetComponent<FloorController>();
+            CollisionEntry Entry = new CollisionEntry(Type: CollisionEntryType.Map, Id: Map.Id);
+            GameManager.Conn.Reducers.AddCollisionEntryMagician(Entry, Identity);
         }
-
     }
 
     public void OnTriggerExit(Collider other)
     {
         if (other.gameObject.CompareTag("Magician"))
         {
-            var Player = other.gameObject.GetComponent<MagicianController>();
+            MagicianController Player = other.gameObject.GetComponent<MagicianController>();
             if (Player.Id != Id)
             {
-                var Entry = new CollisionEntry(Type: CollisionEntryType.Magician, Id: Player.Id);
-                GameManager.Conn.Reducers.RemoveCollisionEntryMagician(entry: Entry, targetIdentity: Identity);
-                Debug.Log($"Magician Removed From Entries With Id: {Player.Id}");
+                CollisionEntry Entry = new CollisionEntry(Type: CollisionEntryType.Magician, Id: Player.Id);
+                GameManager.Conn.Reducers.RemoveCollisionEntryMagician(Entry, Identity);
             }
-            
         }
 
         else if (other.gameObject.CompareTag("ThrowingCard"))
         {
-            var Projectile = other.gameObject.GetComponent<ThrowingCardController>();
+            ThrowingCardController Projectile = other.gameObject.GetComponent<ThrowingCardController>();
             if (Projectile.OwnerIdentity != Identity)
             {
-                var Entry = new CollisionEntry(Type: CollisionEntryType.ThrowingCard, Id: Projectile.Id);
-                GameManager.Conn.Reducers.RemoveCollisionEntryMagician(entry: Entry, targetIdentity: Identity);
+                CollisionEntry Entry = new CollisionEntry(Type: CollisionEntryType.ThrowingCard, Id: Projectile.Id);
+                GameManager.Conn.Reducers.RemoveCollisionEntryMagician(Entry, Identity);
             }
-        }  
+        }
 
         else if (other.gameObject.CompareTag("Map"))
         {
-            var Map = other.gameObject.GetComponent<FloorController>();
-            
-            var Entry = new CollisionEntry(Type: CollisionEntryType.Map, Id: Map.Id);
-            GameManager.Conn.Reducers.RemoveCollisionEntryMagician(entry: Entry, targetIdentity: Identity);
+            FloorController Map = other.gameObject.GetComponent<FloorController>();
+            CollisionEntry Entry = new CollisionEntry(Type: CollisionEntryType.Map, Id: Map.Id);
+            GameManager.Conn.Reducers.RemoveCollisionEntryMagician(Entry, Identity);
         }
     }
-    
-    
 }

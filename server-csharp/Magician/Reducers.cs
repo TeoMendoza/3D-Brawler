@@ -19,7 +19,7 @@ public static partial class Module
 
         if (GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers.Count == 0 && Request.Jump)
         {
-            character.Velocity.y = 7.5f;
+            character.Velocity.y = 10f;
         }
 
         if (GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers.Count == 0 && Request.Crouch)
@@ -78,7 +78,7 @@ public static partial class Module
                         if (Player.Id != character.Id && SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResult GjkResult))
                         {    
                             DbVector3 GjkNormal = Negate(GjkResult.LastDirection);
-                            DbVector3 Normal = ComputeContactNormal(GjkNormal, PositionA, PositionB);
+                            DbVector3 Normal = ComputeContactNormal(GjkNormal, GjkNormal, GjkNormal);
                             float PenetrationDepth = ComputePenetrationDepthApprox(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, Normal);
 
                             Contacts.Add(new CollisionContact(Normal, PenetrationDepth));
@@ -100,7 +100,7 @@ public static partial class Module
                         if (SolveGjk(MapColliderA, MapPositionA, MapYawRadiansA, MapColliderB, MapPositionB, MapYawRadiansB, out GjkResult MapGjkResult))
                         {
                             DbVector3 GjkNormal = Negate(MapGjkResult.LastDirection);
-                            DbVector3 Normal = ComputeContactNormal(GjkNormal, MapPositionA, MapPositionB);
+                            DbVector3 Normal = ComputeContactNormal(GjkNormal, GjkNormal, GjkNormal);
                             float PenetrationDepth = ComputePenetrationDepthApprox(MapColliderA, MapPositionA, MapYawRadiansA, MapColliderB, MapPositionB, MapYawRadiansB, Normal);
 
                             Contacts.Add(new CollisionContact(Normal, PenetrationDepth)); 

@@ -5,9 +5,10 @@ using SpacetimeDB;
 public static partial class Module
 {
     [SpacetimeDB.Type]
-    public partial struct ComplexCollider(List<ConvexHullCollider> convexHulls)
+    public partial struct ComplexCollider(List<ConvexHullCollider> convexHulls, DbVector3 centerPoint)
     {
         public List<ConvexHullCollider> ConvexHulls = convexHulls;
+        public DbVector3 CenterPoint = centerPoint;
     }
 
     [SpacetimeDB.Type]
@@ -24,11 +25,13 @@ public static partial class Module
         public DbVector3 MinkowskiPoint = Sub(SupportPointA, SupportPointB);
     }
 
-    public struct GjkResult(bool Intersects, List<GjkVertex> Simplex, DbVector3 LastDirection)
+    public struct GjkResult(bool Intersects, List<GjkVertex> Simplex, DbVector3 LastDirection, DbVector3 ClosestPointA, DbVector3 ClosestPointB)
     {
         public bool Intersects = Intersects;
         public List<GjkVertex> Simplex = Simplex;
         public DbVector3 LastDirection = LastDirection;
+        public DbVector3 ClosestPointA;
+        public DbVector3 ClosestPointB;
     }
 
     [SpacetimeDB.Type]

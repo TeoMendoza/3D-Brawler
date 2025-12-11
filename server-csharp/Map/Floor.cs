@@ -49,6 +49,7 @@ public static partial class Module
 
     public static readonly ComplexCollider FloorCollider = new ComplexCollider
     {
-        ConvexHulls = PlaneConvexHulls
+        ConvexHulls = PlaneConvexHulls,
+        CenterPoint = new DbVector3(0f, -0.227273f, 0f)
     };
 }
