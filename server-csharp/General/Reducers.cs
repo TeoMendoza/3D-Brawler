@@ -68,7 +68,7 @@ public static partial class Module
                 Id = Player.Id,
                 Name = Player.Name,
                 MatchId = Match.Id,
-                Position = new DbVector3 { x = 0, y = 0, z = 0 },
+                Position = new DbVector3 { x = 0f, y = 0f, z = 0f},
                 Rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
                 Velocity = new DbVector3 { x = 0, y = 0, z = 0 },
                 KinematicInformation = new KinematicInformation(falling: false, crouched: false, grounded: true, sprinting: false),
@@ -84,7 +84,7 @@ public static partial class Module
                     new("CanCrouch", [])
                 ],
                 CollisionEntries = [new CollisionEntry(CollisionEntryType.Map, id: 1)],
-                IsColliding = false,
+                IsColliding = true,
                 CorrectedVelocity = new DbVector3 { x = 0, y = 0, z = 0 }
             });
 
@@ -95,7 +95,7 @@ public static partial class Module
                 Id = 10000,
                 Name = "Test Magician",
                 MatchId = Match.Id,
-                Position = new DbVector3 { x = 0, y = 0, z = 5},
+                Position = new DbVector3 { x = 0f, y = 0.01f, z = 5f},
                 Rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
                 Velocity = new DbVector3 { x = 0, y = 0, z = 0 },
                 KinematicInformation = new KinematicInformation(falling: false, crouched: false, grounded: true, sprinting: false),
@@ -111,7 +111,7 @@ public static partial class Module
                     new("CanCrouch", [])
                 ],
                 CollisionEntries = [new CollisionEntry(CollisionEntryType.Map, id: 1)],
-                IsColliding = false,
+                IsColliding = true,
                 CorrectedVelocity = new DbVector3 { x = 0, y = 0, z = 0 }
             });
     }

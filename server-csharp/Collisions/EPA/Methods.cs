@@ -11,8 +11,13 @@ public static partial class Module
         Normal = Normalize(Normal);
 
         DbVector3 CenterDelta = Sub(CenterA, CenterB);
-        if (Dot(Normal, CenterDelta) < 0f)
-            Normal = Negate(Normal);
+        float CenterDeltaSq = Dot(CenterDelta, CenterDelta);
+
+        if (CenterDeltaSq > 1e-8f)
+        {
+            if (Dot(Normal, CenterDelta) < 0f)
+                Normal = Negate(Normal);
+        }
 
         DbVector3 WorldUp = new(0f, 1f, 0f);
         float MinGroundDot = 0.7f; // 45 degrees

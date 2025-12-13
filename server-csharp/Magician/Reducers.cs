@@ -43,7 +43,7 @@ public static partial class Module
 
         if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanJump").Subscribers.Count == 0 && Request.Jump)
         {
-            Character.Velocity.y = 10f;
+            Character.Velocity.y = 7.5f;
         }
 
         if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanCrouch").Subscribers.Count == 0 && Request.Crouch)

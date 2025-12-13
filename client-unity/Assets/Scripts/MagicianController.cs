@@ -148,7 +148,6 @@ public class MagicianController : MonoBehaviour
         if (Identity != newChar.Identity) return;
 
         TargetPosition = newChar.Position;
-        Debug.Log($"Target Position: {newChar.Position}");
         TargetRotation = newChar.Rotation;
 
         bool wasGrounded = oldChar.KinematicInformation.Grounded;
@@ -220,12 +219,14 @@ public class MagicianController : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Magician"))
         {
+            
             MagicianController Player = other.gameObject.GetComponent<MagicianController>();
             if (Player.Id != Id)
             {
                 CollisionEntry Entry = new CollisionEntry(Type: CollisionEntryType.Magician, Id: Player.Id);
                 GameManager.Conn.Reducers.AddCollisionEntryMagician(Entry, Identity);
             }
+            Debug.Log($"Magician Added To Entries With Id: {Player.Id}");
         }
         else if (other.gameObject.CompareTag("ThrowingCard"))
         {
