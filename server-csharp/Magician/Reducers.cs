@@ -8,43 +8,63 @@ public static partial class Module
     [Reducer]
     public static void HandleMovementRequestMagician(ReducerContext ctx, MovementRequest Request)
     {
-        Magician character = ctx.Db.magician.identity.Find(ctx.Sender) ?? throw new Exception("Magician To Move Not Found");
-        character.Rotation = Request.Aim;
+        Magician Character = ctx.Db.magician.identity.Find(ctx.Sender) ?? throw new Exception("Magician To Move Not Found");
 
-        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanWalk").Subscribers.Count == 0)
+        Character.Rotation = Request.Aim;
+
+        Character.Velocity = new DbVector3(0f, Character.Velocity.y, 0f);
+
+        if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanWalk").Subscribers.Count == 0)
         {
-            float YawRotation = ToRadians(character.Rotation.Yaw);
-            character.Velocity = new DbVector3(MathF.Cos(YawRotation) * Request.Velocity.x + MathF.Sin(YawRotation) * Request.Velocity.z, character.Velocity.y, -MathF.Sin(YawRotation) * Request.Velocity.x + MathF.Cos(YawRotation) * Request.Velocity.z);
+            float LocalX = 0f;
+            float LocalZ = 0f;
+
+            if (Request.MoveForward && !Request.MoveBackward) LocalZ = 2f;
+            else if (Request.MoveBackward && !Request.MoveForward) LocalZ = -1.5f;
+
+            if (Request.MoveRight && !Request.MoveLeft) LocalX = 1.5f;
+            else if (Request.MoveLeft && !Request.MoveRight) LocalX = -1.5f;
+
+            if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint && Request.MoveForward && !Request.MoveBackward)
+                LocalZ *= 2f;
+            
+            if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint)
+                LocalX *= 1.25f;
+
+            float YawRadians = ToRadians(Character.Rotation.Yaw);
+            float CosYaw = MathF.Cos(YawRadians);
+            float SinYaw = MathF.Sin(YawRadians);
+
+            float WorldX = CosYaw * LocalX + SinYaw * LocalZ;
+            float WorldZ = -SinYaw * LocalX + CosYaw * LocalZ;
+
+            Character.Velocity = new DbVector3(WorldX, Character.Velocity.y, WorldZ);
         }
 
-        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanJump").Subscribers.Count == 0 && Request.Jump)
+        if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanJump").Subscribers.Count == 0 && Request.Jump)
         {
-            character.Velocity.y = 10f;
+            Character.Velocity.y = 10f;
         }
 
-        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanCrouch").Subscribers.Count == 0 && Request.Crouch)
+        if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanCrouch").Subscribers.Count == 0 && Request.Crouch)
         {
-            character.Velocity = new DbVector3(character.Velocity.x * 0.5f, character.Velocity.y, character.Velocity.z * 0.5f);
-            character.KinematicInformation.Crouched = true;
-            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Crouch");            
-        }
-
-        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint)
-        {
-            character.Velocity = new DbVector3(character.Velocity.x * 2f, character.Velocity.y, character.Velocity.z * 2f);
+            Character.Velocity = new DbVector3(Character.Velocity.x * 0.5f, Character.Velocity.y, Character.Velocity.z * 0.5f);
+            Character.KinematicInformation.Crouched = true;
+            AddSubscriberUnique(GetPermissionEntry(Character.PlayerPermissionConfig, "CanRun").Subscribers, "Crouch");
         }
 
         if (Request.Crouch is false)
         {
-            character.KinematicInformation.Crouched = false;
-            RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanRun").Subscribers, "Crouch");
+            Character.KinematicInformation.Crouched = false;
+            RemoveSubscriber(GetPermissionEntry(Character.PlayerPermissionConfig, "CanRun").Subscribers, "Crouch");
         }
 
-        ctx.Db.magician.identity.Update(character);
+        ctx.Db.magician.identity.Update(Character);
     }
 
+
     [Reducer]
-    public static void MoveMagicians2(ReducerContext ctx, Move_All_Magicians_Timer timer)
+    public static void MoveMagicians2(ReducerContext ctx, Move_All_Magicians_Timer timer) // Not Used Currently
     {   
         var time = timer.tick_rate;
         foreach (var charac in ctx.Db.magician.Iter())
@@ -81,7 +101,7 @@ public static partial class Module
                             DbVector3 Normal = ComputeContactNormal(GjkNormal, GjkNormal, GjkNormal);
                             float PenetrationDepth = ComputePenetrationDepthApprox(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, Normal);
 
-                            Contacts.Add(new CollisionContact(Normal, PenetrationDepth));
+                            Contacts.Add(new CollisionContact(Normal, PenetrationDepth, CollisionEntryType.Magician));
                             
                         }
                         break;
@@ -103,7 +123,7 @@ public static partial class Module
                             DbVector3 Normal = ComputeContactNormal(GjkNormal, GjkNormal, GjkNormal);
                             float PenetrationDepth = ComputePenetrationDepthApprox(MapColliderA, MapPositionA, MapYawRadiansA, MapColliderB, MapPositionB, MapYawRadiansB, Normal);
 
-                            Contacts.Add(new CollisionContact(Normal, PenetrationDepth)); 
+                            Contacts.Add(new CollisionContact(Normal, PenetrationDepth, CollisionEntryType.Map)); 
                         }
                         break;
 

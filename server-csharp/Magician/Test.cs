@@ -227,6 +227,8 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
         float YawA = ToRadians(Character.Rotation.Yaw);
         float YawB;
 
+        CollisionEntryType EntryType;
+
         switch (Entry.Type)
         {
             case CollisionEntryType.Magician:
@@ -234,6 +236,7 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
                 Magician OtherMagician = Ctx.Db.magician.Id.Find(Entry.Id) ?? throw new Exception("Colliding Magician Not Found");
                 if (OtherMagician.Id == Character.Id) return false;
 
+                EntryType = CollisionEntryType.Magician;
                 ColliderBComplex = OtherMagician.GjkCollider;
                 ColliderB = ColliderBComplex.ConvexHulls;
                 PositionB = OtherMagician.Position;
@@ -245,6 +248,7 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
             {
                 Map MapPiece = Ctx.Db.Map.Id.Find(Entry.Id) ?? throw new Exception("Colliding Map Piece Not Found");
 
+                EntryType = CollisionEntryType.Map;
                 ColliderBComplex = MapPiece.GjkCollider;
                 ColliderB = ColliderBComplex.ConvexHulls;
                 PositionB = new DbVector3(0f, 0f, 0f);
@@ -274,11 +278,7 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
         if (ArtificialPenetration < 0f) ArtificialPenetration = 0f;
 
         ContactsThisStep.Clear();
-        ContactsThisStep.Add(new CollisionContact
-        {
-            Normal = ContactNormal,
-            PenetrationDepth = ArtificialPenetration
-        });
+        ContactsThisStep.Add(new CollisionContact(ContactNormal, ArtificialPenetration, EntryType));
 
         return true;
     }
@@ -318,7 +318,7 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
             float Gap = DistanceB - DistanceA;
             float PenetrationDepth = (Gap > 0f) ? Gap : 0f;
 
-            Contacts.Add(new CollisionContact(ContactNormal, PenetrationDepth));
+            Contacts.Add(new CollisionContact(ContactNormal, PenetrationDepth, CollisionEntryType.Magician));
             return true;
     
         }
@@ -351,7 +351,7 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
             float Gap = DistanceB - DistanceA;
             float PenetrationDepth = (Gap > 0f) ? Gap : 0f;
 
-            Contacts.Add(new CollisionContact(ContactNormal, PenetrationDepth));
+            Contacts.Add(new CollisionContact(ContactNormal, PenetrationDepth, CollisionEntryType.Map));
             return true;
         }
 
@@ -361,19 +361,20 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
     public static void ResolveContacts(ref Magician CharacterLocal, List<CollisionContact> Contacts, DbVector3 InputVelocity)
     {
         DbVector3 WorldUp = new(0f, 1f, 0f);
-        
-        // Thresholds
-        float MinGroundDot = 0.7f; // Must match ComputeContactNormal (approx 45 deg)
+
+        float MinGroundDot = 0.7f;
         float DepthEpsilon = 1e-4f;
         float MaxDepth = 0.25f;
-        
-        // Tuning (Soft & Precise)
-        float CorrectionFactor = 0.8f; 
-        float TargetPenetration = 0.025f; 
-        float ClimbVelocityThreshold = 0.1f;
+
+        float CorrectionFactor = 1f;
+        float TargetPenetration = 0.025f;
+
+        float GroundStickUpThreshold = 0.1f;
+        float InputUpCancelThreshold = 0.1f;
 
         DbVector3 CorrectedVelocity = InputVelocity;
-        bool IsGrounded = false;
+
+        bool IsGroundedOnMap = false;
 
         float MaxPenetrationDepth = 0f;
         DbVector3 BestPositionNormal = WorldUp;
@@ -381,20 +382,16 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
 
         foreach (CollisionContact Contact in Contacts)
         {
-            DbVector3 Normal = Contact.Normal; 
+            DbVector3 Normal = Contact.Normal;
 
-            // 1. Update Ground Flag
             float UpDot = Dot(Normal, WorldUp);
-            if (UpDot >= MinGroundDot) 
-                IsGrounded = true;
-            
-            // 2. Velocity Resolution
-            float NormalVelocityComponent = Dot(Normal, CorrectedVelocity);
-            if (NormalVelocityComponent < 0f) 
-                CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, NormalVelocityComponent));
-            
+            if (UpDot >= MinGroundDot && Contact.CollisionType == CollisionEntryType.Map)
+                IsGroundedOnMap = true;
 
-            // 3. Track Deepest Penetration for Position Correction
+            float NormalVelocityComponent = Dot(Normal, CorrectedVelocity);
+            if (NormalVelocityComponent < 0f)
+                CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, NormalVelocityComponent));
+
             if (Contact.PenetrationDepth > MaxPenetrationDepth)
             {
                 MaxPenetrationDepth = Contact.PenetrationDepth;
@@ -403,24 +400,30 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
             }
         }
 
-        // 4. Grounding cleanup (Prevents jittery sliding down flat surfaces)
-        if (IsGrounded)
+        if (IsGroundedOnMap)
         {
             float HorizInputSq = InputVelocity.x * InputVelocity.x + InputVelocity.z * InputVelocity.z;
             if (HorizInputSq < 0.001f)
             {
                 CorrectedVelocity.x = 0f;
                 CorrectedVelocity.z = 0f;
-            }     
+            }
+
+            if (CorrectedVelocity.y <= GroundStickUpThreshold)
+                CorrectedVelocity.y = 0f;
+
+            if (InputVelocity.y <= InputUpCancelThreshold)
+                CharacterLocal.Velocity.y = 0f;
         }
 
-        // 5. Apply Position Correction
         if (HasPositionContact && MaxPenetrationDepth > DepthEpsilon)
         {
-            if (MaxPenetrationDepth > MaxDepth) MaxPenetrationDepth = MaxDepth;
+            if (MaxPenetrationDepth > MaxDepth)
+                MaxPenetrationDepth = MaxDepth;
 
             float EffectiveDepth = MaxPenetrationDepth - TargetPenetration;
-            if (EffectiveDepth < 0f) EffectiveDepth = 0f;
+            if (EffectiveDepth < 0f)
+                EffectiveDepth = 0f;
 
             DbVector3 PositionCorrection = Mul(BestPositionNormal, EffectiveDepth * CorrectionFactor);
             CharacterLocal.Position = Add(CharacterLocal.Position, PositionCorrection);
@@ -428,8 +431,10 @@ public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Ti
 
         CharacterLocal.IsColliding = Contacts.Count > 0;
         CharacterLocal.CorrectedVelocity = CorrectedVelocity;
-        CharacterLocal.KinematicInformation.Grounded = CharacterLocal.KinematicInformation.Grounded || IsGrounded;
+        CharacterLocal.KinematicInformation.Grounded = CharacterLocal.KinematicInformation.Grounded || IsGroundedOnMap;
     }
+
+
 
 
 

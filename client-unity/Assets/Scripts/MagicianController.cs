@@ -7,22 +7,29 @@ public class MagicianController : MonoBehaviour
 {
     [SerializeField] private CinemachineCamera thirdPersonCam;
     [SerializeField] private GameObject thirdPersonCamPivot;
+
     public Identity Identity;
     public uint Id;
     public string Name;
     public uint MatchId;
+
     public Vector3 TargetPosition;
     public DbRotation2 TargetRotation = new DbRotation2(0, 0);
     public KinematicInformation KinematicInformation;
+
     public Animator Animator;
-    private Camera mainCamera;
     public Transform CardThrowHand;
+
+    private Camera mainCamera;
+
     float yaw = 0f;
     float pitch = 0f;
+
     private readonly float sensX = 200f;
     private readonly float sensY = 100f;
     private readonly float minPitch = -50f;
     private readonly float maxPitch = 75f;
+
     readonly float pitchSmooth = 0.08f;
     float pitchCurrent;
     float pitchVel;
@@ -32,20 +39,33 @@ public class MagicianController : MonoBehaviour
     float CameraPitchOffset;
     Vector3 HandPositionOffset;
 
+    float TargetForwardSpeed;
+    float TargetHorizontalSpeed;
+    readonly float SpeedBlendTime = 0.15f;
+
+    bool IsOwner;
+
     public void Initalize(Magician Character)
     {
         Identity = Character.Identity;
         Id = Character.Id;
         Name = Character.Name;
         MatchId = Character.MatchId;
+
         transform.position = Character.Position;
         TargetPosition = Character.Position;
+
+        TargetRotation = Character.Rotation;
         KinematicInformation = Character.KinematicInformation;
 
-        if (thirdPersonCam != null && Identity.Equals(GameManager.Conn.Identity))
+        IsOwner = Identity.Equals(GameManager.LocalIdentity);
+
+        if (thirdPersonCam != null && IsOwner)
             thirdPersonCam.gameObject.SetActive(true);
 
-        mainCamera = FindFirstObjectByType<CinemachineBrain>().OutputCamera != null ? FindFirstObjectByType<CinemachineBrain>().OutputCamera : throw new System.Exception("No Main Camera Brain");
+        mainCamera = FindFirstObjectByType<CinemachineBrain>().OutputCamera != null
+            ? FindFirstObjectByType<CinemachineBrain>().OutputCamera
+            : throw new System.Exception("No Main Camera Brain");
 
         Vector3 CameraWorldPosition = mainCamera.transform.position;
         Vector3 CharacterWorldPosition = transform.position;
@@ -53,6 +73,7 @@ public class MagicianController : MonoBehaviour
 
         CameraYawOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.y);
         CameraPitchOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.x);
+
         Vector2 Reticle = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
         Vector3 D = AimRay.direction.normalized;
@@ -71,12 +92,15 @@ public class MagicianController : MonoBehaviour
 
     void Update()
     {
-        MovementRequest req = new MovementRequest(Velocity: new DbVector3(0, 0, 0), Sprint: false, Jump: false, Crouch: false, Aim: new DbRotation2(0, 0));
+        if (!IsOwner) return;
 
-        if (Input.GetKey(KeyCode.W)) req.Velocity.Z += 2f;
-        if (Input.GetKey(KeyCode.S)) req.Velocity.Z -= 2f;
-        if (Input.GetKey(KeyCode.D)) req.Velocity.X += 1.5f;
-        if (Input.GetKey(KeyCode.A)) req.Velocity.X -= 1.5f;
+        MovementRequest req = new MovementRequest(MoveForward: false, MoveBackward: false, MoveLeft: false, MoveRight: false, Sprint: false, Jump: false, Crouch: false, Aim: new DbRotation2(0, 0) );
+
+        if (Input.GetKey(KeyCode.W)) req.MoveForward = true;
+        if (Input.GetKey(KeyCode.S)) req.MoveBackward = true;
+        if (Input.GetKey(KeyCode.A)) req.MoveLeft = true;
+        if (Input.GetKey(KeyCode.D)) req.MoveRight = true;
+
         if (Input.GetKey(KeyCode.LeftShift)) req.Sprint = true;
         if (Input.GetKeyDown(KeyCode.Space)) req.Jump = true;
         if (Input.GetKey(KeyCode.LeftControl)) req.Crouch = true;
@@ -88,20 +112,6 @@ public class MagicianController : MonoBehaviour
         pitch = Mathf.Clamp(pitch - my * sensY * Time.deltaTime, minPitch, maxPitch);
 
         req.Aim = new DbRotation2(yaw, pitch);
-        
-        if (Id != 10000) // So Test Player Doesn't Animate Too
-        {
-            DbVector3 AnimVelocity = req.Velocity;
-            if (req.Sprint) AnimVelocity = new DbVector3(AnimVelocity.X * 2f, AnimVelocity.Y, AnimVelocity.Z * 2f);
-            Vector3 vWorld = new(AnimVelocity.X, 0f, AnimVelocity.Z);
-            Quaternion yawOnly = Quaternion.Euler(0f, yaw, 0f);
-            Vector3 vLocal = Quaternion.Inverse(yawOnly) * vWorld;
-            float forwardInput = vLocal.z;
-            float sideInput = vLocal.x;
-            Animator.SetFloat("ForwardSpeed", forwardInput, 0.15f, Time.deltaTime);
-            Animator.SetFloat("HorizontalSpeed", sideInput, 0.15f, Time.deltaTime);
-        }
-        
 
         GameManager.Conn.Reducers.HandleMovementRequestMagician(req);
 
@@ -120,14 +130,25 @@ public class MagicianController : MonoBehaviour
         Quaternion targetRot = Quaternion.Euler(0f, targetYaw, 0f);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 1f - Mathf.Exp(-12f * Time.deltaTime));
 
-        pitchCurrent = Mathf.SmoothDampAngle(pitchCurrent, TargetRotation.Pitch, ref pitchVel, pitchSmooth);
-        thirdPersonCamPivot.transform.localRotation = Quaternion.Euler(pitchCurrent, 0f, 0f);
+        if (thirdPersonCamPivot != null)
+        {
+            pitchCurrent = Mathf.SmoothDampAngle(pitchCurrent, TargetRotation.Pitch, ref pitchVel, pitchSmooth);
+            thirdPersonCamPivot.transform.localRotation = Quaternion.Euler(pitchCurrent, 0f, 0f);
+        }
+
+        if (Animator != null)
+        {
+            Animator.SetFloat("ForwardSpeed", TargetForwardSpeed, SpeedBlendTime, Time.deltaTime);
+            Animator.SetFloat("HorizontalSpeed", TargetHorizontalSpeed, SpeedBlendTime, Time.deltaTime);
+        }
     }
 
     public void HandleMagicianUpdate(EventContext context, Magician oldChar, Magician newChar)
     {
         if (Identity != newChar.Identity) return;
+
         TargetPosition = newChar.Position;
+        Debug.Log($"Target Position: {newChar.Position}");
         TargetRotation = newChar.Rotation;
 
         bool wasGrounded = oldChar.KinematicInformation.Grounded;
@@ -136,15 +157,26 @@ public class MagicianController : MonoBehaviour
         bool Falling = newChar.KinematicInformation.Falling;
         bool Attacking = newChar.State is MagicianState.Attack;
 
-        DbVector3 PhysicalVelocity = newChar.IsColliding ? newChar.CorrectedVelocity : newChar.Velocity;
+        DbVector3 Velocity = newChar.IsColliding ? newChar.CorrectedVelocity : newChar.Velocity;
+        DbVector3 AnimationVelocity = newChar.Velocity;
 
-        if (wasGrounded && Grounded is false && PhysicalVelocity.Y > 2f)
-            Animator.SetTrigger("Jump");
+        if (Animator != null)
+        {
+            if (wasGrounded && Grounded is false && Velocity.Y > 2f)
+                Animator.SetTrigger("Jump");
 
-        Animator.SetBool("Attacking", Attacking);
-        Animator.SetBool("Crouching", Crouching);
-        Animator.SetBool("Falling", Falling);
-        Animator.SetBool("Grounded", Grounded);
+            Animator.SetBool("Attacking", Attacking);
+            Animator.SetBool("Crouching", Crouching);
+            Animator.SetBool("Falling", Falling);
+            Animator.SetBool("Grounded", Grounded);
+        }
+
+        Vector3 vWorld = new Vector3(AnimationVelocity.X, 0f, AnimationVelocity.Z);
+        Quaternion yawOnly = Quaternion.Euler(0f, newChar.Rotation.Yaw, 0f);
+        Vector3 vLocal = Quaternion.Inverse(yawOnly) * vWorld;
+
+        TargetForwardSpeed = vLocal.z;
+        TargetHorizontalSpeed = vLocal.x;
     }
 
     public void Delete(EventContext context)
@@ -165,7 +197,13 @@ public class MagicianController : MonoBehaviour
         Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
         Vector3 D = AimRay.direction.normalized;
 
-        GameManager.Conn.Reducers.SpawnThrowingCard(cameraPositionOffset: (DbVector3)CameraPositionOffset, cameraYawOffset: CameraYawOffset, cameraPitchOffset: CameraPitchOffset, handPositionOffset: (DbVector3)HandPositionOffset, maxDistance: MaxDistance);
+        GameManager.Conn.Reducers.SpawnThrowingCard(
+            cameraPositionOffset: (DbVector3)CameraPositionOffset,
+            cameraYawOffset: CameraYawOffset,
+            cameraPitchOffset: CameraPitchOffset,
+            handPositionOffset: (DbVector3)HandPositionOffset,
+            maxDistance: MaxDistance
+        );
 
         if (Input.GetMouseButton(0) is false)
         {
@@ -189,7 +227,6 @@ public class MagicianController : MonoBehaviour
                 GameManager.Conn.Reducers.AddCollisionEntryMagician(Entry, Identity);
             }
         }
-
         else if (other.gameObject.CompareTag("ThrowingCard"))
         {
             ThrowingCardController Projectile = other.gameObject.GetComponent<ThrowingCardController>();
@@ -199,7 +236,6 @@ public class MagicianController : MonoBehaviour
                 GameManager.Conn.Reducers.AddCollisionEntryMagician(Entry, Identity);
             }
         }
-
         else if (other.gameObject.CompareTag("Map"))
         {
             FloorController Map = other.gameObject.GetComponent<FloorController>();
@@ -219,7 +255,6 @@ public class MagicianController : MonoBehaviour
                 GameManager.Conn.Reducers.RemoveCollisionEntryMagician(Entry, Identity);
             }
         }
-
         else if (other.gameObject.CompareTag("ThrowingCard"))
         {
             ThrowingCardController Projectile = other.gameObject.GetComponent<ThrowingCardController>();
@@ -229,7 +264,6 @@ public class MagicianController : MonoBehaviour
                 GameManager.Conn.Reducers.RemoveCollisionEntryMagician(Entry, Identity);
             }
         }
-
         else if (other.gameObject.CompareTag("Map"))
         {
             FloorController Map = other.gameObject.GetComponent<FloorController>();

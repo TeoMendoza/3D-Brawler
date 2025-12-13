@@ -15,8 +15,14 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class MovementRequest
     {
-        [DataMember(Name = "Velocity")]
-        public DbVector3 Velocity;
+        [DataMember(Name = "MoveForward")]
+        public bool MoveForward;
+        [DataMember(Name = "MoveBackward")]
+        public bool MoveBackward;
+        [DataMember(Name = "MoveLeft")]
+        public bool MoveLeft;
+        [DataMember(Name = "MoveRight")]
+        public bool MoveRight;
         [DataMember(Name = "Sprint")]
         public bool Sprint;
         [DataMember(Name = "Jump")]
@@ -27,14 +33,20 @@ namespace SpacetimeDB.Types
         public DbRotation2 Aim;
 
         public MovementRequest(
-            DbVector3 Velocity,
+            bool MoveForward,
+            bool MoveBackward,
+            bool MoveLeft,
+            bool MoveRight,
             bool Sprint,
             bool Jump,
             bool Crouch,
             DbRotation2 Aim
         )
         {
-            this.Velocity = Velocity;
+            this.MoveForward = MoveForward;
+            this.MoveBackward = MoveBackward;
+            this.MoveLeft = MoveLeft;
+            this.MoveRight = MoveRight;
             this.Sprint = Sprint;
             this.Jump = Jump;
             this.Crouch = Crouch;
@@ -43,7 +55,6 @@ namespace SpacetimeDB.Types
 
         public MovementRequest()
         {
-            this.Velocity = new();
             this.Aim = new();
         }
     }

@@ -27,9 +27,12 @@ public static partial class Module
     }
 
     [SpacetimeDB.Type]
-    public partial struct MovementRequest(DbVector3 velocity, bool sprint, bool jump, bool crouch, DbRotation2 aim)
+    public partial struct MovementRequest(bool moveForward, bool moveBackward, bool moveLeft, bool moveRight, bool sprint, bool jump, bool crouch, DbRotation2 aim)
     {
-        public DbVector3 Velocity = velocity;
+        public bool MoveForward = moveForward;
+        public bool MoveBackward = moveBackward;
+        public bool MoveLeft = moveLeft;
+        public bool MoveRight = moveRight;
         public bool Sprint = sprint;
         public bool Jump = jump;
         public bool Crouch = crouch;
