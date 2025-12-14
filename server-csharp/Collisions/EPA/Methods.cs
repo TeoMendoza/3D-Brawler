@@ -7,7 +7,7 @@ public static partial class Module
     static DbVector3 ComputeContactNormal(DbVector3 RawNormal, DbVector3 CenterA, DbVector3 CenterB)
     {
         DbVector3 Normal = RawNormal;
-        if (Dot(Normal, Normal) < 1e-6f) return new DbVector3(0, 1, 0);
+        if (Dot(Normal, Normal) < 1e-6f) return new DbVector3(0f, 1f, 0f);
         Normal = Normalize(Normal);
 
         DbVector3 CenterDelta = Sub(CenterA, CenterB);
@@ -20,29 +20,34 @@ public static partial class Module
         }
 
         DbVector3 WorldUp = new(0f, 1f, 0f);
-        float MinGroundDot = 0.7f; // 45 degrees
         float UpDot = Dot(Normal, WorldUp);
-        
-        // FLOOR CASE
-        if (UpDot > MinGroundDot)
+
+        float FloorSnapDot = 0.98f;   // ~11 degrees of up
+        float CeilingSnapDot = 0.98f; // ~11 degrees of down
+        float WallSnapAbsDot = 0.05f; // ~87-93 degrees of up (horizontal)
+
+        // FLOOR SNAP (nearly flat)
+        if (UpDot >= FloorSnapDot)
         {
-            Normal = WorldUp;
+            return WorldUp;
         }
-        // CEILING CASE
-        else if (UpDot < -MinGroundDot)
+
+        // CEILING SNAP (nearly flat but inverted)
+        if (UpDot <= -CeilingSnapDot)
         {
-            Normal = new DbVector3(0f, -1f, 0f);
+            return new DbVector3(0f, -1f, 0f);
         }
-        // WALL CASE (Vertical)
-        else if (MathF.Abs(UpDot) < 0.05f)
+
+        // WALL SNAP (nearly vertical surface contact)
+        if (MathF.Abs(UpDot) <= WallSnapAbsDot)
         {
             Normal.y = 0f;
-            Normal = Normalize(Normal);
+            if (Dot(Normal, Normal) < 1e-6f) return new DbVector3(0f, 1f, 0f);
+            return Normalize(Normal);
         }
 
-        // SLOPE CASE (Default)
-        // Returns RawNormal
-
+        // SLOPE / RAMP (keep true normal)
         return Normal;
     }
+
 }

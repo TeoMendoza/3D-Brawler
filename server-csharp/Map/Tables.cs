@@ -9,6 +9,8 @@ public static partial class Module
     {
         [PrimaryKey, AutoInc]
         public uint Id;
+        [Unique]
+        public string Name;
         public ComplexCollider GjkCollider;
     }
 }

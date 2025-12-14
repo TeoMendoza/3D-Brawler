@@ -239,7 +239,7 @@ public class MagicianController : MonoBehaviour
         }
         else if (other.gameObject.CompareTag("Map"))
         {
-            FloorController Map = other.gameObject.GetComponent<FloorController>();
+            MapPiece Map = other.gameObject.GetComponent<MapPiece>();
             CollisionEntry Entry = new CollisionEntry(Type: CollisionEntryType.Map, Id: Map.Id);
             GameManager.Conn.Reducers.AddCollisionEntryMagician(Entry, Identity);
         }
@@ -267,7 +267,7 @@ public class MagicianController : MonoBehaviour
         }
         else if (other.gameObject.CompareTag("Map"))
         {
-            FloorController Map = other.gameObject.GetComponent<FloorController>();
+            MapPiece Map = other.gameObject.GetComponent<MapPiece>();
             CollisionEntry Entry = new CollisionEntry(Type: CollisionEntryType.Map, Id: Map.Id);
             GameManager.Conn.Reducers.RemoveCollisionEntryMagician(Entry, Identity);
         }

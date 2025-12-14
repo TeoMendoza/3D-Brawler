@@ -150,7 +150,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MagicianPrefab: {fileID: 3838300054775145683, guid: 9cac75c6e83db44a488f7f31d8e9a9b3, type: 3}
   ThrowingCardPrefab: {fileID: 4753613909389792992, guid: 45a99bf801c8a486aa152076d1859586, type: 3}
-  FloorPrefab: {fileID: 1859976649831499640, guid: a24d05f48d0724df69c860b4a3e8fd8e, type: 3}
+  MapPrefabs:
+  - {fileID: 4101123262796976276, guid: a24d05f48d0724df69c860b4a3e8fd8e, type: 3}
+  - {fileID: 6537649743902597972, guid: b3d0590656a04451da247dcf2541587e, type: 3}
 --- !u!4 &156625267
 Transform:
   m_ObjectHideFlags: 0

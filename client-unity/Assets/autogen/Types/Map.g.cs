@@ -17,20 +17,25 @@ namespace SpacetimeDB.Types
     {
         [DataMember(Name = "Id")]
         public uint Id;
+        [DataMember(Name = "Name")]
+        public string Name;
         [DataMember(Name = "GjkCollider")]
         public ComplexCollider GjkCollider;
 
         public Map(
             uint Id,
+            string Name,
             ComplexCollider GjkCollider
         )
         {
             this.Id = Id;
+            this.Name = Name;
             this.GjkCollider = GjkCollider;
         }
 
         public Map()
         {
+            this.Name = "";
             this.GjkCollider = new();
         }
     }

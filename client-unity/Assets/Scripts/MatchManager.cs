@@ -17,8 +17,8 @@ public class MatchManager : MonoBehaviour
     public MagicianController MagicianPrefab;
     public Dictionary<uint, ThrowingCardController> ThrowingCards = new();
     public ThrowingCardController ThrowingCardPrefab;
-    public Dictionary<uint, FloorController> Map = new(); // Change To More General Map Class
-    public FloorController FloorPrefab;
+    public Dictionary<uint, MapPiece> MapPieces = new();
+    public List<MapPiece> MapPrefabs;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -71,10 +71,23 @@ public class MatchManager : MonoBehaviour
 
     public void AddMapPiece(EventContext context, Map MapPiece)
     {
-        Debug.Log("Map Piece Registered");
-        var prefab = Instantiate(FloorPrefab);
-        prefab.Initialize(MapPiece);
-        Map.Add(MapPiece.Id, prefab);
+        MapPiece MatchingPrefab = default!;
+
+        for (int PrefabIndex = 0; PrefabIndex < MapPrefabs.Count; PrefabIndex++)
+        {
+            MapPiece CandidatePrefab = MapPrefabs[PrefabIndex];
+            if (CandidatePrefab != null && CandidatePrefab.PieceName == MapPiece.Name)
+            {
+                MatchingPrefab = CandidatePrefab;
+                break;
+            }
+        }
+
+        if (MatchingPrefab == null) return;
+
+        MapPiece Prefab = Instantiate(MatchingPrefab);
+        Prefab.Initialize(MapPiece);
+        MapPieces.Add(MapPiece.Id, Prefab);
     }
 
     public void AddNewCharacter(EventContext context, Magician Character)

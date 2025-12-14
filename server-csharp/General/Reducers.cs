@@ -10,7 +10,8 @@ public static partial class Module
     {
         Log.Info($"Initializing...");
 
-        ctx.Db.Map.Insert(new Map {GjkCollider = FloorCollider});
+        ctx.Db.Map.Insert(new Map {Name = "Floor", GjkCollider = FloorCollider});
+        ctx.Db.Map.Insert(new Map {Name = "Ramp", GjkCollider = RampCollider});
 
         ctx.Db.move_all_magicians.Insert(new Move_All_Magicians_Timer
         {
@@ -96,7 +97,7 @@ public static partial class Module
                 Name = "Test Magician",
                 MatchId = Match.Id,
                 Position = new DbVector3 { x = 0f, y = 0.01f, z = 5f},
-                Rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
+                Rotation = new DbRotation2 { Yaw = 180, Pitch = 0 },
                 Velocity = new DbVector3 { x = 0, y = 0, z = 0 },
                 KinematicInformation = new KinematicInformation(falling: false, crouched: false, grounded: true, sprinting: false),
                 State = MagicianState.Default,
