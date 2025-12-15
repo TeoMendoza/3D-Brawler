@@ -160,19 +160,16 @@ public static partial class Module
 
         float MaxPositionCorrection = 0.02f;
 
-        float GroundStickUpThreshold = 0.1f; // 0.1f
-        float InputUpCancelThreshold = 0.1f; // 0.1f
+        float GroundStickUpThreshold = 0.1f;
+        float InputUpCancelThreshold = 0.1f;
 
         DbVector3 CorrectedVelocity = InputVelocity;
 
         bool IsGroundedOnMap = false;
-
-        bool HasGroundSupport = false;
         DbVector3 GroundSupportNormal = WorldUp;
-        float GroundSupportPenetration = 0f;
 
-        bool HasNonGroundPositionCorrection = false;
-        DbVector3 TotalNonGroundPositionCorrection = new DbVector3(0f, 0f, 0f);
+        bool HasAnyPositionCorrection = false;
+        DbVector3 TotalPositionCorrection = new DbVector3(0f, 0f, 0f);
 
         foreach (CollisionContact Contact in Contacts)
         {
@@ -184,13 +181,7 @@ public static partial class Module
             if (IsWalkableMapContact)
             {
                 IsGroundedOnMap = true;
-
-                if (HasGroundSupport is false || Contact.PenetrationDepth > GroundSupportPenetration)
-                {
-                    HasGroundSupport = true;
-                    GroundSupportNormal = Normal;
-                    GroundSupportPenetration = Contact.PenetrationDepth;
-                }
+                GroundSupportNormal = Normal;
             }
 
             float NormalVelocityComponent = Dot(Normal, CorrectedVelocity);
@@ -205,52 +196,23 @@ public static partial class Module
                     if (Depth > MaxDepth)
                         Depth = MaxDepth;
 
-                    if (IsWalkableMapContact is false)
-                    {
-                        HasNonGroundPositionCorrection = true;
-                        TotalNonGroundPositionCorrection = Add(TotalNonGroundPositionCorrection, Mul(Normal, Depth));
-                    }
+                    HasAnyPositionCorrection = true;
+                    TotalPositionCorrection = Add(TotalPositionCorrection, Mul(Normal, Depth));
                 }
             }
         }
 
-        if (ApplyPositionCorrection)
+        if (ApplyPositionCorrection && HasAnyPositionCorrection)
         {
-            if (HasGroundSupport)
+            float CorrectionMagnitudeSq = Dot(TotalPositionCorrection, TotalPositionCorrection);
+            if (CorrectionMagnitudeSq > 1e-8f)
             {
-                float GroundDepth = GroundSupportPenetration - TargetPenetration;
-                if (GroundDepth > DepthEpsilon)
-                {
-                    if (GroundDepth > MaxDepth)
-                        GroundDepth = MaxDepth;
+                float CorrectionMagnitude = MathF.Sqrt(CorrectionMagnitudeSq);
+                if (CorrectionMagnitude > MaxPositionCorrection)
+                    TotalPositionCorrection = Mul(Normalize(TotalPositionCorrection), MaxPositionCorrection);
 
-                    DbVector3 GroundCorrection = Mul(GroundSupportNormal, GroundDepth);
-
-                    float GroundCorrectionSq = Dot(GroundCorrection, GroundCorrection);
-                    if (GroundCorrectionSq > 1e-8f)
-                    {
-                        float GroundCorrectionMag = MathF.Sqrt(GroundCorrectionSq);
-                        if (GroundCorrectionMag > MaxPositionCorrection)
-                            GroundCorrection = Mul(Normalize(GroundCorrection), MaxPositionCorrection);
-
-                        GroundCorrection = Mul(GroundCorrection, CorrectionFactor);
-                        CharacterLocal.Position = Add(CharacterLocal.Position, GroundCorrection);
-                    }
-                }
-            }
-
-            if (HasNonGroundPositionCorrection)
-            {
-                float CorrectionMagnitudeSq = Dot(TotalNonGroundPositionCorrection, TotalNonGroundPositionCorrection);
-                if (CorrectionMagnitudeSq > 1e-8f)
-                {
-                    float CorrectionMagnitude = MathF.Sqrt(CorrectionMagnitudeSq);
-                    if (CorrectionMagnitude > MaxPositionCorrection)
-                        TotalNonGroundPositionCorrection = Mul(Normalize(TotalNonGroundPositionCorrection), MaxPositionCorrection);
-
-                    TotalNonGroundPositionCorrection = Mul(TotalNonGroundPositionCorrection, CorrectionFactor);
-                    CharacterLocal.Position = Add(CharacterLocal.Position, TotalNonGroundPositionCorrection);
-                }
+                TotalPositionCorrection = Mul(TotalPositionCorrection, CorrectionFactor);
+                CharacterLocal.Position = Add(CharacterLocal.Position, TotalPositionCorrection);
             }
         }
 
@@ -263,9 +225,11 @@ public static partial class Module
                 CorrectedVelocity.x = 0f;
                 CorrectedVelocity.z = 0f;
             }
-            else if (HasGroundSupport)
+            else
             {
                 float DesiredHorizontalSpeed = MathF.Sqrt(DesiredHorizontalSpeedSq);
+
+                float PreservedCorrectedY = CorrectedVelocity.y;
 
                 DbVector3 TangentVelocity = Sub(CorrectedVelocity, Mul(GroundSupportNormal, Dot(CorrectedVelocity, GroundSupportNormal)));
 
@@ -273,13 +237,17 @@ public static partial class Module
                 if (TangentSpeedSq > 1e-8f)
                 {
                     DbVector3 TangentDirection = Mul(TangentVelocity, 1f / MathF.Sqrt(TangentSpeedSq));
-                    CorrectedVelocity = Mul(TangentDirection, DesiredHorizontalSpeed);
+                    DbVector3 DesiredTangentVelocity = Mul(TangentDirection, DesiredHorizontalSpeed);
+
+                    CorrectedVelocity.x = DesiredTangentVelocity.x;
+                    CorrectedVelocity.z = DesiredTangentVelocity.z;
+                    CorrectedVelocity.y = PreservedCorrectedY;
                 }
             }
 
             if (CorrectedVelocity.y <= GroundStickUpThreshold)
                 CorrectedVelocity.y = 0f;
-            
+
             if (InputVelocity.y <= InputUpCancelThreshold)
                 CharacterLocal.Velocity.y = 0f;
         }
@@ -288,8 +256,6 @@ public static partial class Module
         CharacterLocal.CorrectedVelocity = CorrectedVelocity;
         CharacterLocal.KinematicInformation.Grounded = CharacterLocal.KinematicInformation.Grounded || IsGroundedOnMap;
     }
-
-
 
 
     static DbVector3 GetColliderCenterWorld(ComplexCollider Collider, DbVector3 Position, float YawRadians)
