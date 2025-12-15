@@ -94,21 +94,30 @@ public static partial class Module
             bool IntersectsMagician = SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResult GjkResultMagician);
             if (IntersectsMagician is false) return false;
 
-            DbVector3 PointOnA = GjkResultMagician.ClosestPointA;
-            DbVector3 PointOnB = GjkResultMagician.ClosestPointB;
-
             DbVector3 CenterAWorld = GetColliderCenterWorld(CharacterLocal.GjkCollider, PositionA, YawRadiansA);
             DbVector3 CenterBWorld = GetColliderCenterWorld(OtherMagician.GjkCollider, PositionB, YawRadiansB);
 
-            DbVector3 ContactNormal = ComputeContactNormal(GjkResultMagician.LastDirection, CenterAWorld, CenterBWorld);
+            if (EpaSolve(GjkResultMagician, ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out Contact EpaContact))
+            {
+                DbVector3 ContactNormal = ComputeContactNormal(EpaContact.Normal, CenterAWorld, CenterBWorld);
+                float PenetrationDepth = EpaContact.Depth;
 
-            float DistanceA = Dot(PointOnA, ContactNormal);
-            float DistanceB = Dot(PointOnB, ContactNormal);
+                Contacts.Add(new CollisionContact(ContactNormal, PenetrationDepth, CollisionEntryType.Magician));
+                return true;
+            }
+
+            DbVector3 FallbackNormal = ComputeContactNormal(GjkResultMagician.LastDirection, CenterAWorld, CenterBWorld);
+
+            DbVector3 PointOnA = GjkResultMagician.ClosestPointA;
+            DbVector3 PointOnB = GjkResultMagician.ClosestPointB;
+
+            float DistanceA = Dot(PointOnA, FallbackNormal);
+            float DistanceB = Dot(PointOnB, FallbackNormal);
             float Gap = DistanceB - DistanceA;
 
-            float PenetrationDepth = (Gap > 0f) ? Gap : 0f;
+            float FallbackDepth = (Gap > 0f) ? Gap : 0f;
 
-            Contacts.Add(new CollisionContact(ContactNormal, PenetrationDepth, CollisionEntryType.Magician));
+            Contacts.Add(new CollisionContact(FallbackNormal, FallbackDepth, CollisionEntryType.Magician));
             return true;
         }
 
@@ -125,26 +134,36 @@ public static partial class Module
             bool IntersectsMap = SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResult GjkResultMap);
             if (IntersectsMap is false) return false;
 
-            DbVector3 PointOnA = GjkResultMap.ClosestPointA;
-            DbVector3 PointOnB = GjkResultMap.ClosestPointB;
-
             DbVector3 CenterAWorld = GetColliderCenterWorld(CharacterLocal.GjkCollider, PositionA, YawRadiansA);
             DbVector3 CenterBWorld = GetColliderCenterWorld(MapPiece.GjkCollider, PositionB, YawRadiansB);
 
-            DbVector3 ContactNormal = ComputeContactNormal(GjkResultMap.LastDirection, CenterAWorld, CenterBWorld);
+            if (EpaSolve(GjkResultMap, ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out Contact EpaContact))
+            {
+                DbVector3 ContactNormal = ComputeContactNormal(EpaContact.Normal, CenterAWorld, CenterBWorld);
+                float PenetrationDepth = EpaContact.Depth;
 
-            float DistanceA = Dot(PointOnA, ContactNormal);
-            float DistanceB = Dot(PointOnB, ContactNormal);
+                Contacts.Add(new CollisionContact(ContactNormal, PenetrationDepth, CollisionEntryType.Map));
+                return true;
+            }
+
+            DbVector3 FallbackNormal = ComputeContactNormal(GjkResultMap.LastDirection, CenterAWorld, CenterBWorld);
+
+            DbVector3 PointOnA = GjkResultMap.ClosestPointA;
+            DbVector3 PointOnB = GjkResultMap.ClosestPointB;
+
+            float DistanceA = Dot(PointOnA, FallbackNormal);
+            float DistanceB = Dot(PointOnB, FallbackNormal);
             float Gap = DistanceB - DistanceA;
 
-            float PenetrationDepth = (Gap > 0f) ? Gap : 0f;
+            float FallbackDepth = (Gap > 0f) ? Gap : 0f;
 
-            Contacts.Add(new CollisionContact(ContactNormal, PenetrationDepth, CollisionEntryType.Map));
+            Contacts.Add(new CollisionContact(FallbackNormal, FallbackDepth, CollisionEntryType.Map));
             return true;
         }
 
         return false;
     }
+
 
     public static void ResolveContacts(ref Magician CharacterLocal, List<CollisionContact> Contacts, DbVector3 InputVelocity, bool ApplyPositionCorrection)
     {
