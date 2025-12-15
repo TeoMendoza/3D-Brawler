@@ -59,7 +59,8 @@ public static partial class Module
             RemoveSubscriber(GetPermissionEntry(Character.PlayerPermissionConfig, "CanRun").Subscribers, "Crouch");
         }
 
-        ctx.Db.magician.identity.Update(Character);
+        if (Character.Id != 10000) // Testing To Make Sure Moving Collisions Work
+            ctx.Db.magician.identity.Update(Character);
     }
 
 

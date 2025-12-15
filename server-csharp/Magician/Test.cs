@@ -8,10 +8,8 @@ public static partial class Module
     public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Timer)
     {
         float TickTime = Timer.tick_rate;
-
         float MinTimeStep = 1e-4f;
-
-        int MaxSubsteps = 8;
+        int MaxSubsteps = 12;
 
         foreach (var CharacterRow in Ctx.Db.magician.Iter())
         {
@@ -19,12 +17,10 @@ public static partial class Module
 
             bool WasGrounded = Character.KinematicInformation.Grounded;
             Character.KinematicInformation.Grounded = false;
-
             Character.IsColliding = false;
             Character.CorrectedVelocity = Character.Velocity;
-
+            
             float RemainingTime = TickTime;
-
             int SubstepCount = 0;
             while (RemainingTime > MinTimeStep && SubstepCount < MaxSubsteps)
             {
@@ -33,9 +29,7 @@ public static partial class Module
                 float StepTime = RemainingTime / (MaxSubsteps - SubstepCount + 1);
 
                 DbVector3 StepVelocity = Character.IsColliding ? Character.CorrectedVelocity : Character.Velocity;
-
                 List<CollisionContact> PreContacts = new List<CollisionContact>();
-
                 foreach (CollisionEntry Entry in Character.CollisionEntries)
                 {
                     TryBuildContactForEntry(Ctx, ref Character, Entry, PreContacts);
@@ -43,7 +37,7 @@ public static partial class Module
 
                 if (PreContacts.Count > 0)
                 {
-                    ResolveContacts(ref Character, PreContacts, StepVelocity);
+                    ResolveContacts(ref Character, PreContacts, Character.Velocity, ApplyPositionCorrection: false);
                     StepVelocity = Character.IsColliding ? Character.CorrectedVelocity : Character.Velocity;
                 }
 
@@ -54,7 +48,6 @@ public static partial class Module
                 );
 
                 List<CollisionContact> PostContacts = new List<CollisionContact>();
-
                 foreach (CollisionEntry Entry in Character.CollisionEntries)
                 {
                     TryBuildContactForEntry(Ctx, ref Character, Entry, PostContacts);
@@ -62,8 +55,8 @@ public static partial class Module
 
                 if (PostContacts.Count > 0)
                 {
-                    ResolveContacts(ref Character, PostContacts, StepVelocity);
-                }  
+                    ResolveContacts(ref Character, PostContacts, Character.Velocity, ApplyPositionCorrection: true);
+                }
 
                 RemainingTime -= StepTime;
             }
@@ -153,82 +146,140 @@ public static partial class Module
         return false;
     }
 
-   public static void ResolveContacts(ref Magician CharacterLocal, List<CollisionContact> Contacts, DbVector3 InputVelocity)
+    public static void ResolveContacts(ref Magician CharacterLocal, List<CollisionContact> Contacts, DbVector3 InputVelocity, bool ApplyPositionCorrection)
     {
         DbVector3 WorldUp = new DbVector3(0f, 1f, 0f);
 
         float MinGroundDot = 0.7f;
 
-        float DepthEpsilon = 1e-4f;
-        float MaxDepth = 0.25f;
+        float DepthEpsilon = 1e-3f;
+        float MaxDepth = 0.15f;
 
-        float CorrectionFactor = 0.8f;
-        float TargetPenetration = 0.01f;
+        float CorrectionFactor = 0.5f;
+        float TargetPenetration = 0.02f;
 
         float MaxPositionCorrection = 0.02f;
 
-        float GroundStickUpThreshold = 0.1f;
-        float InputUpCancelThreshold = 0.1f;
+        float GroundStickUpThreshold = 0.1f; // 0.1f
+        float InputUpCancelThreshold = 0.1f; // 0.1f
 
         DbVector3 CorrectedVelocity = InputVelocity;
 
         bool IsGroundedOnMap = false;
 
-        DbVector3 TotalPositionCorrection = new DbVector3(0f, 0f, 0f);
+        bool HasGroundSupport = false;
+        DbVector3 GroundSupportNormal = WorldUp;
+        float GroundSupportPenetration = 0f;
+
+        bool HasNonGroundPositionCorrection = false;
+        DbVector3 TotalNonGroundPositionCorrection = new DbVector3(0f, 0f, 0f);
 
         foreach (CollisionContact Contact in Contacts)
         {
             DbVector3 Normal = Contact.Normal;
 
             float UpDot = Dot(Normal, WorldUp);
-            if (UpDot >= MinGroundDot && Contact.CollisionType == CollisionEntryType.Map)
+            bool IsWalkableMapContact = Contact.CollisionType == CollisionEntryType.Map && UpDot >= MinGroundDot;
+
+            if (IsWalkableMapContact)
+            {
                 IsGroundedOnMap = true;
+
+                if (HasGroundSupport is false || Contact.PenetrationDepth > GroundSupportPenetration)
+                {
+                    HasGroundSupport = true;
+                    GroundSupportNormal = Normal;
+                    GroundSupportPenetration = Contact.PenetrationDepth;
+                }
+            }
 
             float NormalVelocityComponent = Dot(Normal, CorrectedVelocity);
             if (NormalVelocityComponent < 0f)
                 CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, NormalVelocityComponent));
 
-            float Depth = Contact.PenetrationDepth - TargetPenetration;
-            if (Depth > DepthEpsilon)
+            if (ApplyPositionCorrection)
             {
-                if (Depth > MaxDepth)
-                    Depth = MaxDepth;
+                float Depth = Contact.PenetrationDepth - TargetPenetration;
+                if (Depth > DepthEpsilon)
+                {
+                    if (Depth > MaxDepth)
+                        Depth = MaxDepth;
 
-                TotalPositionCorrection = Add(
-                    TotalPositionCorrection,
-                    Mul(Normal, Depth)
-                );
+                    if (IsWalkableMapContact is false)
+                    {
+                        HasNonGroundPositionCorrection = true;
+                        TotalNonGroundPositionCorrection = Add(TotalNonGroundPositionCorrection, Mul(Normal, Depth));
+                    }
+                }
             }
         }
 
-        float CorrectionMagnitudeSq = Dot(TotalPositionCorrection, TotalPositionCorrection);
-        if (CorrectionMagnitudeSq > 1e-8f)
+        if (ApplyPositionCorrection)
         {
-            float CorrectionMagnitude = MathF.Sqrt(CorrectionMagnitudeSq);
-            if (CorrectionMagnitude > MaxPositionCorrection)
+            if (HasGroundSupport)
             {
-                TotalPositionCorrection = Mul(
-                    Normalize(TotalPositionCorrection),
-                    MaxPositionCorrection
-                );
+                float GroundDepth = GroundSupportPenetration - TargetPenetration;
+                if (GroundDepth > DepthEpsilon)
+                {
+                    if (GroundDepth > MaxDepth)
+                        GroundDepth = MaxDepth;
+
+                    DbVector3 GroundCorrection = Mul(GroundSupportNormal, GroundDepth);
+
+                    float GroundCorrectionSq = Dot(GroundCorrection, GroundCorrection);
+                    if (GroundCorrectionSq > 1e-8f)
+                    {
+                        float GroundCorrectionMag = MathF.Sqrt(GroundCorrectionSq);
+                        if (GroundCorrectionMag > MaxPositionCorrection)
+                            GroundCorrection = Mul(Normalize(GroundCorrection), MaxPositionCorrection);
+
+                        GroundCorrection = Mul(GroundCorrection, CorrectionFactor);
+                        CharacterLocal.Position = Add(CharacterLocal.Position, GroundCorrection);
+                    }
+                }
             }
 
-            TotalPositionCorrection = Mul(TotalPositionCorrection, CorrectionFactor);
-            CharacterLocal.Position = Add(CharacterLocal.Position, TotalPositionCorrection);
+            if (HasNonGroundPositionCorrection)
+            {
+                float CorrectionMagnitudeSq = Dot(TotalNonGroundPositionCorrection, TotalNonGroundPositionCorrection);
+                if (CorrectionMagnitudeSq > 1e-8f)
+                {
+                    float CorrectionMagnitude = MathF.Sqrt(CorrectionMagnitudeSq);
+                    if (CorrectionMagnitude > MaxPositionCorrection)
+                        TotalNonGroundPositionCorrection = Mul(Normalize(TotalNonGroundPositionCorrection), MaxPositionCorrection);
+
+                    TotalNonGroundPositionCorrection = Mul(TotalNonGroundPositionCorrection, CorrectionFactor);
+                    CharacterLocal.Position = Add(CharacterLocal.Position, TotalNonGroundPositionCorrection);
+                }
+            }
         }
 
         if (IsGroundedOnMap)
         {
-            float HorizInputSq = InputVelocity.x * InputVelocity.x + InputVelocity.z * InputVelocity.z;
-            if (HorizInputSq < 0.001f)
+            float DesiredHorizontalSpeedSq = InputVelocity.x * InputVelocity.x + InputVelocity.z * InputVelocity.z;
+
+            if (DesiredHorizontalSpeedSq < 0.001f)
             {
                 CorrectedVelocity.x = 0f;
                 CorrectedVelocity.z = 0f;
             }
+            else if (HasGroundSupport)
+            {
+                float DesiredHorizontalSpeed = MathF.Sqrt(DesiredHorizontalSpeedSq);
+
+                DbVector3 TangentVelocity = Sub(CorrectedVelocity, Mul(GroundSupportNormal, Dot(CorrectedVelocity, GroundSupportNormal)));
+
+                float TangentSpeedSq = Dot(TangentVelocity, TangentVelocity);
+                if (TangentSpeedSq > 1e-8f)
+                {
+                    DbVector3 TangentDirection = Mul(TangentVelocity, 1f / MathF.Sqrt(TangentSpeedSq));
+                    CorrectedVelocity = Mul(TangentDirection, DesiredHorizontalSpeed);
+                }
+            }
 
             if (CorrectedVelocity.y <= GroundStickUpThreshold)
                 CorrectedVelocity.y = 0f;
-
+            
             if (InputVelocity.y <= InputUpCancelThreshold)
                 CharacterLocal.Velocity.y = 0f;
         }
@@ -237,6 +288,8 @@ public static partial class Module
         CharacterLocal.CorrectedVelocity = CorrectedVelocity;
         CharacterLocal.KinematicInformation.Grounded = CharacterLocal.KinematicInformation.Grounded || IsGroundedOnMap;
     }
+
+
 
 
     static DbVector3 GetColliderCenterWorld(ComplexCollider Collider, DbVector3 Position, float YawRadians)

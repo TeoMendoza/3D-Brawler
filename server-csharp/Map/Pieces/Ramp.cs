@@ -33,6 +33,6 @@ public static partial class Module
     public static readonly ComplexCollider RampCollider = new ComplexCollider
     {
         ConvexHulls = RampConvexHulls,
-        CenterPoint = new DbVector3(0f, 1.2f, 10f)
+        CenterPoint = new DbVector3(0f, 0.6f, 10f)
     };
 }
