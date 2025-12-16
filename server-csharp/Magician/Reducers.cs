@@ -20,16 +20,16 @@ public static partial class Module
             float LocalZ = 0f;
 
             if (Request.MoveForward && !Request.MoveBackward) LocalZ = 2f;
-            else if (Request.MoveBackward && !Request.MoveForward) LocalZ = -1.5f;
+            else if (Request.MoveBackward && !Request.MoveForward) LocalZ = -2f;
 
-            if (Request.MoveRight && !Request.MoveLeft) LocalX = 1.5f;
-            else if (Request.MoveLeft && !Request.MoveRight) LocalX = -1.5f;
+            if (Request.MoveRight && !Request.MoveLeft) LocalX = 2f;
+            else if (Request.MoveLeft && !Request.MoveRight) LocalX = -2f;
 
             if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint && Request.MoveForward && !Request.MoveBackward)
-                LocalZ *= 2f;
+                LocalZ *= 3f;
             
             if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint)
-                LocalX *= 1.25f;
+                LocalX *= 1.5f;
 
             float YawRadians = ToRadians(Character.Rotation.Yaw);
             float CosYaw = MathF.Cos(YawRadians);

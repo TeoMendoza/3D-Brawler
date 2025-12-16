@@ -10,7 +10,7 @@ public static partial class Module
     static float Dot(in DbVector3 x, in DbVector3 y) => x.x * y.x + x.y * y.y + x.z * y.z;
     static float LenSq(in DbVector3 x) => Dot(x, x);
     static float Sqrt(float v) => (float)Math.Sqrt(v);
-    static float Magnitude(in DbVector3 x) => Sqrt(Dot(x, x));
+    static float Length(in DbVector3 x) => Sqrt(Dot(x, x));
     static float Clamp01(float t) => t < 0f ? 0f : (t > 1f ? 1f : t);
     static float Clamp(float x, float a, float b) => x < a ? a : (x > b ? b : x);
     static float ToRadians(float Degrees) => Degrees * (MathF.PI / 180f);
@@ -37,7 +37,7 @@ public static partial class Module
 
     private static DbVector3 Normalize(DbVector3 v)
     {
-        float Magnitude = Module.Magnitude(v);
+        float Magnitude = Module.Length(v);
         if (Magnitude <= 1e-6f) return new DbVector3(0f, 0f, 0f);
         return new DbVector3(v.x / Magnitude, v.y / Magnitude, v.z / Magnitude);
     }
