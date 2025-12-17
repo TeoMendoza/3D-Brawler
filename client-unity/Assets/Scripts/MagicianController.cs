@@ -115,9 +115,9 @@ public class MagicianController : MonoBehaviour
 
         GameManager.Conn.Reducers.HandleMovementRequestMagician(req);
 
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0)) // Attacking To Be Changed For Milestone 5 (Hitscan Instead Of Projectiles)
         {
-            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack));
+            // GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack));
         }
     }
 

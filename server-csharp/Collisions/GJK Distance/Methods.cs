@@ -4,154 +4,69 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-    public struct GjkDistanceResult
+    public static bool SolveGjkDistance(List<ConvexHullCollider> ColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ColliderB, DbVector3 PositionB, float YawRadiansB, out GjkDistanceResult Result, int MaxIterations = 32)
     {
-        public bool Intersects;
-        public float Distance;
-        public DbVector3 SeparationDirection;
-        public DbVector3 PointOnA;
-        public DbVector3 PointOnB;
-        public List<GjkVertex> Simplex;
-        public DbVector3 LastDirection;
+        float ProgressEpsilon = 1e-4f;
+
+        List<GjkVertex> Simplex = new List<GjkVertex>(4);
+
+        DbVector3 CenterAWorld = GetColliderCenterWorld(new ComplexCollider { ConvexHulls = ColliderA }, PositionA, YawRadiansA);
+        DbVector3 CenterBWorld = GetColliderCenterWorld(new ComplexCollider { ConvexHulls = ColliderB }, PositionB, YawRadiansB);
+
+        DbVector3 CenterDelta = Sub(CenterBWorld, CenterAWorld);
+        DbVector3 SearchDirection = NearZero(CenterDelta) ? new DbVector3(0f, 1f, 0f) : Normalize(CenterDelta);
+
+        GjkVertex InitialVertex = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, SearchDirection);
+        Simplex.Add(InitialVertex);
+
+        for (int IterationIndex = 0; IterationIndex < MaxIterations; IterationIndex++)
+        {
+            ComputeDistanceFromSimplex(Simplex, out float CurrentDistance, out DbVector3 CurrentPointOnA, out DbVector3 CurrentPointOnB, out DbVector3 CurrentSeparationDirection, out DbVector3 ClosestMinkowskiPoint);
+
+            if (CurrentDistance <= 1e-6f)
+            {
+                DbVector3 SeparationDirection = NearZero(CurrentSeparationDirection) ? new DbVector3(0f, 1f, 0f) : Normalize(CurrentSeparationDirection);
+                Result = new GjkDistanceResult { Intersects = true, Distance = 0f, SeparationDirection = SeparationDirection, PointOnA = CurrentPointOnA, PointOnB = CurrentPointOnB, Simplex = Simplex, LastDirection = SearchDirection };
+                return true;
+            }
+
+            SearchDirection = Negate(ClosestMinkowskiPoint);
+            if (NearZero(SearchDirection))
+            {
+                Result = new GjkDistanceResult { Intersects = false, Distance = CurrentDistance, SeparationDirection = CurrentSeparationDirection, PointOnA = CurrentPointOnA, PointOnB = CurrentPointOnB, Simplex = Simplex, LastDirection = SearchDirection };
+                return true;
+            }
+
+            GjkVertex SupportVertex = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, SearchDirection);
+
+            float ClosestDot = Dot(ClosestMinkowskiPoint, SearchDirection);
+            float SupportDot = Dot(SupportVertex.MinkowskiPoint, SearchDirection);
+            float Progress = SupportDot - ClosestDot;
+
+            if (Progress <= ProgressEpsilon)
+            {
+                Result = new GjkDistanceResult { Intersects = false, Distance = CurrentDistance, SeparationDirection = CurrentSeparationDirection, PointOnA = CurrentPointOnA, PointOnB = CurrentPointOnB, Simplex = Simplex, LastDirection = SearchDirection };
+                return true;
+            }
+
+            Simplex.Add(SupportVertex);
+
+            DbVector3 UpdateDirection = SearchDirection;
+            if (UpdateSimplex(ref Simplex, ref UpdateDirection))
+            {
+                DbVector3 SeparationDirection = NearZero(UpdateDirection) ? new DbVector3(0f, 1f, 0f) : Normalize(UpdateDirection);
+                Result = new GjkDistanceResult { Intersects = true, Distance = 0f, SeparationDirection = SeparationDirection, PointOnA = SupportVertex.SupportPointA, PointOnB = SupportVertex.SupportPointB, Simplex = Simplex, LastDirection = UpdateDirection };
+                return true;
+            }
+        }
+
+        ComputeDistanceFromSimplex(Simplex, out float FinalDistance, out DbVector3 FinalPointOnA, out DbVector3 FinalPointOnB, out DbVector3 FinalSeparationDirection, out DbVector3 FinalClosestMinkowskiPoint);
+
+        Result = new GjkDistanceResult { Intersects = false, Distance = FinalDistance, SeparationDirection = FinalSeparationDirection, PointOnA = FinalPointOnA, PointOnB = FinalPointOnB, Simplex = Simplex, LastDirection = Negate(FinalClosestMinkowskiPoint) };
+        return true;
     }
 
-    public static bool SolveGjkDistance(
-    List<ConvexHullCollider> ColliderA,
-    DbVector3 PositionA,
-    float YawRadiansA,
-    List<ConvexHullCollider> ColliderB,
-    DbVector3 PositionB,
-    float YawRadiansB,
-    out GjkDistanceResult Result,
-    int MaxIterations = 32)
-{
-    float ProgressEpsilon = 1e-4f;
-
-    List<GjkVertex> Simplex = new List<GjkVertex>(4);
-
-    DbVector3 CenterAWorld = GetColliderCenterWorld(new ComplexCollider { ConvexHulls = ColliderA }, PositionA, YawRadiansA);
-    DbVector3 CenterBWorld = GetColliderCenterWorld(new ComplexCollider { ConvexHulls = ColliderB }, PositionB, YawRadiansB);
-
-    DbVector3 CenterDelta = Sub(CenterBWorld, CenterAWorld);
-    DbVector3 SearchDirection = NearZero(CenterDelta) ? new DbVector3(0f, 1f, 0f) : Normalize(CenterDelta);
-
-    GjkVertex InitialVertex = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, SearchDirection);
-    Simplex.Add(InitialVertex);
-
-    for (int IterationIndex = 0; IterationIndex < MaxIterations; IterationIndex++)
-    {
-        ComputeDistanceFromSimplex(
-            Simplex,
-            out float CurrentDistance,
-            out DbVector3 CurrentPointOnA,
-            out DbVector3 CurrentPointOnB,
-            out DbVector3 CurrentSeparationDirection,
-            out DbVector3 ClosestMinkowskiPoint);
-
-        if (CurrentDistance <= 1e-6f)
-        {
-            DbVector3 SeparationDirection = NearZero(CurrentSeparationDirection) ? new DbVector3(0f, 1f, 0f) : Normalize(CurrentSeparationDirection);
-
-            Result = new GjkDistanceResult
-            {
-                Intersects = true,
-                Distance = 0f,
-                SeparationDirection = SeparationDirection,
-                PointOnA = CurrentPointOnA,
-                PointOnB = CurrentPointOnB,
-                Simplex = Simplex,
-                LastDirection = SearchDirection
-            };
-            return true;
-        }
-
-        SearchDirection = Negate(ClosestMinkowskiPoint);
-        if (NearZero(SearchDirection))
-        {
-            Result = new GjkDistanceResult
-            {
-                Intersects = false,
-                Distance = CurrentDistance,
-                SeparationDirection = CurrentSeparationDirection,
-                PointOnA = CurrentPointOnA,
-                PointOnB = CurrentPointOnB,
-                Simplex = Simplex,
-                LastDirection = SearchDirection
-            };
-            return true;
-        }
-
-        GjkVertex SupportVertex = SupportPairWorld(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, SearchDirection);
-
-        float ClosestDot = Dot(ClosestMinkowskiPoint, SearchDirection);
-        float SupportDot = Dot(SupportVertex.MinkowskiPoint, SearchDirection);
-        float Progress = SupportDot - ClosestDot;
-
-        if (Progress <= ProgressEpsilon)
-        {
-            Result = new GjkDistanceResult
-            {
-                Intersects = false,
-                Distance = CurrentDistance,
-                SeparationDirection = CurrentSeparationDirection,
-                PointOnA = CurrentPointOnA,
-                PointOnB = CurrentPointOnB,
-                Simplex = Simplex,
-                LastDirection = SearchDirection
-            };
-            return true;
-        }
-
-        Simplex.Add(SupportVertex);
-
-        DbVector3 UpdateDirection = SearchDirection;
-        if (UpdateSimplex(ref Simplex, ref UpdateDirection))
-        {
-            DbVector3 SeparationDirection = NearZero(UpdateDirection) ? new DbVector3(0f, 1f, 0f) : Normalize(UpdateDirection);
-
-            Result = new GjkDistanceResult
-            {
-                Intersects = true,
-                Distance = 0f,
-                SeparationDirection = SeparationDirection,
-                PointOnA = SupportVertex.SupportPointA,
-                PointOnB = SupportVertex.SupportPointB,
-                Simplex = Simplex,
-                LastDirection = UpdateDirection
-            };
-            return true;
-        }
-    }
-
-    ComputeDistanceFromSimplex(
-        Simplex,
-        out float FinalDistance,
-        out DbVector3 FinalPointOnA,
-        out DbVector3 FinalPointOnB,
-        out DbVector3 FinalSeparationDirection,
-        out DbVector3 FinalClosestMinkowskiPoint);
-
-    Result = new GjkDistanceResult
-    {
-        Intersects = false,
-        Distance = FinalDistance,
-        SeparationDirection = FinalSeparationDirection,
-        PointOnA = FinalPointOnA,
-        PointOnB = FinalPointOnB,
-        Simplex = Simplex,
-        LastDirection = Negate(FinalClosestMinkowskiPoint)
-    };
-    return true;
-}
-
-
-    static void ComputeDistanceFromSimplex(
-        List<GjkVertex> Simplex,
-        out float Distance,
-        out DbVector3 PointOnA,
-        out DbVector3 PointOnB,
-        out DbVector3 SeparationDirection,
-        out DbVector3 ClosestMinkowskiPoint)
+    static void ComputeDistanceFromSimplex(List<GjkVertex> Simplex, out float Distance, out DbVector3 PointOnA, out DbVector3 PointOnB, out DbVector3 SeparationDirection, out DbVector3 ClosestMinkowskiPoint)
     {
         if (Simplex.Count == 0)
         {
@@ -193,14 +108,7 @@ public static partial class Module
         ComputeDistanceFromTetrahedron(Simplex[0], Simplex[1], Simplex[2], Simplex[3], out Distance, out PointOnA, out PointOnB, out SeparationDirection, out ClosestMinkowskiPoint);
     }
 
-    static void ComputeDistanceFromSegment(
-        GjkVertex VertexA,
-        GjkVertex VertexB,
-        out float Distance,
-        out DbVector3 PointOnA,
-        out DbVector3 PointOnB,
-        out DbVector3 SeparationDirection,
-        out DbVector3 ClosestMinkowskiPoint)
+    static void ComputeDistanceFromSegment(GjkVertex VertexA, GjkVertex VertexB, out float Distance, out DbVector3 PointOnA, out DbVector3 PointOnB, out DbVector3 SeparationDirection, out DbVector3 ClosestMinkowskiPoint)
     {
         DbVector3 A = VertexA.MinkowskiPoint;
         DbVector3 B = VertexB.MinkowskiPoint;
@@ -209,10 +117,7 @@ public static partial class Module
         float Denominator = Dot(AB, AB);
         float T = 0f;
 
-        if (Denominator > 1e-12f)
-        {
-            T = Clamp01(-Dot(A, AB) / Denominator);
-        }
+        if (Denominator > 1e-12f) T = Clamp01(-Dot(A, AB) / Denominator);
 
         ClosestMinkowskiPoint = Add(A, Mul(AB, T));
 
@@ -225,15 +130,7 @@ public static partial class Module
         SeparationDirection = NearZero(Direction) ? new DbVector3(0f, 1f, 0f) : Normalize(Direction);
     }
 
-    static void ComputeDistanceFromTriangle(
-        GjkVertex VertexA,
-        GjkVertex VertexB,
-        GjkVertex VertexC,
-        out float Distance,
-        out DbVector3 PointOnA,
-        out DbVector3 PointOnB,
-        out DbVector3 SeparationDirection,
-        out DbVector3 ClosestMinkowskiPoint)
+    static void ComputeDistanceFromTriangle(GjkVertex VertexA, GjkVertex VertexB, GjkVertex VertexC, out float Distance, out DbVector3 PointOnA, out DbVector3 PointOnB, out DbVector3 SeparationDirection, out DbVector3 ClosestMinkowskiPoint)
     {
         DbVector3 A = VertexA.MinkowskiPoint;
         DbVector3 B = VertexB.MinkowskiPoint;
@@ -364,16 +261,7 @@ public static partial class Module
         SeparationDirection = NearZero(DirectionFace) ? new DbVector3(0f, 1f, 0f) : Normalize(DirectionFace);
     }
 
-    static void ComputeDistanceFromTetrahedron(
-        GjkVertex VertexA,
-        GjkVertex VertexB,
-        GjkVertex VertexC,
-        GjkVertex VertexD,
-        out float Distance,
-        out DbVector3 PointOnA,
-        out DbVector3 PointOnB,
-        out DbVector3 SeparationDirection,
-        out DbVector3 ClosestMinkowskiPoint)
+    static void ComputeDistanceFromTetrahedron(GjkVertex VertexA, GjkVertex VertexB, GjkVertex VertexC, GjkVertex VertexD, out float Distance, out DbVector3 PointOnA, out DbVector3 PointOnB, out DbVector3 SeparationDirection, out DbVector3 ClosestMinkowskiPoint)
     {
         float BestDistance = float.MaxValue;
 
@@ -389,24 +277,9 @@ public static partial class Module
         EvaluateFace(VertexB, VertexD, VertexC, ref BestDistance, ref Distance, ref PointOnA, ref PointOnB, ref SeparationDirection, ref ClosestMinkowskiPoint);
     }
 
-    static void EvaluateFace(
-        GjkVertex FaceA,
-        GjkVertex FaceB,
-        GjkVertex FaceC,
-        ref float BestDistance,
-        ref float Distance,
-        ref DbVector3 PointOnA,
-        ref DbVector3 PointOnB,
-        ref DbVector3 SeparationDirection,
-        ref DbVector3 ClosestMinkowskiPoint)
+    static void EvaluateFace(GjkVertex FaceA, GjkVertex FaceB, GjkVertex FaceC, ref float BestDistance, ref float Distance, ref DbVector3 PointOnA, ref DbVector3 PointOnB, ref DbVector3 SeparationDirection, ref DbVector3 ClosestMinkowskiPoint)
     {
-        ComputeDistanceFromTriangle(
-            FaceA, FaceB, FaceC,
-            out float FaceDistance,
-            out DbVector3 FacePointOnA,
-            out DbVector3 FacePointOnB,
-            out DbVector3 FaceSeparationDirection,
-            out DbVector3 FaceClosestMinkowskiPoint);
+        ComputeDistanceFromTriangle(FaceA, FaceB, FaceC, out float FaceDistance, out DbVector3 FacePointOnA, out DbVector3 FacePointOnB, out DbVector3 FaceSeparationDirection, out DbVector3 FaceClosestMinkowskiPoint);
 
         if (FaceDistance < BestDistance)
         {

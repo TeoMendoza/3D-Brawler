@@ -6,7 +6,7 @@ public static partial class Module
 {
     public struct CollisionContact(DbVector3 Normal, float PenetrationDepth, CollisionEntryType collisionType)
     {
-        public DbVector3 Normal = Normal; // Object B -> A
+        public DbVector3 Normal = Normal; // Object A -> B
         public float PenetrationDepth = PenetrationDepth;
         public CollisionEntryType CollisionType = collisionType;
     }

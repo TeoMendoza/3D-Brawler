@@ -14,19 +14,7 @@ public static partial class Module
 
         if (InitialDot <= 0f)
         {
-            DbVector3 ClosestPointA;
-            DbVector3 ClosestPointB;
-
-            ComputeWitnessPointsFromSimplex(Simplex, out ClosestPointA, out ClosestPointB);
-
-            Result = new GjkResult
-            {
-                Intersects = false,
-                Simplex = Simplex,
-                LastDirection = Negate(SearchDirection),
-                ClosestPointA = ClosestPointA,
-                ClosestPointB = ClosestPointB
-            };
+            Result = new GjkResult { Intersects = false, Simplex = Simplex, LastDirection = Negate(SearchDirection) };
             return false;
         }
 
@@ -40,19 +28,7 @@ public static partial class Module
 
             if (SupportDot <= 0f)
             {
-                DbVector3 ClosestPointA;
-                DbVector3 ClosestPointB;
-
-                ComputeWitnessPointsFromSimplex(Simplex, out ClosestPointA, out ClosestPointB);
-
-                Result = new GjkResult
-                {
-                    Intersects = false,
-                    Simplex = Simplex,
-                    LastDirection = Negate(SearchDirection),
-                    ClosestPointA = ClosestPointA,
-                    ClosestPointB = ClosestPointB
-                };
+                Result = new GjkResult { Intersects = false, Simplex = Simplex, LastDirection = Negate(SearchDirection) };
                 return false;
             }
 
@@ -60,258 +36,13 @@ public static partial class Module
 
             if (UpdateSimplex(ref Simplex, ref SearchDirection))
             {
-                DbVector3 ClosestPointA;
-                DbVector3 ClosestPointB;
-
-                ComputeWitnessPointsFromSimplex(Simplex, out ClosestPointA, out ClosestPointB);
-
-                Result = new GjkResult
-                {
-                    Intersects = true,
-                    Simplex = Simplex,
-                    LastDirection = Negate(SearchDirection),
-                    ClosestPointA = ClosestPointA,
-                    ClosestPointB = ClosestPointB
-                };
+                Result = new GjkResult { Intersects = true, Simplex = Simplex, LastDirection = Negate(SearchDirection) };
                 return true;
             }
         }
 
-        {
-            DbVector3 ClosestPointA;
-            DbVector3 ClosestPointB;
-
-            ComputeWitnessPointsFromSimplex(Simplex, out ClosestPointA, out ClosestPointB);
-
-            Result = new GjkResult
-            {
-                Intersects = false,
-                Simplex = Simplex,
-                LastDirection = Negate(SearchDirection),
-                ClosestPointA = ClosestPointA,
-                ClosestPointB = ClosestPointB
-            };
-            return false;
-        }
-    }
-
-    static void ComputeWitnessPointsFromSimplex(List<GjkVertex> Simplex, out DbVector3 ClosestPointA, out DbVector3 ClosestPointB)
-    {
-        int Count = Simplex.Count;
-
-        if (Count == 0)
-        {
-            ClosestPointA = new DbVector3(0f, 0f, 0f);
-            ClosestPointB = new DbVector3(0f, 0f, 0f);
-            return;
-        }
-
-        if (Count == 1)
-        {
-            GjkVertex V = Simplex[0];
-            ClosestPointA = V.SupportPointA;
-            ClosestPointB = V.SupportPointB;
-            return;
-        }
-
-        int BestIndexI = 0;
-        int BestIndexJ = 1;
-        float BestDistanceSquared = float.PositiveInfinity;
-
-        for (int I = 0; I < Count; I++)
-        {
-            DbVector3 Wi = Simplex[I].MinkowskiPoint;
-            float DistanceSquaredI = Dot(Wi, Wi);
-
-            if (DistanceSquaredI < BestDistanceSquared)
-            {
-                BestDistanceSquared = DistanceSquaredI;
-                BestIndexI = I;
-                BestIndexJ = I;
-            }
-
-            for (int J = I + 1; J < Count; J++)
-            {
-                DbVector3 W0 = Simplex[I].MinkowskiPoint;
-                DbVector3 W1 = Simplex[J].MinkowskiPoint;
-
-                DbVector3 Edge = Sub(W1, W0);
-                float EdgeLengthSquared = Dot(Edge, Edge);
-
-                if (EdgeLengthSquared <= 1e-12f)
-                {
-                    continue;
-                }
-
-                DbVector3 NegativeW0 = Negate(W0);
-                float T = Dot(NegativeW0, Edge) / EdgeLengthSquared;
-
-                if (T < 0f)
-                {
-                    T = 0f;
-                }
-                else if (T > 1f)
-                {
-                    T = 1f;
-                }
-
-                DbVector3 ClosestMinkowski = new DbVector3(
-                    W0.x + Edge.x * T,
-                    W0.y + Edge.y * T,
-                    W0.z + Edge.z * T
-                );
-
-                float DistanceSquared = Dot(ClosestMinkowski, ClosestMinkowski);
-
-                if (DistanceSquared < BestDistanceSquared)
-                {
-                    BestDistanceSquared = DistanceSquared;
-                    BestIndexI = I;
-                    BestIndexJ = J;
-                }
-            }
-        }
-
-        if (BestIndexI == BestIndexJ)
-        {
-            GjkVertex V = Simplex[BestIndexI];
-            ClosestPointA = V.SupportPointA;
-            ClosestPointB = V.SupportPointB;
-        }
-        else
-        {
-            GjkVertex V0 = Simplex[BestIndexI];
-            GjkVertex V1 = Simplex[BestIndexJ];
-
-            DbVector3 W0 = V0.MinkowskiPoint;
-            DbVector3 W1 = V1.MinkowskiPoint;
-            DbVector3 Edge = Sub(W1, W0);
-
-            float EdgeLengthSquared = Dot(Edge, Edge);
-
-            if (EdgeLengthSquared <= 1e-12f)
-            {
-                ClosestPointA = V0.SupportPointA;
-                ClosestPointB = V0.SupportPointB;
-                return;
-            }
-
-            DbVector3 NegativeW0 = Negate(W0);
-            float T = Dot(NegativeW0, Edge) / EdgeLengthSquared;
-
-            if (T < 0f)
-            {
-                T = 0f;
-            }
-            else if (T > 1f)
-            {
-                T = 1f;
-            }
-
-            DbVector3 SupportA0 = V0.SupportPointA;
-            DbVector3 SupportA1 = V1.SupportPointA;
-            DbVector3 SupportB0 = V0.SupportPointB;
-            DbVector3 SupportB1 = V1.SupportPointB;
-
-            ClosestPointA = new DbVector3(
-                SupportA0.x + (SupportA1.x - SupportA0.x) * T,
-                SupportA0.y + (SupportA1.y - SupportA0.y) * T,
-                SupportA0.z + (SupportA1.z - SupportA0.z) * T
-            );
-
-            ClosestPointB = new DbVector3(
-                SupportB0.x + (SupportB1.x - SupportB0.x) * T,
-                SupportB0.y + (SupportB1.y - SupportB0.y) * T,
-                SupportB0.z + (SupportB1.z - SupportB0.z) * T
-            );
-        }
-    }
-
-    static GjkVertex SupportPairWorld(List<ConvexHullCollider> ComplexColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ComplexColliderB, DbVector3 PositionB, float YawRadiansB, DbVector3 DirectionWorld)
-    {
-        DbVector3 SupportPointAWorld = SupportWorldComplex(ComplexColliderA, PositionA, YawRadiansA, DirectionWorld);
-        DbVector3 SupportPointBWorld = SupportWorldComplex(ComplexColliderB, PositionB, YawRadiansB, Negate(DirectionWorld));
-        return new GjkVertex(SupportPointAWorld, SupportPointBWorld);
-    }
-
-    static DbVector3 SupportWorldComplex(List<ConvexHullCollider> ComplexCollider, DbVector3 WorldPosition, float YawRadians, DbVector3 DirectionWorld)
-    {
-        DbVector3 DirectionLocal = RotateAroundYAxis(DirectionWorld, -YawRadians);
-        DbVector3 SupportLocalPoint = SupportLocalComplex(ComplexCollider, DirectionLocal);
-        DbVector3 SupportWorldRotated = RotateAroundYAxis(SupportLocalPoint, YawRadians);
-        return Add(SupportWorldRotated, WorldPosition);
-    }
-
-    static DbVector3 SupportLocalComplex(List<ConvexHullCollider> ComplexCollider, DbVector3 DirectionLocal)
-    {
-        float BestDot = float.NegativeInfinity;
-        DbVector3 BestPoint = new(0f, 0f, 0f);
-
-        for (int Index = 0; Index < ComplexCollider.Count; Index++)
-        {
-            DbVector3 HullSupportPoint = SupportLocal(ComplexCollider[Index], DirectionLocal);
-            float DotValue = Dot(HullSupportPoint, DirectionLocal);
-
-            if (DotValue > BestDot)
-            {
-                BestDot = DotValue;
-                BestPoint = HullSupportPoint;
-            }
-        }
-
-        return BestPoint;
-    }
-
-    static DbVector3 SupportLocal(ConvexHullCollider Collider, DbVector3 Direction)
-    {
-        List<DbVector3> Vertices = Collider.VerticesLocal;
-
-        int BestVertexIndex = 0;
-        float BestDotProduct = Dot(Vertices[0], Direction);
-
-        for (int VertexIndex = 1; VertexIndex < Vertices.Count; VertexIndex++)
-        {
-            float DotProduct = Dot(Vertices[VertexIndex], Direction);
-            if (DotProduct > BestDotProduct)
-            {
-                BestDotProduct = DotProduct;
-                BestVertexIndex = VertexIndex;
-            }
-        }
-
-        DbVector3 BestVertex = Vertices[BestVertexIndex];
-
-        // Margin inflation (logical skin)
-        float Margin = Collider.Margin;
-        if (Margin > 0f)
-        {
-            float DirLenSq = Dot(Direction, Direction);
-            if (DirLenSq > 1e-8f)
-            {
-                float InvLen = 1.0f / MathF.Sqrt(DirLenSq);
-                DbVector3 DirNorm = new(Direction.x * InvLen, Direction.y * InvLen, Direction.z * InvLen);
-
-                BestVertex = new DbVector3(
-                    BestVertex.x + DirNorm.x * Margin,
-                    BestVertex.y + DirNorm.y * Margin,
-                    BestVertex.z + DirNorm.z * Margin
-                );
-            }
-        }
-
-        return BestVertex;
-    }
-
-
-    static DbVector3 RotateAroundYAxis(DbVector3 Vector, float YawRadians)
-    {
-        float CosYaw = MathF.Cos(YawRadians);
-        float SinYaw = MathF.Sin(YawRadians);
-
-        float RotatedX = Vector.x * CosYaw + Vector.z * SinYaw;
-        float RotatedZ = -Vector.x * SinYaw + Vector.z * CosYaw;
-
-        return new DbVector3(RotatedX, Vector.y, RotatedZ);
+        Result = new GjkResult { Intersects = false, Simplex = Simplex, LastDirection = Negate(SearchDirection) };
+        return false;
     }
 
     static bool UpdateSimplex(ref List<GjkVertex> Simplex, ref DbVector3 SearchDirection)
@@ -470,20 +201,94 @@ public static partial class Module
         return false;
     }
 
-    static float ComputePenetrationDepthApprox(List<ConvexHullCollider> ColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ColliderB, DbVector3 PositionB, float YawRadiansB, DbVector3 Normal)
+    static GjkVertex SupportPairWorld(List<ConvexHullCollider> ComplexColliderA, DbVector3 PositionA, float YawRadiansA, List<ConvexHullCollider> ComplexColliderB, DbVector3 PositionB, float YawRadiansB, DbVector3 DirectionWorld)
     {
-        // A uses -Normal (Backwards), B uses +Normal (Forwards)
-        DbVector3 SupportA = SupportWorldComplex(ColliderA, PositionA, YawRadiansA, Negate(Normal));
-        DbVector3 SupportB = SupportWorldComplex(ColliderB, PositionB, YawRadiansB, Normal);
+        DbVector3 SupportPointAWorld = SupportWorldComplex(ComplexColliderA, PositionA, YawRadiansA, DirectionWorld);
+        DbVector3 SupportPointBWorld = SupportWorldComplex(ComplexColliderB, PositionB, YawRadiansB, Negate(DirectionWorld));
+        return new GjkVertex(SupportPointAWorld, SupportPointBWorld);
+    }
 
-        float DistanceA = Dot(SupportA, Normal);
-        float DistanceB = Dot(SupportB, Normal);
+    static DbVector3 SupportWorldComplex(List<ConvexHullCollider> ComplexCollider, DbVector3 WorldPosition, float YawRadians, DbVector3 DirectionWorld)
+    {
+        DbVector3 DirectionLocal = RotateAroundYAxis(DirectionWorld, -YawRadians);
+        DbVector3 SupportLocalPoint = SupportLocalComplex(ComplexCollider, DirectionLocal);
+        DbVector3 SupportWorldRotated = RotateAroundYAxis(SupportLocalPoint, YawRadians);
+        return Add(SupportWorldRotated, WorldPosition);
+    }
 
-        float Gap = DistanceB - DistanceA;
+    static DbVector3 SupportLocalComplex(List<ConvexHullCollider> ComplexCollider, DbVector3 DirectionLocal)
+    {
+        float BestDot = float.NegativeInfinity;
+        DbVector3 BestPoint = new(0f, 0f, 0f);
 
-        // FIX: If Gap is positive, we are overlapping. Return the Gap.
-        // If Gap is negative, we are separated. Return 0.
-        if (Gap <= 0f) return 0f;
-        return Gap;
+        for (int Index = 0; Index < ComplexCollider.Count; Index++)
+        {
+            DbVector3 HullSupportPoint = SupportLocal(ComplexCollider[Index], DirectionLocal);
+            float DotValue = Dot(HullSupportPoint, DirectionLocal);
+
+            if (DotValue > BestDot)
+            {
+                BestDot = DotValue;
+                BestPoint = HullSupportPoint;
+            }
+        }
+
+        return BestPoint;
+    }
+
+    static DbVector3 SupportLocal(ConvexHullCollider Collider, DbVector3 Direction)
+    {
+        List<DbVector3> Vertices = Collider.VerticesLocal;
+
+        int BestVertexIndex = 0;
+        float BestDotProduct = Dot(Vertices[0], Direction);
+
+        for (int VertexIndex = 1; VertexIndex < Vertices.Count; VertexIndex++)
+        {
+            float DotProduct = Dot(Vertices[VertexIndex], Direction);
+            if (DotProduct > BestDotProduct)
+            {
+                BestDotProduct = DotProduct;
+                BestVertexIndex = VertexIndex;
+            }
+        }
+
+        DbVector3 BestVertex = Vertices[BestVertexIndex];
+
+        float Margin = Collider.Margin;
+        if (Margin > 0f)
+        {
+            float DirLenSq = Dot(Direction, Direction);
+            if (DirLenSq > 1e-8f)
+            {
+                float InvLen = 1.0f / MathF.Sqrt(DirLenSq);
+                DbVector3 DirNorm = new(Direction.x * InvLen, Direction.y * InvLen, Direction.z * InvLen);
+
+                BestVertex = new DbVector3(
+                    BestVertex.x + DirNorm.x * Margin,
+                    BestVertex.y + DirNorm.y * Margin,
+                    BestVertex.z + DirNorm.z * Margin
+                );
+            }
+        }
+
+        return BestVertex;
+    }
+
+    static DbVector3 RotateAroundYAxis(DbVector3 Vector, float YawRadians)
+    {
+        float CosYaw = MathF.Cos(YawRadians);
+        float SinYaw = MathF.Sin(YawRadians);
+
+        float RotatedX = Vector.x * CosYaw + Vector.z * SinYaw;
+        float RotatedZ = -Vector.x * SinYaw + Vector.z * CosYaw;
+
+        return new DbVector3(RotatedX, Vector.y, RotatedZ);
+    }
+
+    static DbVector3 GetColliderCenterWorld(ComplexCollider Collider, DbVector3 Position, float YawRadians)
+    {
+        DbVector3 RotatedCenter = RotateAroundYAxis(Collider.CenterPoint, YawRadians);
+        return Add(Position, RotatedCenter);
     }
 }
