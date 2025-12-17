@@ -15,6 +15,8 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class KinematicInformation
     {
+        [DataMember(Name = "Jump")]
+        public bool Jump;
         [DataMember(Name = "Falling")]
         public bool Falling;
         [DataMember(Name = "Crouched")]
@@ -25,12 +27,14 @@ namespace SpacetimeDB.Types
         public bool Sprinting;
 
         public KinematicInformation(
+            bool Jump,
             bool Falling,
             bool Crouched,
             bool Grounded,
             bool Sprinting
         )
         {
+            this.Jump = Jump;
             this.Falling = Falling;
             this.Crouched = Crouched;
             this.Grounded = Grounded;

@@ -9,7 +9,7 @@ public static partial class Module
     {
         float TickTime = Timer.tick_rate;
         float MinTimeStep = 1e-4f;
-        int MaxSubsteps = 12;
+        int MaxSubsteps = 4;
 
         foreach (var CharacterRow in Ctx.Db.magician.Iter())
         {
@@ -19,27 +19,26 @@ public static partial class Module
             Character.KinematicInformation.Grounded = false;
             Character.IsColliding = false;
             Character.CorrectedVelocity = Character.Velocity;
-            
+
+            List<CollisionContact> PreContacts = new List<CollisionContact>();
+            foreach (CollisionEntry Entry in Character.CollisionEntries)
+            {
+                TryBuildContactForEntry(Ctx, ref Character, Entry, PreContacts);
+            }
+
+            if (PreContacts.Count > 0)
+            {
+                ResolveContacts(ref Character, PreContacts, Character.Velocity);
+            }
+
             float RemainingTime = TickTime;
             int SubstepCount = 0;
+
             while (RemainingTime > MinTimeStep && SubstepCount < MaxSubsteps)
             {
                 SubstepCount += 1;
-
                 float StepTime = RemainingTime / (MaxSubsteps - SubstepCount + 1);
-
                 DbVector3 StepVelocity = Character.IsColliding ? Character.CorrectedVelocity : Character.Velocity;
-                List<CollisionContact> PreContacts = new List<CollisionContact>();
-                foreach (CollisionEntry Entry in Character.CollisionEntries)
-                {
-                    TryBuildContactForEntry(Ctx, ref Character, Entry, PreContacts);
-                }
-
-                if (PreContacts.Count > 0)
-                {
-                    ResolveContacts(ref Character, PreContacts, Character.Velocity, ApplyPositionCorrection: false);
-                    StepVelocity = Character.IsColliding ? Character.CorrectedVelocity : Character.Velocity;
-                }
 
                 Character.Position = new DbVector3(
                     Character.Position.x + StepVelocity.x * StepTime,
@@ -61,7 +60,7 @@ public static partial class Module
 
                 if (PostContacts.Count > 0)
                 {
-                    ResolveContacts(ref Character, PostContacts, Character.Velocity, ApplyPositionCorrection: true);
+                    ResolveContacts(ref Character, PostContacts, Character.Velocity);
                 }
 
                 RemainingTime -= StepTime;
@@ -171,7 +170,7 @@ public static partial class Module
     }
 
 
-    public static void ResolveContacts(ref Magician CharacterLocal, List<CollisionContact> Contacts, DbVector3 InputVelocity, bool ApplyPositionCorrection)
+    public static void ResolveContacts(ref Magician CharacterLocal, List<CollisionContact> Contacts, DbVector3 InputVelocity)
     {
         DbVector3 WorldUp = new DbVector3(0f, 1f, 0f);
 
@@ -194,7 +193,7 @@ public static partial class Module
         DbVector3 GroundSupportNormal = WorldUp;
 
         bool HasAnyPositionCorrection = false;
-        DbVector3 TotalPositionCorrection = new DbVector3(0f, 0f, 0f);
+        DbVector3 TotalPositionCorrection = new(0f, 0f, 0f);
 
         foreach (CollisionContact Contact in Contacts)
         {
@@ -213,21 +212,16 @@ public static partial class Module
             if (NormalVelocityComponent < 0f)
                 CorrectedVelocity = Sub(CorrectedVelocity, Mul(Normal, NormalVelocityComponent));
 
-            if (ApplyPositionCorrection)
+            float Depth = Contact.PenetrationDepth - TargetPenetration;
+            if (Depth > DepthEpsilon)
             {
-                float Depth = Contact.PenetrationDepth - TargetPenetration;
-                if (Depth > DepthEpsilon)
-                {
-                    if (Depth > MaxDepth)
-                        Depth = MaxDepth;
-
-                    HasAnyPositionCorrection = true;
-                    TotalPositionCorrection = Add(TotalPositionCorrection, Mul(Normal, Depth));
-                }
+                if (Depth > MaxDepth) Depth = MaxDepth;
+                HasAnyPositionCorrection = true;
+                TotalPositionCorrection = Add(TotalPositionCorrection, Mul(Normal, Depth));
             }
         }
 
-        if (ApplyPositionCorrection && HasAnyPositionCorrection)
+        if (HasAnyPositionCorrection)
         {
             float CorrectionMagnitudeSq = Dot(TotalPositionCorrection, TotalPositionCorrection);
             if (CorrectionMagnitudeSq > 1e-8f)
@@ -253,20 +247,27 @@ public static partial class Module
             else
             {
                 float DesiredHorizontalSpeed = MathF.Sqrt(DesiredHorizontalSpeedSq);
-
                 float PreservedCorrectedY = CorrectedVelocity.y;
 
                 DbVector3 TangentVelocity = Sub(CorrectedVelocity, Mul(GroundSupportNormal, Dot(CorrectedVelocity, GroundSupportNormal)));
-
                 float TangentSpeedSq = Dot(TangentVelocity, TangentVelocity);
+
                 if (TangentSpeedSq > 1e-8f)
                 {
                     DbVector3 TangentDirection = Mul(TangentVelocity, 1f / MathF.Sqrt(TangentSpeedSq));
-                    DbVector3 DesiredTangentVelocity = Mul(TangentDirection, DesiredHorizontalSpeed);
 
-                    CorrectedVelocity.x = DesiredTangentVelocity.x;
-                    CorrectedVelocity.z = DesiredTangentVelocity.z;
-                    CorrectedVelocity.y = PreservedCorrectedY;
+                    float TangentDirectionHorizontalSq = TangentDirection.x * TangentDirection.x + TangentDirection.z * TangentDirection.z;
+                    if (TangentDirectionHorizontalSq > 1e-8f)
+                    {
+                        float TangentDirectionHorizontal = MathF.Sqrt(TangentDirectionHorizontalSq);
+                        float Scale = DesiredHorizontalSpeed / TangentDirectionHorizontal;
+
+                        DbVector3 DesiredTangentVelocity = Mul(TangentDirection, Scale);
+
+                        CorrectedVelocity.x = DesiredTangentVelocity.x;
+                        CorrectedVelocity.z = DesiredTangentVelocity.z;
+                        CorrectedVelocity.y = PreservedCorrectedY;
+                    }
                 }
             }
 
@@ -282,7 +283,6 @@ public static partial class Module
         CharacterLocal.KinematicInformation.Grounded = CharacterLocal.KinematicInformation.Grounded || IsGroundedOnMap;
     }
 
-
     static DbVector3 GetColliderCenterWorld(ComplexCollider Collider, DbVector3 Position, float YawRadians)
     {
         DbVector3 RotatedCenter = RotateAroundYAxis(Collider.CenterPoint, YawRadians);
@@ -290,78 +290,68 @@ public static partial class Module
     }
 
     static bool TryForceOverlapForEntry(ReducerContext Ctx, ref Magician Character, CollisionEntry Entry, bool WasGrounded)
-{
-    if (Entry.Type != CollisionEntryType.Map) return false;
-    if (WasGrounded is false && Character.KinematicInformation.Grounded is false) return false;
+    {
+        if (Entry.Type != CollisionEntryType.Map) return false;
+        if (WasGrounded is false && Character.KinematicInformation.Grounded is false) return false;
 
-    float UpwardVelocityBlockThreshold = 0.03f;
-    if (Character.Velocity.y > UpwardVelocityBlockThreshold) return false;
+        float UpwardVelocityBlockThreshold = 0.03f;
+        if (Character.Velocity.y > UpwardVelocityBlockThreshold) return false;
 
-    float MaxDistanceToSnap = 0.08f;
+        DbVector3 WorldUp = new DbVector3(0f, 1f, 0f);
 
-    float MaxVerticalGapToSnap = 0.045f;
-    float MaxVerticalSnap = 0.01f;
+        float MinGroundDot = 0.75f;
+        float FloorUpDot = 0.98f;
 
-    float TinyOverlap = 0.0005f;
-    float OverlapEnableGap = 0.01f;
+        float MaxVerticalGapRamp = 0.045f;
+        float MaxVerticalSnap = 0.01f;
 
-    DbVector3 WorldUp = new DbVector3(0f, 1f, 0f);
-    float MinGroundDot = 0.75f;
+        float TinyOverlap = 0.0005f;
+        float OverlapEnableGap = 0.01f;
 
-    ComplexCollider ColliderAComplex = Character.GjkCollider;
-    List<ConvexHullCollider> ColliderA = ColliderAComplex.ConvexHulls;
+        ComplexCollider ColliderAComplex = Character.GjkCollider;
+        List<ConvexHullCollider> ColliderA = ColliderAComplex.ConvexHulls;
 
-    Map MapPiece = Ctx.Db.Map.Id.Find(Entry.Id) ?? throw new Exception("Colliding Map Piece Not Found");
-    ComplexCollider ColliderBComplex = MapPiece.GjkCollider;
-    List<ConvexHullCollider> ColliderB = ColliderBComplex.ConvexHulls;
+        Map MapPiece = Ctx.Db.Map.Id.Find(Entry.Id) ?? throw new Exception("Colliding Map Piece Not Found");
+        ComplexCollider ColliderBComplex = MapPiece.GjkCollider;
+        List<ConvexHullCollider> ColliderB = ColliderBComplex.ConvexHulls;
 
-    DbVector3 PositionA = Character.Position;
-    DbVector3 PositionB = new DbVector3(0f, 0f, 0f);
+        DbVector3 PositionA = Character.Position;
+        DbVector3 PositionB = new DbVector3(0f, 0f, 0f);
 
-    float YawA = ToRadians(Character.Rotation.Yaw);
-    float YawB = 0f;
+        float YawA = ToRadians(Character.Rotation.Yaw);
+        float YawB = 0f;
 
-    if (SolveGjkDistance(ColliderA, PositionA, YawA, ColliderB, PositionB, YawB, out GjkDistanceResult DistanceResult) is false)
-        return false;
+        if (SolveGjkDistance(ColliderA, PositionA, YawA, ColliderB, PositionB, YawB, out GjkDistanceResult DistanceResult) is false)
+            return false;
 
-    if (DistanceResult.Distance > MaxDistanceToSnap)
-        return false;
+        DbVector3 CenterAWorld = GetColliderCenterWorld(ColliderAComplex, PositionA, YawA);
+        DbVector3 CenterBWorld = GetColliderCenterWorld(ColliderBComplex, PositionB, YawB);
 
-    DbVector3 CenterAWorld = GetColliderCenterWorld(ColliderAComplex, PositionA, YawA);
-    DbVector3 CenterBWorld = GetColliderCenterWorld(ColliderBComplex, PositionB, YawB);
+        DbVector3 ContactNormal = ComputeContactNormal(DistanceResult.SeparationDirection, CenterAWorld, CenterBWorld);
 
-    DbVector3 ContactNormal = ComputeContactNormal(DistanceResult.SeparationDirection, CenterAWorld, CenterBWorld);
+        float UpDot = Dot(ContactNormal, WorldUp);
+        if (UpDot < MinGroundDot) return false;
 
-    float UpDot = Dot(ContactNormal, WorldUp);
-    if (UpDot < MinGroundDot)
-        return false;
+        if (UpDot > FloorUpDot) return false;
 
-    DbVector3 Delta = Sub(DistanceResult.PointOnA, DistanceResult.PointOnB);
-    float VerticalGap = Dot(Delta, WorldUp);
+        DbVector3 Delta = Sub(DistanceResult.PointOnA, DistanceResult.PointOnB);
+        float VerticalGap = Dot(Delta, WorldUp);
 
-    if (VerticalGap <= 0f)
-        return false;
+        if (VerticalGap <= 0f) return false;
+        if (VerticalGap > MaxVerticalGapRamp) return false;
 
-    if (VerticalGap > MaxVerticalGapToSnap)
-        return false;
+        float SnapDown = VerticalGap;
+        if (VerticalGap <= OverlapEnableGap)
+            SnapDown = VerticalGap + TinyOverlap;
 
-    float SnapDown = VerticalGap;
-    if (VerticalGap <= OverlapEnableGap)
-        SnapDown = VerticalGap + TinyOverlap;
+        if (SnapDown > MaxVerticalSnap)
+            SnapDown = MaxVerticalSnap;
 
-    if (SnapDown > MaxVerticalSnap)
-        SnapDown = MaxVerticalSnap;
+        if (SnapDown <= 1e-6f) return false;
 
-    if (SnapDown <= 1e-6f)
-        return false;
-
-    Character.Position = Add(Character.Position, Mul(WorldUp, -SnapDown));
-    return true;
-}
-
-
-
-
+        Character.Position = Add(Character.Position, Mul(WorldUp, -SnapDown));
+        return true;
+    }
 
 }
 

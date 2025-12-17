@@ -150,7 +150,8 @@ public class MagicianController : MonoBehaviour
         TargetPosition = newChar.Position;
         TargetRotation = newChar.Rotation;
 
-        bool wasGrounded = oldChar.KinematicInformation.Grounded;
+        bool WasNotJumping = oldChar.KinematicInformation.Jump is false;
+        bool Jumping = newChar.KinematicInformation.Jump is true;
         bool Grounded = newChar.KinematicInformation.Grounded;
         bool Crouching = newChar.KinematicInformation.Crouched;
         bool Falling = newChar.KinematicInformation.Falling;
@@ -161,9 +162,8 @@ public class MagicianController : MonoBehaviour
 
         if (Animator != null)
         {
-            if (wasGrounded && Grounded is false && Velocity.Y > 2f)
-                Animator.SetTrigger("Jump");
-
+            if (WasNotJumping && Jumping) Animator.SetTrigger("Jump");
+            
             Animator.SetBool("Attacking", Attacking);
             Animator.SetBool("Crouching", Crouching);
             Animator.SetBool("Falling", Falling);

@@ -11,8 +11,8 @@ public static partial class Module
         Magician Character = ctx.Db.magician.identity.Find(ctx.Sender) ?? throw new Exception("Magician To Move Not Found");
 
         Character.Rotation = Request.Aim;
-
         Character.Velocity = new DbVector3(0f, Character.Velocity.y, 0f);
+        Character.KinematicInformation.Jump = false;
 
         if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanWalk").Subscribers.Count == 0)
         {
@@ -26,7 +26,7 @@ public static partial class Module
             else if (Request.MoveLeft && !Request.MoveRight) LocalX = -2f;
 
             if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint && Request.MoveForward && !Request.MoveBackward)
-                LocalZ *= 3f;
+                LocalZ *= 2.5f;
             
             if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanRun").Subscribers.Count == 0 && Request.Sprint)
                 LocalX *= 1.5f;
@@ -43,6 +43,7 @@ public static partial class Module
 
         if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanJump").Subscribers.Count == 0 && Request.Jump)
         {
+            Character.KinematicInformation.Jump = true;
             Character.Velocity.y = 7.5f;
         }
 

@@ -17,8 +17,9 @@ public static partial class Module
     }
     
     [SpacetimeDB.Type]
-    public partial struct KinematicInformation(bool falling, bool crouched, bool grounded, bool sprinting)
+    public partial struct KinematicInformation(bool jump, bool falling, bool crouched, bool grounded, bool sprinting)
     {
+        public bool Jump = jump;
         public bool Falling = falling;
         public bool Crouched = crouched;
         public bool Grounded = grounded;

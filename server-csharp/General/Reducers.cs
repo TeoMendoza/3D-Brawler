@@ -72,7 +72,7 @@ public static partial class Module
                 Position = new DbVector3 { x = 0f, y = 0f, z = 0f},
                 Rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
                 Velocity = new DbVector3 { x = 0, y = 0, z = 0 },
-                KinematicInformation = new KinematicInformation(falling: false, crouched: false, grounded: true, sprinting: false),
+                KinematicInformation = new KinematicInformation(jump: false, falling: false, crouched: false, grounded: true, sprinting: false),
                 State = MagicianState.Default,
                 Collider = new CapsuleCollider { Center = new DbVector3 { x = 0, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f }, // Height & Radius Are Manual For Now, Have To Change If Collider Changes
                 GjkCollider = MagicianIdleCollider, 
@@ -99,7 +99,7 @@ public static partial class Module
                 Position = new DbVector3 { x = 0f, y = 0f, z = 5f},
                 Rotation = new DbRotation2 { Yaw = 180, Pitch = 0 },
                 Velocity = new DbVector3 { x = 0, y = 0, z = 0f},
-                KinematicInformation = new KinematicInformation(falling: false, crouched: false, grounded: true, sprinting: false),
+                KinematicInformation = new KinematicInformation(jump: false, falling: false, crouched: false, grounded: true, sprinting: false),
                 State = MagicianState.Default,
                 Collider = new CapsuleCollider { Center = new DbVector3 { x = 0, y = 0, z = 0 }, Direction = new DbVector3 { x = 0, y = 1, z = 0 }, HeightEndToEnd = 2f, Radius = 0.2f }, // Height & Radius Are Manual For Now, Have To Change If Collider Changes
                 GjkCollider = MagicianIdleCollider,

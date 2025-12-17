@@ -47,13 +47,11 @@ public static partial class Module
         if (Magician.KinematicInformation.Grounded is true) {
              Magician.KinematicInformation.Falling = false;
             RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
-            RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
             RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump"); 
         }
         else {
-            Magician.KinematicInformation.Falling = MoveVelocity.y < -2.0f;
+            Magician.KinematicInformation.Falling = MoveVelocity.y < -2f;
             AddSubscriberUnique(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanJump").Subscribers, "Jump");
-            AddSubscriberUnique(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanRun").Subscribers, "Jump");
             AddSubscriberUnique(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanCrouch").Subscribers, "Jump");   
         }
 
