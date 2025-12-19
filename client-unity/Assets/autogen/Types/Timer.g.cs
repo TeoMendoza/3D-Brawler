@@ -13,30 +13,29 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class Map
+    public sealed partial class Timer
     {
-        [DataMember(Name = "Id")]
-        public uint Id;
         [DataMember(Name = "Name")]
         public string Name;
-        [DataMember(Name = "Collider")]
-        public ComplexCollider Collider;
+        [DataMember(Name = "ResetTime")]
+        public float ResetTime;
+        [DataMember(Name = "CurrentTime")]
+        public float CurrentTime;
 
-        public Map(
-            uint Id,
+        public Timer(
             string Name,
-            ComplexCollider Collider
+            float ResetTime,
+            float CurrentTime
         )
         {
-            this.Id = Id;
             this.Name = Name;
-            this.Collider = Collider;
+            this.ResetTime = ResetTime;
+            this.CurrentTime = CurrentTime;
         }
 
-        public Map()
+        public Timer()
         {
             this.Name = "";
-            this.Collider = new();
         }
     }
 }

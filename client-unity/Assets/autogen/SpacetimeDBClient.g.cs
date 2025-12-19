@@ -25,13 +25,12 @@ namespace SpacetimeDB.Types
         {
             AddTable(Map = new(conn));
             AddTable(GravityMagician = new(conn));
+            AddTable(HandleMagicianTimersTimer = new(conn));
             AddTable(LoggedInPlayers = new(conn));
             AddTable(LoggedOutPlayers = new(conn));
             AddTable(Magician = new(conn));
             AddTable(Match = new(conn));
             AddTable(MoveAllMagicians = new(conn));
-            AddTable(MoveThrowingCards = new(conn));
-            AddTable(ThrowingCards = new(conn));
         }
     }
 
@@ -480,12 +479,11 @@ namespace SpacetimeDB.Types
                 "Connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
                 "Disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
                 "HandleActionChangeRequestMagician" => BSATNHelpers.Decode<Reducer.HandleActionChangeRequestMagician>(encodedArgs),
+                "HandleMagicianTimers" => BSATNHelpers.Decode<Reducer.HandleMagicianTimers>(encodedArgs),
                 "HandleMovementRequestMagician" => BSATNHelpers.Decode<Reducer.HandleMovementRequestMagician>(encodedArgs),
                 "MoveMagicians" => BSATNHelpers.Decode<Reducer.MoveMagicians>(encodedArgs),
                 "MoveMagiciansCCD" => BSATNHelpers.Decode<Reducer.MoveMagiciansCcd>(encodedArgs),
-                "MoveThrowingCards" => BSATNHelpers.Decode<Reducer.MoveThrowingCards>(encodedArgs),
                 "RemoveCollisionEntryMagician" => BSATNHelpers.Decode<Reducer.RemoveCollisionEntryMagician>(encodedArgs),
-                "SpawnThrowingCard" => BSATNHelpers.Decode<Reducer.SpawnThrowingCard>(encodedArgs),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }
@@ -512,12 +510,11 @@ namespace SpacetimeDB.Types
                 Reducer.Connect args => Reducers.InvokeConnect(eventContext, args),
                 Reducer.Disconnect args => Reducers.InvokeDisconnect(eventContext, args),
                 Reducer.HandleActionChangeRequestMagician args => Reducers.InvokeHandleActionChangeRequestMagician(eventContext, args),
+                Reducer.HandleMagicianTimers args => Reducers.InvokeHandleMagicianTimers(eventContext, args),
                 Reducer.HandleMovementRequestMagician args => Reducers.InvokeHandleMovementRequestMagician(eventContext, args),
                 Reducer.MoveMagicians args => Reducers.InvokeMoveMagicians(eventContext, args),
                 Reducer.MoveMagiciansCcd args => Reducers.InvokeMoveMagiciansCcd(eventContext, args),
-                Reducer.MoveThrowingCards args => Reducers.InvokeMoveThrowingCards(eventContext, args),
                 Reducer.RemoveCollisionEntryMagician args => Reducers.InvokeRemoveCollisionEntryMagician(eventContext, args),
-                Reducer.SpawnThrowingCard args => Reducers.InvokeSpawnThrowingCard(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }

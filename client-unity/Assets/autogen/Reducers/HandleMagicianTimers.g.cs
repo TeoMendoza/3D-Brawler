@@ -14,17 +14,17 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void MoveThrowingCardsHandler(ReducerEventContext ctx, MoveThrowingCardsTimer timer);
-        public event MoveThrowingCardsHandler? OnMoveThrowingCards;
+        public delegate void HandleMagicianTimersHandler(ReducerEventContext ctx, HandleMagicianTimersTimer timer);
+        public event HandleMagicianTimersHandler? OnHandleMagicianTimers;
 
-        public void MoveThrowingCards(MoveThrowingCardsTimer timer)
+        public void HandleMagicianTimers(HandleMagicianTimersTimer timer)
         {
-            conn.InternalCallReducer(new Reducer.MoveThrowingCards(timer), this.SetCallReducerFlags.MoveThrowingCardsFlags);
+            conn.InternalCallReducer(new Reducer.HandleMagicianTimers(timer), this.SetCallReducerFlags.HandleMagicianTimersFlags);
         }
 
-        public bool InvokeMoveThrowingCards(ReducerEventContext ctx, Reducer.MoveThrowingCards args)
+        public bool InvokeHandleMagicianTimers(ReducerEventContext ctx, Reducer.HandleMagicianTimers args)
         {
-            if (OnMoveThrowingCards == null)
+            if (OnHandleMagicianTimers == null)
             {
                 if (InternalOnUnhandledReducerError != null)
                 {
@@ -36,7 +36,7 @@ namespace SpacetimeDB.Types
                 }
                 return false;
             }
-            OnMoveThrowingCards(
+            OnHandleMagicianTimers(
                 ctx,
                 args.Timer
             );
@@ -48,28 +48,28 @@ namespace SpacetimeDB.Types
     {
         [SpacetimeDB.Type]
         [DataContract]
-        public sealed partial class MoveThrowingCards : Reducer, IReducerArgs
+        public sealed partial class HandleMagicianTimers : Reducer, IReducerArgs
         {
             [DataMember(Name = "timer")]
-            public MoveThrowingCardsTimer Timer;
+            public HandleMagicianTimersTimer Timer;
 
-            public MoveThrowingCards(MoveThrowingCardsTimer Timer)
+            public HandleMagicianTimers(HandleMagicianTimersTimer Timer)
             {
                 this.Timer = Timer;
             }
 
-            public MoveThrowingCards()
+            public HandleMagicianTimers()
             {
                 this.Timer = new();
             }
 
-            string IReducerArgs.ReducerName => "MoveThrowingCards";
+            string IReducerArgs.ReducerName => "HandleMagicianTimers";
         }
     }
 
     public sealed partial class SetReducerFlags
     {
-        internal CallReducerFlags MoveThrowingCardsFlags;
-        public void MoveThrowingCards(CallReducerFlags flags) => MoveThrowingCardsFlags = flags;
+        internal CallReducerFlags HandleMagicianTimersFlags;
+        public void HandleMagicianTimers(CallReducerFlags flags) => HandleMagicianTimersFlags = flags;
     }
 }

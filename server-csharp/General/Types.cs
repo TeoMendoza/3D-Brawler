@@ -46,4 +46,12 @@ public static partial class Module
         Hunter,
         Monk
     }
+
+    [SpacetimeDB.Type]
+    public partial struct Timer(string name, float resetTime, float currentTime)
+    {
+        public string Name = name;
+        public float ResetTime = resetTime; // Seconds
+        public float CurrentTime = currentTime; // Seconds
+    }
 }

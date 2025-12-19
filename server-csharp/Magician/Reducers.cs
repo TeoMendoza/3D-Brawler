@@ -60,45 +60,42 @@ public static partial class Module
             RemoveSubscriber(GetPermissionEntry(Character.PlayerPermissionConfig, "CanRun").Subscribers, "Crouch");
         }
 
-        if (Character.Id != 10000) // Testing To Make Sure Moving Collisions Work
-            ctx.Db.magician.identity.Update(Character);
+        ctx.Db.magician.identity.Update(Character);
     }   
 
     [Reducer]
-    public static void HandleActionChangeRequestMagician(ReducerContext ctx, ActionRequestMagician request)
+    public static void HandleActionChangeRequestMagician(ReducerContext Ctx, ActionRequestMagician Request)
     {
-        Identity identity = ctx.Sender;
-        Magician character = ctx.Db.magician.identity.Find(identity) ?? throw new Exception("Magician Not Found");
-        MagicianState oldState = character.State;
+        Identity Identity = Ctx.Sender;
+        Magician Character = Ctx.Db.magician.identity.Find(Identity) ?? throw new Exception("Magician Not Found");
+        MagicianState OldState = Character.State;
 
-        bool StateSwitched = false;
-        if (GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers.Count == 0 && request.State == MagicianState.Attack)
+        if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanAttack").Subscribers.Count == 0 && Request.State == MagicianState.Attack)
         {
-            character.State = MagicianState.Attack;
-            AddSubscriberUnique(GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
-            StateSwitched = true;
+            Character.State = MagicianState.Attack;
+            AddSubscriberUnique(GetPermissionEntry(Character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
+            TryPerformAttack(Ctx, ref Character, Request.AttackInformation);
         }
 
-        else if (request.State == MagicianState.Default)
-        {
-            character.State = MagicianState.Default;
-            StateSwitched = true;
-        }
+        else if (Request.State == MagicianState.Default)
+            Character.State = MagicianState.Default;
 
+        bool StateSwitched = OldState != Character.State;
         if (StateSwitched)
         {
-            switch (oldState)
+            switch (OldState)
             {
                 case MagicianState.Attack:
-                    RemoveSubscriber(GetPermissionEntry(character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
+                    RemoveSubscriber(GetPermissionEntry(Character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
                     break;
+
                 case MagicianState.Default:
                     break;
             }
         }
-
-        ctx.Db.magician.identity.Update(character);
+        Ctx.Db.magician.identity.Update(Character);
     }
+
 
     [Reducer]
     public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Timer)
@@ -176,6 +173,42 @@ public static partial class Module
         }
     }
 
+
+    [Reducer]
+    public static void HandleMagicianTimers(ReducerContext ctx, Handle_Magician_Timers_Timer timer)
+    {
+        float time = timer.tick_rate;
+        foreach (Magician magician in ctx.Db.magician.Iter())
+        {
+            // If Certain Timers Ever Get Introduced That Are Irrelevant To Magician State, Seperate Timers Into Two Properties: Stateless and Stateful Timers, One That Relies On The State To Know Which Timer To Adjust, One That Adjusts All The Timers Regardless Of State. This Would Be The Stateful Timer
+
+            Magician Magician = magician;
+            switch (Magician.State)
+            {
+                case MagicianState.Attack:
+                    Timer Timer = Magician.Timers[TryFindTimerIndex(ref Magician, "Attack")];
+                    Timer.CurrentTime -= time;
+
+                    if (Timer.CurrentTime <= 0) 
+                    {
+                        Timer.CurrentTime = Timer.ResetTime;
+                        Magician.State = MagicianState.Default;
+                        RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
+                    }
+
+                    Magician.Timers[TryFindTimerIndex(ref Magician, "Attack")] = Timer;
+                    break;
+
+                case MagicianState.Default:
+                    break;
+
+                default:
+                    break;
+            }
+
+            ctx.Db.magician.identity.Update(Magician);
+        }
+    }
 
     [Reducer]
     public static void ApplyGravityMagician(ReducerContext ctx, Gravity_Timer_Magician timer)

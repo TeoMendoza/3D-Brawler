@@ -29,22 +29,22 @@ namespace SpacetimeDB.Types
         public DbRotation2 Rotation;
         [DataMember(Name = "Velocity")]
         public DbVector3 Velocity;
+        [DataMember(Name = "CorrectedVelocity")]
+        public DbVector3 CorrectedVelocity;
+        [DataMember(Name = "Collider")]
+        public ComplexCollider Collider;
+        [DataMember(Name = "CollisionEntries")]
+        public System.Collections.Generic.List<CollisionEntry> CollisionEntries;
+        [DataMember(Name = "IsColliding")]
+        public bool IsColliding;
         [DataMember(Name = "State")]
         public MagicianState State;
         [DataMember(Name = "KinematicInformation")]
         public KinematicInformation KinematicInformation;
-        [DataMember(Name = "Collider")]
-        public CapsuleCollider Collider;
-        [DataMember(Name = "GjkCollider")]
-        public ComplexCollider GjkCollider;
         [DataMember(Name = "PlayerPermissionConfig")]
         public System.Collections.Generic.List<PermissionEntry> PlayerPermissionConfig;
-        [DataMember(Name = "CollisionEntries")]
-        public System.Collections.Generic.List<CollisionEntry> CollisionEntries;
-        [DataMember(Name = "CorrectedVelocity")]
-        public DbVector3 CorrectedVelocity;
-        [DataMember(Name = "IsColliding")]
-        public bool IsColliding;
+        [DataMember(Name = "Timers")]
+        public System.Collections.Generic.List<Timer> Timers;
 
         public Magician(
             SpacetimeDB.Identity Identity,
@@ -54,14 +54,14 @@ namespace SpacetimeDB.Types
             DbVector3 Position,
             DbRotation2 Rotation,
             DbVector3 Velocity,
+            DbVector3 CorrectedVelocity,
+            ComplexCollider Collider,
+            System.Collections.Generic.List<CollisionEntry> CollisionEntries,
+            bool IsColliding,
             MagicianState State,
             KinematicInformation KinematicInformation,
-            CapsuleCollider Collider,
-            ComplexCollider GjkCollider,
             System.Collections.Generic.List<PermissionEntry> PlayerPermissionConfig,
-            System.Collections.Generic.List<CollisionEntry> CollisionEntries,
-            DbVector3 CorrectedVelocity,
-            bool IsColliding
+            System.Collections.Generic.List<Timer> Timers
         )
         {
             this.Identity = Identity;
@@ -71,14 +71,14 @@ namespace SpacetimeDB.Types
             this.Position = Position;
             this.Rotation = Rotation;
             this.Velocity = Velocity;
+            this.CorrectedVelocity = CorrectedVelocity;
+            this.Collider = Collider;
+            this.CollisionEntries = CollisionEntries;
+            this.IsColliding = IsColliding;
             this.State = State;
             this.KinematicInformation = KinematicInformation;
-            this.Collider = Collider;
-            this.GjkCollider = GjkCollider;
             this.PlayerPermissionConfig = PlayerPermissionConfig;
-            this.CollisionEntries = CollisionEntries;
-            this.CorrectedVelocity = CorrectedVelocity;
-            this.IsColliding = IsColliding;
+            this.Timers = Timers;
         }
 
         public Magician()
@@ -87,12 +87,12 @@ namespace SpacetimeDB.Types
             this.Position = new();
             this.Rotation = new();
             this.Velocity = new();
-            this.KinematicInformation = new();
-            this.Collider = new();
-            this.GjkCollider = new();
-            this.PlayerPermissionConfig = new();
-            this.CollisionEntries = new();
             this.CorrectedVelocity = new();
+            this.Collider = new();
+            this.CollisionEntries = new();
+            this.KinematicInformation = new();
+            this.PlayerPermissionConfig = new();
+            this.Timers = new();
         }
     }
 }

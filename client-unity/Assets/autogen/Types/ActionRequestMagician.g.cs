@@ -17,14 +17,21 @@ namespace SpacetimeDB.Types
     {
         [DataMember(Name = "State")]
         public MagicianState State;
+        [DataMember(Name = "AttackInformation")]
+        public AttackInformation AttackInformation;
 
-        public ActionRequestMagician(MagicianState State)
+        public ActionRequestMagician(
+            MagicianState State,
+            AttackInformation AttackInformation
+        )
         {
             this.State = State;
+            this.AttackInformation = AttackInformation;
         }
 
         public ActionRequestMagician()
         {
+            this.AttackInformation = new();
         }
     }
 }

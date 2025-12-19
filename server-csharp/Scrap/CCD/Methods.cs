@@ -69,8 +69,8 @@ public static partial class Module
                             Magician OtherMagician = Ctx.Db.magician.Id.Find(CollisionEntry.Id) ?? throw new Exception("Colliding Magician Not Found");
                             if (OtherMagician.Id == Character.Id) break;
 
-                            ColliderA = Character.GjkCollider.ConvexHulls;
-                            ColliderB = OtherMagician.GjkCollider.ConvexHulls;
+                            ColliderA = Character.Collider.ConvexHulls;
+                            ColliderB = OtherMagician.Collider.ConvexHulls;
                             PositionB = OtherMagician.Position;
                             YawRadiansB = ToRadians(OtherMagician.Rotation.Yaw);
                             DbVector3 VelocityB = OtherMagician.IsColliding ? OtherMagician.CorrectedVelocity : OtherMagician.Velocity;
@@ -80,8 +80,8 @@ public static partial class Module
 
                             float Sep = Dist.Distance;
 
-                            DbVector3 CenterAWorld = GetColliderCenterWorld(Character.GjkCollider, PositionA, YawRadiansA);
-                            DbVector3 CenterBWorld = GetColliderCenterWorld(OtherMagician.GjkCollider, PositionB, YawRadiansB);
+                            DbVector3 CenterAWorld = GetColliderCenterWorld(Character.Collider, PositionA, YawRadiansA);
+                            DbVector3 CenterBWorld = GetColliderCenterWorld(OtherMagician.Collider, PositionB, YawRadiansB);
 
                             DbVector3 Normal = ComputeContactNormal(Dist.SeparationDirection, CenterAWorld, CenterBWorld);
 
@@ -118,8 +118,8 @@ public static partial class Module
                         {
                             Map MapPiece = Ctx.Db.Map.Id.Find(CollisionEntry.Id) ?? throw new Exception("Colliding Map Piece Not Found");
 
-                            ColliderA = Character.GjkCollider.ConvexHulls;
-                            ColliderB = MapPiece.GjkCollider.ConvexHulls;
+                            ColliderA = Character.Collider.ConvexHulls;
+                            ColliderB = MapPiece.Collider.ConvexHulls;
                             PositionB = new DbVector3(0f, 0f, 0f);
                             YawRadiansB = 0f;
 
@@ -128,8 +128,8 @@ public static partial class Module
 
                             float SeparationDistanceMap = DistanceResultMap.Distance;
 
-                            DbVector3 CenterAWorld = GetColliderCenterWorld(Character.GjkCollider, PositionA, YawRadiansA);
-                            DbVector3 CenterBWorld = GetColliderCenterWorld(MapPiece.GjkCollider, PositionB, YawRadiansB);
+                            DbVector3 CenterAWorld = GetColliderCenterWorld(Character.Collider, PositionA, YawRadiansA);
+                            DbVector3 CenterBWorld = GetColliderCenterWorld(MapPiece.Collider, PositionB, YawRadiansB);
 
                             DbVector3 Normal = ComputeContactNormal(DistanceResultMap.SeparationDirection, CenterAWorld, CenterBWorld);
 
@@ -239,7 +239,7 @@ public static partial class Module
         float SkinThicknessMagician = 0.05f;
         float DetectionThresholdMagician = 0.15f;
 
-        ComplexCollider ColliderAComplex = Character.GjkCollider;
+        ComplexCollider ColliderAComplex = Character.Collider;
         ComplexCollider ColliderBComplex;
 
         List<ConvexHullCollider> ColliderA = ColliderAComplex.ConvexHulls;
@@ -258,7 +258,7 @@ public static partial class Module
                 if (OtherMagician.Id == Character.Id) return false;
 
                 EntryType = CollisionEntryType.Magician;
-                ColliderBComplex = OtherMagician.GjkCollider;
+                ColliderBComplex = OtherMagician.Collider;
                 ColliderB = ColliderBComplex.ConvexHulls;
                 PositionB = OtherMagician.Position;
                 YawB = ToRadians(OtherMagician.Rotation.Yaw);
@@ -270,7 +270,7 @@ public static partial class Module
                 Map MapPiece = Ctx.Db.Map.Id.Find(Entry.Id) ?? throw new Exception("Colliding Map Piece Not Found");
 
                 EntryType = CollisionEntryType.Map;
-                ColliderBComplex = MapPiece.GjkCollider;
+                ColliderBComplex = MapPiece.Collider;
                 ColliderB = ColliderBComplex.ConvexHulls;
                 PositionB = new DbVector3(0f, 0f, 0f);
                 YawB = 0f;
@@ -319,8 +319,8 @@ public static partial class Module
             Magician OtherMagician = Ctx.Db.magician.Id.Find(CollisionEntry.Id) ?? throw new Exception("Colliding Magician Not Found");
             if (OtherMagician.Id == CharacterLocal.Id) return false;
 
-            List<ConvexHullCollider> ColliderA = CharacterLocal.GjkCollider.ConvexHulls;
-            List<ConvexHullCollider> ColliderB = OtherMagician.GjkCollider.ConvexHulls;
+            List<ConvexHullCollider> ColliderA = CharacterLocal.Collider.ConvexHulls;
+            List<ConvexHullCollider> ColliderB = OtherMagician.Collider.ConvexHulls;
 
             DbVector3 PositionB = OtherMagician.Position;
             float YawRadiansB = ToRadians(OtherMagician.Rotation.Yaw);
@@ -333,8 +333,8 @@ public static partial class Module
             DbVector3 PointOnA = SkinPoints.SupportPointA;
             DbVector3 PointOnB = SkinPoints.SupportPointB;
 
-            DbVector3 CenterAWorld = GetColliderCenterWorld(CharacterLocal.GjkCollider, PositionA, YawRadiansA);
-            DbVector3 CenterBWorld = GetColliderCenterWorld(OtherMagician.GjkCollider, PositionB, YawRadiansB);
+            DbVector3 CenterAWorld = GetColliderCenterWorld(CharacterLocal.Collider, PositionA, YawRadiansA);
+            DbVector3 CenterBWorld = GetColliderCenterWorld(OtherMagician.Collider, PositionB, YawRadiansB);
 
             DbVector3 ContactNormal = ComputeContactNormal(GjkResultMagician.LastDirection, CenterAWorld, CenterBWorld);
 
@@ -352,8 +352,8 @@ public static partial class Module
         {
             Map MapPiece = Ctx.Db.Map.Id.Find(CollisionEntry.Id) ?? throw new Exception("Colliding Map Piece Not Found");
 
-            List<ConvexHullCollider> ColliderA = CharacterLocal.GjkCollider.ConvexHulls;
-            List<ConvexHullCollider> ColliderB = MapPiece.GjkCollider.ConvexHulls;
+            List<ConvexHullCollider> ColliderA = CharacterLocal.Collider.ConvexHulls;
+            List<ConvexHullCollider> ColliderB = MapPiece.Collider.ConvexHulls;
 
             DbVector3 PositionB = new DbVector3(0f, 0f, 0f);
             float YawRadiansB = 0f;
@@ -366,8 +366,8 @@ public static partial class Module
             DbVector3 PointOnA = SkinPoints.SupportPointA;
             DbVector3 PointOnB = SkinPoints.SupportPointB;
 
-            DbVector3 CenterAWorld = GetColliderCenterWorld(CharacterLocal.GjkCollider, PositionA, YawRadiansA);
-            DbVector3 CenterBWorld = GetColliderCenterWorld(MapPiece.GjkCollider, PositionB, YawRadiansB);
+            DbVector3 CenterAWorld = GetColliderCenterWorld(CharacterLocal.Collider, PositionA, YawRadiansA);
+            DbVector3 CenterBWorld = GetColliderCenterWorld(MapPiece.Collider, PositionB, YawRadiansB);
 
             DbVector3 ContactNormal = ComputeContactNormal(GjkResultMap.LastDirection, CenterAWorld, CenterBWorld);
 

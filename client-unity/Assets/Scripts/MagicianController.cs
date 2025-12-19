@@ -2,6 +2,7 @@ using SpacetimeDB;
 using UnityEngine;
 using SpacetimeDB.Types;
 using Unity.Cinemachine;
+using Unity.VisualScripting;
 
 public class MagicianController : MonoBehaviour
 {
@@ -37,7 +38,6 @@ public class MagicianController : MonoBehaviour
     Vector3 CameraPositionOffset;
     float CameraYawOffset;
     float CameraPitchOffset;
-    Vector3 HandPositionOffset;
 
     float TargetForwardSpeed;
     float TargetHorizontalSpeed;
@@ -115,9 +115,9 @@ public class MagicianController : MonoBehaviour
 
         GameManager.Conn.Reducers.HandleMovementRequestMagician(req);
 
-        if (Input.GetMouseButton(0)) // Attacking To Be Changed For Milestone 5 (Hitscan Instead Of Projectiles)
+        if (Input.GetMouseButton(0))
         {
-            // GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack));
+            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack, new AttackInformation(CameraPositionOffset: CameraPositionOffset, CameraYawOffset: CameraYawOffset, CameraPitchOffset: CameraPitchOffset, SpawnPointOffset: new(0f, 1.15f, 0.45f), MaxDistance: 100f)));
         }
     }
 
@@ -150,27 +150,30 @@ public class MagicianController : MonoBehaviour
         TargetPosition = newChar.Position;
         TargetRotation = newChar.Rotation;
 
-        bool WasNotJumping = oldChar.KinematicInformation.Jump is false;
-        bool Jumping = newChar.KinematicInformation.Jump is true;
+        
+        bool Jump = oldChar.KinematicInformation.Jump is false && newChar.KinematicInformation.Jump is true;
+
+        bool Attack = oldChar.State is not MagicianState.Attack && newChar.State is MagicianState.Attack;
+        bool AttackDone = oldChar.State is MagicianState.Attack && newChar.State is not MagicianState.Attack;
+
         bool Grounded = newChar.KinematicInformation.Grounded;
         bool Crouching = newChar.KinematicInformation.Crouched;
         bool Falling = newChar.KinematicInformation.Falling;
-        bool Attacking = newChar.State is MagicianState.Attack;
-
-        DbVector3 Velocity = newChar.IsColliding ? newChar.CorrectedVelocity : newChar.Velocity;
-        DbVector3 AnimationVelocity = newChar.Velocity;
+        
 
         if (Animator != null)
         {
-            if (WasNotJumping && Jumping) Animator.SetTrigger("Jump");
-            
-            Animator.SetBool("Attacking", Attacking);
+            if (Jump) Animator.SetTrigger("Jump");
+            if (Attack) Animator.SetTrigger("Attack");
+            if (AttackDone) Animator.SetTrigger("AttackDone");
+
             Animator.SetBool("Crouching", Crouching);
             Animator.SetBool("Falling", Falling);
             Animator.SetBool("Grounded", Grounded);
         }
 
-        Vector3 vWorld = new Vector3(AnimationVelocity.X, 0f, AnimationVelocity.Z);
+        DbVector3 AnimationVelocity = newChar.Velocity;
+        Vector3 vWorld = new(AnimationVelocity.X, 0f, AnimationVelocity.Z);
         Quaternion yawOnly = Quaternion.Euler(0f, newChar.Rotation.Yaw, 0f);
         Vector3 vLocal = Quaternion.Inverse(yawOnly) * vWorld;
 
@@ -181,38 +184,6 @@ public class MagicianController : MonoBehaviour
     public void Delete(EventContext context)
     {
         Destroy(gameObject);
-    }
-
-    public void CardThrow()
-    {
-        float MaxDistance = 100f;
-
-        Vector3 CharacterWorldPosition = transform.position;
-        Vector3 HandWorldPosition = CardThrowHand.position;
-        Quaternion Rotation = Quaternion.Euler(0, TargetRotation.Yaw, 0);
-        HandPositionOffset = Quaternion.Inverse(Rotation) * (HandWorldPosition - CharacterWorldPosition);
-
-        Vector2 Reticle = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-        Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
-        Vector3 D = AimRay.direction.normalized;
-
-        GameManager.Conn.Reducers.SpawnThrowingCard(
-            cameraPositionOffset: (DbVector3)CameraPositionOffset,
-            cameraYawOffset: CameraYawOffset,
-            cameraPitchOffset: CameraPitchOffset,
-            handPositionOffset: (DbVector3)HandPositionOffset,
-            maxDistance: MaxDistance
-        );
-
-        if (Input.GetMouseButton(0) is false)
-        {
-            CardThrowFinished();
-        }
-    }
-
-    public void CardThrowFinished()
-    {
-        GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Default));
     }
 
     public void OnTriggerEnter(Collider other)
@@ -228,15 +199,7 @@ public class MagicianController : MonoBehaviour
             }
             Debug.Log($"Magician Added To Entries With Id: {Player.Id}");
         }
-        else if (other.gameObject.CompareTag("ThrowingCard"))
-        {
-            ThrowingCardController Projectile = other.gameObject.GetComponent<ThrowingCardController>();
-            if (Projectile.OwnerIdentity != Identity)
-            {
-                CollisionEntry Entry = new CollisionEntry(Type: CollisionEntryType.ThrowingCard, Id: Projectile.Id);
-                GameManager.Conn.Reducers.AddCollisionEntryMagician(Entry, Identity);
-            }
-        }
+
         else if (other.gameObject.CompareTag("Map"))
         {
             MapPiece Map = other.gameObject.GetComponent<MapPiece>();
@@ -256,15 +219,7 @@ public class MagicianController : MonoBehaviour
                 GameManager.Conn.Reducers.RemoveCollisionEntryMagician(Entry, Identity);
             }
         }
-        else if (other.gameObject.CompareTag("ThrowingCard"))
-        {
-            ThrowingCardController Projectile = other.gameObject.GetComponent<ThrowingCardController>();
-            if (Projectile.OwnerIdentity != Identity)
-            {
-                CollisionEntry Entry = new CollisionEntry(Type: CollisionEntryType.ThrowingCard, Id: Projectile.Id);
-                GameManager.Conn.Reducers.RemoveCollisionEntryMagician(Entry, Identity);
-            }
-        }
+
         else if (other.gameObject.CompareTag("Map"))
         {
             MapPiece Map = other.gameObject.GetComponent<MapPiece>();

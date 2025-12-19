@@ -10,7 +10,7 @@ public static partial class Module
         [PrimaryKey]
         public Identity identity;
 
-        [Unique]
+        [Unique, AutoInc]
         public uint Id;
         public string Name;
 
@@ -19,14 +19,16 @@ public static partial class Module
         public DbVector3 Position;
         public DbRotation2 Rotation;
         public DbVector3 Velocity;
+        public DbVector3 CorrectedVelocity;
+        public ComplexCollider Collider;
+        public List<CollisionEntry> CollisionEntries;
+        public bool IsColliding;
         public MagicianState State;
         public KinematicInformation KinematicInformation;
-        public CapsuleCollider Collider;
-        public ComplexCollider GjkCollider;
         public List<PermissionEntry> PlayerPermissionConfig;
-        public List<CollisionEntry> CollisionEntries;
-        public DbVector3 CorrectedVelocity;
-        public bool IsColliding;
+        public List<Timer> Timers;
+
+        //public List<ThrowingCard> AttackMagazine;
     }
     
    [Table(Name = "move_all_magicians", Scheduled = nameof(MoveMagicians), ScheduledAt = nameof(scheduled_at))]
@@ -46,30 +48,13 @@ public static partial class Module
         public float gravity;
     }
 
-    [Table(Name = "throwing_cards", Public = true)]
-    public partial struct ThrowingCard
-    {
-        [PrimaryKey, AutoInc]
-        public uint Id;
-
-        [SpacetimeDB.Index.BTree(Name = "OwnerIdentity")]
-        public Identity OwnerIdentity;
-
-        [SpacetimeDB.Index.BTree(Name = "MatchId")]
-        public uint MatchId;
-        public DbVector3 position;
-        public DbVector3 velocity;
-        public DbVector3 direction;
-        public CapsuleCollider Collider;
-
-        // public List<Effect> Effects; // Add once effects are being implemented
-    }
-    
-    [Table(Name = "move_throwing_cards", Scheduled = nameof(MoveThrowingCards), ScheduledAt = nameof(scheduled_at))]
-    public partial struct Move_ThrowingCards_Timer
+    [Table(Name = "handle_magician_timers_timer", Scheduled = nameof(HandleMagicianTimers), ScheduledAt = nameof(scheduled_at))]
+    public partial struct Handle_Magician_Timers_Timer
     {
         [PrimaryKey, AutoInc] public ulong scheduled_id;
         public ScheduleAt scheduled_at;
         public float tick_rate;
     }
+
+    
 }

@@ -21,6 +21,7 @@ public static partial class Module
     public static readonly ConvexHullCollider Ramp2ConvexHull0 = new ConvexHullCollider
     {
         VerticesLocal = Ramp2ConvexHull0Vertices,
+        TriangleIndicesLocal = new List<int> { 2, 0, 1, 0, 5, 1, 2, 5, 4, 5, 0, 4, 0, 2, 4, 2, 1, 3, 1, 5, 3, 5, 2, 3 },
         Margin = 0f
     };
 

@@ -15,27 +15,27 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteTables
     {
-        public sealed class MoveThrowingCardsHandle : RemoteTableHandle<EventContext, MoveThrowingCardsTimer>
+        public sealed class HandleMagicianTimersTimerHandle : RemoteTableHandle<EventContext, HandleMagicianTimersTimer>
         {
-            protected override string RemoteTableName => "move_throwing_cards";
+            protected override string RemoteTableName => "handle_magician_timers_timer";
 
             public sealed class ScheduledIdUniqueIndex : UniqueIndexBase<ulong>
             {
-                protected override ulong GetKey(MoveThrowingCardsTimer row) => row.ScheduledId;
+                protected override ulong GetKey(HandleMagicianTimersTimer row) => row.ScheduledId;
 
-                public ScheduledIdUniqueIndex(MoveThrowingCardsHandle table) : base(table) { }
+                public ScheduledIdUniqueIndex(HandleMagicianTimersTimerHandle table) : base(table) { }
             }
 
             public readonly ScheduledIdUniqueIndex ScheduledId;
 
-            internal MoveThrowingCardsHandle(DbConnection conn) : base(conn)
+            internal HandleMagicianTimersTimerHandle(DbConnection conn) : base(conn)
             {
                 ScheduledId = new(this);
             }
 
-            protected override object GetPrimaryKey(MoveThrowingCardsTimer row) => row.ScheduledId;
+            protected override object GetPrimaryKey(HandleMagicianTimersTimer row) => row.ScheduledId;
         }
 
-        public readonly MoveThrowingCardsHandle MoveThrowingCards;
+        public readonly HandleMagicianTimersTimerHandle HandleMagicianTimersTimer;
     }
 }

@@ -17,21 +17,26 @@ namespace SpacetimeDB.Types
     {
         [DataMember(Name = "VerticesLocal")]
         public System.Collections.Generic.List<DbVector3> VerticesLocal;
+        [DataMember(Name = "TriangleIndicesLocal")]
+        public System.Collections.Generic.List<int> TriangleIndicesLocal;
         [DataMember(Name = "Margin")]
         public float Margin;
 
         public ConvexHullCollider(
             System.Collections.Generic.List<DbVector3> VerticesLocal,
+            System.Collections.Generic.List<int> TriangleIndicesLocal,
             float Margin
         )
         {
             this.VerticesLocal = VerticesLocal;
+            this.TriangleIndicesLocal = TriangleIndicesLocal;
             this.Margin = Margin;
         }
 
         public ConvexHullCollider()
         {
             this.VerticesLocal = new();
+            this.TriangleIndicesLocal = new();
         }
     }
 }

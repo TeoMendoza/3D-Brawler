@@ -30,12 +30,13 @@ public static partial class Module
     public static readonly ConvexHullCollider IdleConvexHull0 = new ConvexHullCollider
     {
         VerticesLocal = IdleConvexHull0Vertices,
+        TriangleIndicesLocal = new List<int> { 2, 3, 6, 4, 2, 6, 1, 3, 0, 3, 2, 0, 2, 4, 0, 4, 1, 0, 3, 1, 5, 1, 4, 5, 9, 6, 7, 6, 3, 7, 3, 5, 7, 5, 9, 7, 4, 6, 8, 6, 9, 8, 9, 5, 8, 5, 4, 8 },
         Margin = 0f
     };
 
     public static readonly List<ConvexHullCollider> MagicianIdleConvexHulls = new List<ConvexHullCollider>
     {
-        IdleConvexHull0
+        IdleConvexHull0,
     };
 
     public static readonly ComplexCollider MagicianIdleCollider = new ComplexCollider

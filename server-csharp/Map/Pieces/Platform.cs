@@ -21,7 +21,9 @@ public static partial class Module
 
     public static readonly ConvexHullCollider PlatformConvexHull0 = new ConvexHullCollider
     {
-        VerticesLocal = PlatformConvexHull0Vertices
+        VerticesLocal = PlatformConvexHull0Vertices,
+        TriangleIndicesLocal = new List<int> { 0, 2, 1, 1, 2, 6, 0, 1, 4, 6, 2, 3, 2, 0, 3, 0, 4, 3, 1, 6, 5, 6, 4, 5, 4, 1, 5, 4, 6, 7, 6, 3, 7, 3, 4, 7 },
+        Margin = 0f
     };
 
     public static readonly List<ConvexHullCollider> PlatformConvexHulls = new List<ConvexHullCollider>

@@ -18,7 +18,6 @@ public static partial class Module
         }
 
     }
-
     public static void ResolveContacts(ref Magician CharacterLocal, List<CollisionContact> Contacts, DbVector3 InputVelocity)
     {
         DbVector3 WorldUp = new(0f, 1f, 0f);
@@ -141,8 +140,8 @@ public static partial class Module
             Magician OtherMagician = Ctx.Db.magician.Id.Find(CollisionEntry.Id) ?? throw new Exception("Colliding Magician Not Found");
             if (OtherMagician.Id == CharacterLocal.Id) return false;
 
-            List<ConvexHullCollider> ColliderA = CharacterLocal.GjkCollider.ConvexHulls;
-            List<ConvexHullCollider> ColliderB = OtherMagician.GjkCollider.ConvexHulls;
+            List<ConvexHullCollider> ColliderA = CharacterLocal.Collider.ConvexHulls;
+            List<ConvexHullCollider> ColliderB = OtherMagician.Collider.ConvexHulls;
 
             DbVector3 PositionB = OtherMagician.Position;
             float YawRadiansB = ToRadians(OtherMagician.Rotation.Yaw);
@@ -150,8 +149,8 @@ public static partial class Module
             bool IntersectsMagician = SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResult GjkResultMagician);
             if (IntersectsMagician is false) return false;
 
-            DbVector3 CenterAWorld = GetColliderCenterWorld(CharacterLocal.GjkCollider, PositionA, YawRadiansA);
-            DbVector3 CenterBWorld = GetColliderCenterWorld(OtherMagician.GjkCollider, PositionB, YawRadiansB);
+            DbVector3 CenterAWorld = GetColliderCenterWorld(CharacterLocal.Collider, PositionA, YawRadiansA);
+            DbVector3 CenterBWorld = GetColliderCenterWorld(OtherMagician.Collider, PositionB, YawRadiansB);
 
             if (EpaSolve(GjkResultMagician, ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out Contact EpaContact))
             {
@@ -167,8 +166,8 @@ public static partial class Module
         {
             Map MapPiece = Ctx.Db.Map.Id.Find(CollisionEntry.Id) ?? throw new Exception("Colliding Map Piece Not Found");
 
-            List<ConvexHullCollider> ColliderA = CharacterLocal.GjkCollider.ConvexHulls;
-            List<ConvexHullCollider> ColliderB = MapPiece.GjkCollider.ConvexHulls;
+            List<ConvexHullCollider> ColliderA = CharacterLocal.Collider.ConvexHulls;
+            List<ConvexHullCollider> ColliderB = MapPiece.Collider.ConvexHulls;
 
             DbVector3 PositionB = new DbVector3(0f, 0f, 0f);
             float YawRadiansB = 0f;
@@ -176,8 +175,8 @@ public static partial class Module
             bool IntersectsMap = SolveGjk(ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out GjkResult GjkResultMap);
             if (IntersectsMap is false) return false;
 
-            DbVector3 CenterAWorld = GetColliderCenterWorld(CharacterLocal.GjkCollider, PositionA, YawRadiansA);
-            DbVector3 CenterBWorld = GetColliderCenterWorld(MapPiece.GjkCollider, PositionB, YawRadiansB);
+            DbVector3 CenterAWorld = GetColliderCenterWorld(CharacterLocal.Collider, PositionA, YawRadiansA);
+            DbVector3 CenterBWorld = GetColliderCenterWorld(MapPiece.Collider, PositionB, YawRadiansB);
 
             if (EpaSolve(GjkResultMap, ColliderA, PositionA, YawRadiansA, ColliderB, PositionB, YawRadiansB, out Contact EpaContact))
             {
@@ -211,11 +210,11 @@ public static partial class Module
         float TinyOverlap = 0.0005f;
         float OverlapEnableGap = 0.01f;
 
-        ComplexCollider ColliderAComplex = Character.GjkCollider;
+        ComplexCollider ColliderAComplex = Character.Collider;
         List<ConvexHullCollider> ColliderA = ColliderAComplex.ConvexHulls;
 
         Map MapPiece = Ctx.Db.Map.Id.Find(Entry.Id) ?? throw new Exception("Colliding Map Piece Not Found");
-        ComplexCollider ColliderBComplex = MapPiece.GjkCollider;
+        ComplexCollider ColliderBComplex = MapPiece.Collider;
         List<ConvexHullCollider> ColliderB = ColliderBComplex.ConvexHulls;
 
         DbVector3 PositionA = Character.Position;
@@ -255,4 +254,40 @@ public static partial class Module
         Character.Position = Add(Character.Position, Mul(WorldUp, -SnapDown));
         return true;
     }
+
+    public static void TryPerformAttack(ReducerContext Ctx, ref Magician Character, AttackInformation AttackInformation)
+    {
+        DbVector3 MagicianPosition = Character.Position;
+
+        float MagicianYawRadians = ToRadians(Character.Rotation.Yaw);
+        Quaternion MagicianYawOnly = Quaternion.CreateFromYawPitchRoll(MagicianYawRadians, 0f, 0f);
+
+        DbVector3 SpawnPoint = Add(MagicianPosition, Rotate(AttackInformation.SpawnPointOffset, MagicianYawOnly));
+
+        float CameraYawRadians = ToRadians(Character.Rotation.Yaw + AttackInformation.CameraYawOffset);
+        float CameraPitchRadians = ToRadians(Character.Rotation.Pitch + AttackInformation.CameraPitchOffset);
+        Quaternion CameraRotation = Quaternion.CreateFromYawPitchRoll(CameraYawRadians, CameraPitchRadians, 0f);
+
+        DbVector3 CameraPosition = Add(MagicianPosition, Rotate(AttackInformation.CameraPositionOffset, CameraRotation));
+        DbVector3 CameraForward = Normalize(Rotate(new DbVector3(0f, 0f, 1f), CameraRotation));
+
+        Raycast CameraHit = RaycastMatch(Ctx, CameraPosition, CameraForward, AttackInformation.MaxDistance);
+        DbVector3 AimPoint = CameraHit.Hit ? CameraHit.HitPoint : Add(CameraPosition, Mul(CameraForward, AttackInformation.MaxDistance));
+
+        DbVector3 ShotDelta = Sub(AimPoint, SpawnPoint);
+        DbVector3 ShotDirection = Normalize(ShotDelta);
+        Raycast ShotHit = RaycastMatch(Ctx, SpawnPoint, ShotDirection, AttackInformation.MaxDistance);
+    } 
+
+    public static int TryFindTimerIndex(ref Magician Magician, string TimerName)
+    {
+        for (int TimerIndex = 0; TimerIndex < Magician.Timers.Count; TimerIndex++)
+        {
+            if (Magician.Timers[TimerIndex].Name == TimerName)
+                return TimerIndex;
+        }
+
+        throw new Exception("Requested Timer Not Found");
+    }
+
 }

@@ -37,19 +37,17 @@ public static partial class Module
         Box,
     }
 
-    
-
-    public partial struct Contact
-    {
-        public DbVector3 Normal; // Object B -> A
-        public float Depth;
-    }
-
-    public partial struct Raycast(DbVector3 position, DbVector3 forward, float maxDistance)
+    public partial struct Raycast2(DbVector3 position, DbVector3 forward, float maxDistance)
     {
         public DbVector3 Position = position;
         public DbVector3 Forward = forward;
         public float MaxDistance = maxDistance;
     }
+
+    
+
+    
+
+    
 
 }

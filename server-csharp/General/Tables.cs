@@ -4,7 +4,7 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-   [Table(Name = "logged_in_players", Public = true)]
+    [Table(Name = "logged_in_players", Public = true)]
     [Table(Name = "logged_out_players")]
     public partial struct Player
     {

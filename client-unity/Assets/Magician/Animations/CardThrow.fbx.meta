@@ -35,7 +35,7 @@ ModelImporter:
       takeName: CardThrow
       internalID: -2296460875742650652
       firstFrame: 0
-      lastFrame: 269
+      lastFrame: 42
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -54,70 +54,7 @@ ModelImporter:
       mirror: 0
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
-      events:
-      - time: 0.116197184
-        functionName: CardThrow
-        data: 
-        objectReferenceParameter: {fileID: 11500000, guid: e93a1e9e576ec4ddba74cd1abb92f2a6, type: 3}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.22832371
-        functionName: CardThrow
-        data: 
-        objectReferenceParameter: {fileID: 11500000, guid: e93a1e9e576ec4ddba74cd1abb92f2a6, type: 3}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.3381503
-        functionName: CardThrow
-        data: 
-        objectReferenceParameter: {fileID: 11500000, guid: e93a1e9e576ec4ddba74cd1abb92f2a6, type: 3}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.44508672
-        functionName: CardThrow
-        data: 
-        objectReferenceParameter: {fileID: 11500000, guid: e93a1e9e576ec4ddba74cd1abb92f2a6, type: 3}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.5635838
-        functionName: CardThrow
-        data: 
-        objectReferenceParameter: {fileID: 11500000, guid: e93a1e9e576ec4ddba74cd1abb92f2a6, type: 3}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.67341036
-        functionName: CardThrow
-        data: 
-        objectReferenceParameter: {fileID: 11500000, guid: e93a1e9e576ec4ddba74cd1abb92f2a6, type: 3}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.783237
-        functionName: CardThrow
-        data: 
-        objectReferenceParameter: {fileID: 11500000, guid: e93a1e9e576ec4ddba74cd1abb92f2a6, type: 3}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.89306355
-        functionName: CardThrow
-        data: 
-        objectReferenceParameter: {fileID: 11500000, guid: e93a1e9e576ec4ddba74cd1abb92f2a6, type: 3}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
-      - time: 0.9884393
-        functionName: CardThrowFinished
-        data: 
-        objectReferenceParameter: {fileID: 11500000, guid: e93a1e9e576ec4ddba74cd1abb92f2a6, type: 3}
-        floatParameter: 0
-        intParameter: 0
-        messageOptions: 0
+      events: []
       transformMask: []
       maskType: 3
       maskSource: {instanceID: 0}

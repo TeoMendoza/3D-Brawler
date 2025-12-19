@@ -12,9 +12,10 @@ public static partial class Module
     }
 
     [SpacetimeDB.Type]
-    public partial struct ConvexHullCollider(List<DbVector3> verticesLocal, float margin)
+    public partial struct ConvexHullCollider(List<DbVector3> verticesLocal, List<int> triangleIndicesLocal, float margin)
     {
         public List<DbVector3> VerticesLocal = verticesLocal;
+        public List<int> TriangleIndicesLocal = triangleIndicesLocal;
         public float Margin = margin;
     }
 
@@ -44,7 +45,12 @@ public static partial class Module
     public enum CollisionEntryType
     {
         Magician,
-        ThrowingCard,
         Map,
+    }
+
+    public partial struct Contact
+    {
+        public DbVector3 Normal; // Object B -> A
+        public float Depth;
     }
 }

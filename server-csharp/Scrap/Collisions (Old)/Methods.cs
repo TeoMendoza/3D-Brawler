@@ -30,14 +30,14 @@ public static partial class Module
         return false;
     }
 
-    public delegate bool RaycastOverlapFn(object a, Raycast Raycast, out DbVector3 Position);
+    public delegate bool RaycastOverlapFn(object a, Raycast2 Raycast, out DbVector3 Position);
 
     static readonly Dictionary<Shape, RaycastOverlapFn> RaycastOverlap = new()
     {
-        {  Shape.Capsule, (object a, Raycast Raycast, out DbVector3 p) => OverlapRaycastCapsule((CapsuleCollider)a, Raycast, out p) },
+        {  Shape.Capsule, (object a, Raycast2 Raycast, out DbVector3 p) => OverlapRaycastCapsule((CapsuleCollider)a, Raycast, out p) },
     };
 
-    static bool TryRaycastOverlap(Shape sa, object ca, Raycast Raycast, out DbVector3 Position)
+    static bool TryRaycastOverlap(Shape sa, object ca, Raycast2 Raycast, out DbVector3 Position)
     {
         if (RaycastOverlap.TryGetValue(sa, out var fn))
             return fn(ca, Raycast, out Position);
@@ -46,7 +46,7 @@ public static partial class Module
         return false;
     }
     
-    static bool OverlapRaycastCapsule(CapsuleCollider Capsule, Raycast Raycast, out DbVector3 Position)
+    static bool OverlapRaycastCapsule(CapsuleCollider Capsule, Raycast2 Raycast, out DbVector3 Position)
     {
         Position = default;
 

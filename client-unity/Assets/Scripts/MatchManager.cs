@@ -15,8 +15,6 @@ public class MatchManager : MonoBehaviour
     public DbConnection Conn;
     public Dictionary<Identity, MagicianController> Players = new();
     public MagicianController MagicianPrefab;
-    public Dictionary<uint, ThrowingCardController> ThrowingCards = new();
-    public ThrowingCardController ThrowingCardPrefab;
     public Dictionary<uint, MapPiece> MapPieces = new();
     public List<MapPiece> MapPrefabs;
     
@@ -37,8 +35,6 @@ public class MatchManager : MonoBehaviour
         Conn = GameManager.Conn;
         Conn.Db.Magician.OnInsert += AddNewCharacter;
         Conn.Db.Magician.OnDelete += RemoveCharacter;
-        Conn.Db.ThrowingCards.OnInsert += AddThrowingCard;
-        Conn.Db.ThrowingCards.OnDelete += RemoveThrowingCard;
         Conn.Db.Map.OnInsert += AddMapPiece;
         
         // I'm Not Entirely Sure These Are Needed
@@ -49,16 +45,6 @@ public class MatchManager : MonoBehaviour
                 var prefab = Instantiate(MagicianPrefab);
                 prefab.Initalize(Character);
                 Players.Add(Character.Identity, prefab);
-            }
-        }
-        
-        foreach (ThrowingCard throwingCard in Conn.Db.ThrowingCards.Iter())
-        {
-            if (throwingCard.MatchId == MatchId)
-            {
-                var prefab = Instantiate(ThrowingCardPrefab);
-                prefab.Initalize(throwingCard);
-                ThrowingCards.Add(throwingCard.Id, prefab);
             }
         }
 
@@ -113,29 +99,5 @@ public class MatchManager : MonoBehaviour
             }
         }
 
-    }
-    
-    public void AddThrowingCard(EventContext context, ThrowingCard throwingCard)
-    {
-        if (MatchId is not null && throwingCard.MatchId == MatchId)
-        {
-            var prefab = Instantiate(ThrowingCardPrefab);
-            prefab.Initalize(throwingCard);     
-            ThrowingCards.Add(throwingCard.Id, prefab);
-        } 
-    }
-    
-    public void RemoveThrowingCard(EventContext context, ThrowingCard throwingCard)
-    {
-        if (MatchId is not null && throwingCard.MatchId == MatchId)
-        {
-            ThrowingCards.TryGetValue(throwingCard.Id, out var prefab);
-            if (prefab != null)
-            {
-                prefab.Delete(context);
-                ThrowingCards.Remove(throwingCard.Id);
-            }
-        }
-            
     }
 }

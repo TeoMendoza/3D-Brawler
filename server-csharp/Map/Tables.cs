@@ -11,6 +11,6 @@ public static partial class Module
         public uint Id;
         [Unique]
         public string Name;
-        public ComplexCollider GjkCollider;
+        public ComplexCollider Collider;
     }
 }

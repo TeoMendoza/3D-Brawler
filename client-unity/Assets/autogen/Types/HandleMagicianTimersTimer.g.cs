@@ -13,7 +13,7 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class MoveThrowingCardsTimer
+    public sealed partial class HandleMagicianTimersTimer
     {
         [DataMember(Name = "scheduled_id")]
         public ulong ScheduledId;
@@ -22,7 +22,7 @@ namespace SpacetimeDB.Types
         [DataMember(Name = "tick_rate")]
         public float TickRate;
 
-        public MoveThrowingCardsTimer(
+        public HandleMagicianTimersTimer(
             ulong ScheduledId,
             SpacetimeDB.ScheduleAt ScheduledAt,
             float TickRate
@@ -33,7 +33,7 @@ namespace SpacetimeDB.Types
             this.TickRate = TickRate;
         }
 
-        public MoveThrowingCardsTimer()
+        public HandleMagicianTimersTimer()
         {
             this.ScheduledAt = null!;
         }
