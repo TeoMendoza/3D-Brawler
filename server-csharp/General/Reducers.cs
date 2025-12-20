@@ -15,26 +15,29 @@ public static partial class Module
         ctx.Db.Map.Insert(new Map {Name = "Ramp2", Collider = Ramp2Collider});
         ctx.Db.Map.Insert(new Map {Name = "Platform", Collider = PlatformCollider});
 
+        var Match = ctx.Db.match.Insert( new Match { maxPlayers = 12, currentPlayers = 1, inProgress = false });  
+
         ctx.Db.move_all_magicians.Insert(new Move_All_Magicians_Timer
         {
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
-            tick_rate = 1.0f / 60.0f
+            tick_rate = 1.0f / 60.0f,
+            MatchId = Match.Id
         });
 
         ctx.Db.handle_magician_timers_timer.Insert(new Handle_Magician_Timers_Timer
         {
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
-            tick_rate = 1.0f / 60.0f
+            tick_rate = 1.0f / 60.0f,
+            MatchId = Match.Id
         });
 
         ctx.Db.gravity_magician.Insert(new Gravity_Timer_Magician
         {
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
             tick_rate = 1.0f / 60.0f,
-            gravity = 20
+            gravity = 20,
+            MatchId = Match.Id
         });
-
-        var Match = ctx.Db.match.Insert( new Match { maxPlayers = 12, currentPlayers = 1, inProgress = false });  
 
         //Test Player
         ctx.Db.magician.Insert(new Magician
@@ -49,18 +52,13 @@ public static partial class Module
             CorrectedVelocity = new DbVector3 { x = 0, y = 0, z = 0 },
             Collider = MagicianIdleCollider,
             CollisionEntries = [new CollisionEntry(CollisionEntryType.Map, id: 1)],
-            IsColliding = true,
-            KinematicInformation = new KinematicInformation(jump: false, falling: false, crouched: false, grounded: true, sprinting: false),
+            IsColliding = false,
+            KinematicInformation = new KinematicInformation(jump: false, falling: false, crouched: false, grounded: false, sprinting: false),
             State = MagicianState.Default,
-            PlayerPermissionConfig =
-            [
-                new("CanWalk", []),
-                new("CanRun", []),
-                new("CanJump", []),
-                new("CanAttack", []),
-                new("CanCrouch", [])
-            ],
-            Timers = [new Timer("Attack", 0.7f, 0.7f)]
+            PlayerPermissionConfig = [new("CanWalk", []), new("CanRun", []), new("CanJump", []), new("CanCrouch", []), new("CanAttack", []), new("CanReload", [])],
+            Timers = [new Timer("Attack", 0.7f, 0.7f), new Timer("Reload", 2.2f, 2.2f)],
+            Bullets = new List<ThrowingCard>(),
+            BulletCapacity = 8
         });
     }
 
@@ -89,36 +87,39 @@ public static partial class Module
         var Matches = ctx.Db.match.Started.Filter(false);
         var MatchesList = Matches.ToList();
         var Match = MatchesList.Count > 0 ? MatchesList[0] : ctx.Db.match.Insert( new Match { maxPlayers = 12, currentPlayers = 0, inProgress = false });
-    
+
+        if (MatchesList.Count == 0)
+        {
+            ctx.Db.move_all_magicians.Insert(new Move_All_Magicians_Timer
+            {
+                scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
+                tick_rate = 1.0f / 60.0f,
+                MatchId = Match.Id
+            });
+
+            ctx.Db.handle_magician_timers_timer.Insert(new Handle_Magician_Timers_Timer
+            {
+                scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
+                tick_rate = 1.0f / 60.0f,
+                MatchId = Match.Id
+            });
+
+            ctx.Db.gravity_magician.Insert(new Gravity_Timer_Magician
+            {
+                scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(1000.0 / 60.0)),
+                tick_rate = 1.0f / 60.0f,
+                gravity = 20,
+                MatchId = Match.Id
+            });
+        }
+        
+
         Match.currentPlayers += 1;
         ctx.Db.match.Id.Update(Match);
 
-        ctx.Db.magician.Insert(
-            new Magician
-            {
-                identity = Player.identity,
-                Id = Player.Id,
-                Name = Player.Name,
-                MatchId = Match.Id,
-                Position = new DbVector3 { x = 0f, y = 0f, z = 0f},
-                Rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
-                Velocity = new DbVector3 { x = 0, y = 0, z = 0 },
-                CorrectedVelocity = new DbVector3 { x = 0, y = 0, z = 0 },
-                Collider = MagicianIdleCollider, 
-                CollisionEntries = [new CollisionEntry(CollisionEntryType.Map, id: 1)],
-                IsColliding = true,
-                KinematicInformation = new KinematicInformation(jump: false, falling: false, crouched: false, grounded: true, sprinting: false),
-                State = MagicianState.Default,
-                PlayerPermissionConfig =
-                [
-                    new("CanWalk", []),
-                    new("CanRun", []),
-                    new("CanJump", []),
-                    new("CanAttack", []),
-                    new("CanCrouch", [])
-                ],
-                Timers = [new Timer("Attack", 0.7f, 0.7f)]
-            });
+        MagicianConfig Config = new(Player, Match.Id, new DbVector3 { x = 0f, y = 0f, z = 0f});
+        Magician Magician = CreateMagician(Config);
+        ctx.Db.magician.Insert(Magician);
     }
 
     [Reducer(ReducerKind.ClientDisconnected)]

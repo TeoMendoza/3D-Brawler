@@ -6,14 +6,14 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
-    public enum MagicianState
+    [DataContract]
+    public sealed partial class ReloadInformation
     {
-        Default,
-        Attack,
-        Reload,
     }
 }

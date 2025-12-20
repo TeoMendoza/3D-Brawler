@@ -6,14 +6,25 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
-    public enum MagicianState
+    [DataContract]
+    public sealed partial class Effect
     {
-        Default,
-        Attack,
-        Reload,
+        [DataMember(Name = "Type")]
+        public EffectType Type;
+
+        public Effect(EffectType Type)
+        {
+            this.Type = Type;
+        }
+
+        public Effect()
+        {
+        }
     }
 }

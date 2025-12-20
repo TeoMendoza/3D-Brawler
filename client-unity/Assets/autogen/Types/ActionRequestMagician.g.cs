@@ -19,19 +19,24 @@ namespace SpacetimeDB.Types
         public MagicianState State;
         [DataMember(Name = "AttackInformation")]
         public AttackInformation AttackInformation;
+        [DataMember(Name = "ReloadInformation")]
+        public ReloadInformation ReloadInformation;
 
         public ActionRequestMagician(
             MagicianState State,
-            AttackInformation AttackInformation
+            AttackInformation AttackInformation,
+            ReloadInformation ReloadInformation
         )
         {
             this.State = State;
             this.AttackInformation = AttackInformation;
+            this.ReloadInformation = ReloadInformation;
         }
 
         public ActionRequestMagician()
         {
             this.AttackInformation = new();
+            this.ReloadInformation = new();
         }
     }
 }

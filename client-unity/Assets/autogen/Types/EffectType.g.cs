@@ -10,10 +10,8 @@ using System;
 namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
-    public enum MagicianState
+    public enum EffectType
     {
-        Default,
-        Attack,
-        Reload,
+        Damage,
     }
 }

@@ -10,7 +10,6 @@ public static partial class Module
     {
         [PrimaryKey]
         public Identity identity;
-
         [Unique, AutoInc]
         public uint Id;
         public string Name;

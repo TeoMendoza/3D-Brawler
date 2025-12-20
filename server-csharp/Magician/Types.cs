@@ -14,10 +14,11 @@ public static partial class Module
     }
 
     [SpacetimeDB.Type]
-    public partial struct ActionRequestMagician(MagicianState state, AttackInformation attackInformation)
+    public partial struct ActionRequestMagician(MagicianState state, AttackInformation attackInformation, ReloadInformation reloadInformation)
     {
         public MagicianState State = state;
         public AttackInformation AttackInformation = attackInformation;
+        public ReloadInformation ReloadInformation = reloadInformation;
     }
     
     [SpacetimeDB.Type]
@@ -31,15 +32,32 @@ public static partial class Module
     }
 
     [SpacetimeDB.Type]
+    public partial struct ReloadInformation() {} // Empty For Now - Might Have Info Later On
+
+    [SpacetimeDB.Type]
     public enum MagicianState
     {
         Default,
-        Attack
+        Attack,
+        Reload
     }
+
     [SpacetimeDB.Type]
-    public partial struct ThrowingCard
+    public partial struct ThrowingCard(List<Effect> effects)
     {
-        //public List<Effect> Effects; // Add once effects are being implemented
+        public List<Effect> Effects = effects;
+    }
+
+    [SpacetimeDB.Type]
+    public partial struct Effect(EffectType type)
+    {
+        public EffectType Type = type; // Add A Struct For Each Different Effect That Has The Neccessary Information - Similar To Action Request System
+    }
+
+    [SpacetimeDB.Type]
+    public enum EffectType
+    {
+        Damage, // Etc
     }
 
 }

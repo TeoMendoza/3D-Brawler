@@ -70,32 +70,129 @@ public static partial class Module
         Magician Character = Ctx.Db.magician.identity.Find(Identity) ?? throw new Exception("Magician Not Found");
         MagicianState OldState = Character.State;
 
-        if (GetPermissionEntry(Character.PlayerPermissionConfig, "CanAttack").Subscribers.Count == 0 && Request.State == MagicianState.Attack)
+        if (Request.State is MagicianState.Attack && GetPermissionEntry(Character.PlayerPermissionConfig, "CanAttack").Subscribers.Count == 0 && Character.Bullets.Count > 0)
         {
             Character.State = MagicianState.Attack;
             AddSubscriberUnique(GetPermissionEntry(Character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
+            AddSubscriberUnique(GetPermissionEntry(Character.PlayerPermissionConfig, "CanReload").Subscribers, "Attack");
             TryPerformAttack(Ctx, ref Character, Request.AttackInformation);
         }
 
-        else if (Request.State == MagicianState.Default)
-            Character.State = MagicianState.Default;
+        else if (Request.State is MagicianState.Reload && GetPermissionEntry(Character.PlayerPermissionConfig, "CanReload").Subscribers.Count == 0 && Character.Bullets.Count < Character.BulletCapacity)
+        {
+            Character.State = MagicianState.Reload;
+            AddSubscriberUnique(GetPermissionEntry(Character.PlayerPermissionConfig, "CanReload").Subscribers, "Reload");
+        }
 
         bool StateSwitched = OldState != Character.State;
         if (StateSwitched)
         {
+            ResetAllTimers(ref Character);
             switch (OldState)
             {
                 case MagicianState.Attack:
                     RemoveSubscriber(GetPermissionEntry(Character.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
+                    RemoveSubscriber(GetPermissionEntry(Character.PlayerPermissionConfig, "CanReload").Subscribers, "Attack");
+                    break;
+
+                case MagicianState.Reload:
+                    RemoveSubscriber(GetPermissionEntry(Character.PlayerPermissionConfig, "CanReload").Subscribers, "Reload");
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        Ctx.Db.magician.identity.Update(Character);
+    }
+
+    [Reducer]
+    public static void HandleMagicianTimers(ReducerContext Ctx, Handle_Magician_Timers_Timer timer)
+    {
+        float Time = timer.tick_rate;
+        foreach (Magician magician in Ctx.Db.magician.MatchId.Filter(timer.MatchId))
+        {
+            // If Certain Timers Ever Get Introduced That Are Irrelevant To Magician State, Seperate Timers Into Two Properties: Stateless and Stateful Timers, One That Relies On The State To Know Which Timer To Adjust, One That Adjusts All The Timers Regardless Of State. This Would Be The Stateful Timer
+            Magician Magician = magician;
+            Timer Timer;
+            switch (Magician.State)
+            {
+                case MagicianState.Attack:
+                    Timer = Magician.Timers[TryFindTimerIndex(ref Magician, "Attack")];
+                    Timer.CurrentTime -= Time;
+
+                    if (Timer.CurrentTime <= 0) 
+                    {
+                        Timer.CurrentTime = Timer.ResetTime;
+                        if (Magician.Bullets.Count > 0)
+                            Magician.State = MagicianState.Default;
+                        
+                        else {
+                            Magician.State = MagicianState.Reload;
+                            AddSubscriberUnique(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanReload").Subscribers, "Reload");
+                        }
+
+                        RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
+                        RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanReload").Subscribers, "Attack");  
+                    }
+
+                    Magician.Timers[TryFindTimerIndex(ref Magician, "Attack")] = Timer;
+                    break;
+                
+                case MagicianState.Reload:
+                    Timer = Magician.Timers[TryFindTimerIndex(ref Magician, "Reload")];
+                    Timer.CurrentTime -= Time;
+
+                    if (Timer.CurrentTime <= 0) 
+                    {
+                        Timer.CurrentTime = Timer.ResetTime;
+                        Magician.State = MagicianState.Default;
+                        RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanReload").Subscribers, "Reload");
+                        TryReload(Ctx, ref Magician);
+                    }
+
+                    Magician.Timers[TryFindTimerIndex(ref Magician, "Reload")] = Timer;
                     break;
 
                 case MagicianState.Default:
                     break;
+
+                default:
+                    break;
             }
+
+            Ctx.Db.magician.identity.Update(Magician);
         }
-        Ctx.Db.magician.identity.Update(Character);
     }
 
+    [Reducer]
+    public static void ApplyGravityMagician(ReducerContext ctx, Gravity_Timer_Magician Timer)
+    {
+        var Time = Timer.tick_rate;
+        foreach (var charac in ctx.Db.magician.MatchId.Filter(Timer.MatchId))
+        {
+            var character = charac;
+            character.Velocity.y = character.Velocity.y > -10f ? character.Velocity.y -= Timer.gravity * Time : -10f;
+            ctx.Db.magician.identity.Update(character);
+        }
+    }
+    
+    [Reducer]
+    public static void AddCollisionEntryMagician(ReducerContext ctx, CollisionEntry Entry, Identity TargetIdentity)
+    {
+        Magician Magician = ctx.Db.magician.identity.Find(TargetIdentity) ?? throw new Exception("Magician (Sender) Not Found");
+        if (Magician.CollisionEntries.Contains(Entry) is false) Magician.CollisionEntries.Add(Entry);
+        ctx.Db.magician.identity.Update(Magician);
+    }
+
+    [Reducer]
+    public static void RemoveCollisionEntryMagician(ReducerContext ctx, CollisionEntry Entry, Identity TargetIdentity)
+    {
+        Magician Magician = ctx.Db.magician.identity.Find(TargetIdentity) ?? throw new Exception("Magician (Sender) Not Found");
+        if (Magician.CollisionEntries.Contains(Entry) is true) Magician.CollisionEntries.Remove(Entry);
+        ctx.Db.magician.identity.Update(Magician);
+    }
 
     [Reducer]
     public static void MoveMagicians(ReducerContext Ctx, Move_All_Magicians_Timer Timer)
@@ -104,7 +201,7 @@ public static partial class Module
         float MinTimeStep = 1e-4f;
         int MaxSubsteps = 4;
 
-        foreach (var CharacterRow in Ctx.Db.magician.Iter())
+        foreach (var CharacterRow in Ctx.Db.magician.MatchId.Filter(Timer.MatchId))
         {
             Magician Character = CharacterRow;
 
@@ -171,71 +268,6 @@ public static partial class Module
 
             Ctx.Db.magician.identity.Update(Character);
         }
-    }
-
-
-    [Reducer]
-    public static void HandleMagicianTimers(ReducerContext ctx, Handle_Magician_Timers_Timer timer)
-    {
-        float time = timer.tick_rate;
-        foreach (Magician magician in ctx.Db.magician.Iter())
-        {
-            // If Certain Timers Ever Get Introduced That Are Irrelevant To Magician State, Seperate Timers Into Two Properties: Stateless and Stateful Timers, One That Relies On The State To Know Which Timer To Adjust, One That Adjusts All The Timers Regardless Of State. This Would Be The Stateful Timer
-
-            Magician Magician = magician;
-            switch (Magician.State)
-            {
-                case MagicianState.Attack:
-                    Timer Timer = Magician.Timers[TryFindTimerIndex(ref Magician, "Attack")];
-                    Timer.CurrentTime -= time;
-
-                    if (Timer.CurrentTime <= 0) 
-                    {
-                        Timer.CurrentTime = Timer.ResetTime;
-                        Magician.State = MagicianState.Default;
-                        RemoveSubscriber(GetPermissionEntry(Magician.PlayerPermissionConfig, "CanAttack").Subscribers, "Attack");
-                    }
-
-                    Magician.Timers[TryFindTimerIndex(ref Magician, "Attack")] = Timer;
-                    break;
-
-                case MagicianState.Default:
-                    break;
-
-                default:
-                    break;
-            }
-
-            ctx.Db.magician.identity.Update(Magician);
-        }
-    }
-
-    [Reducer]
-    public static void ApplyGravityMagician(ReducerContext ctx, Gravity_Timer_Magician timer)
-    {
-        var time = timer.tick_rate;
-        foreach (var charac in ctx.Db.magician.Iter())
-        {
-            var character = charac;
-            character.Velocity.y = character.Velocity.y > -10f ? character.Velocity.y -= timer.gravity * time : -10f;
-            ctx.Db.magician.identity.Update(character);
-        }
-    }
-    
-    [Reducer]
-    public static void AddCollisionEntryMagician(ReducerContext ctx, CollisionEntry Entry, Identity TargetIdentity)
-    {
-        Magician Magician = ctx.Db.magician.identity.Find(TargetIdentity) ?? throw new Exception("Magician (Sender) Not Found");
-        if (Magician.CollisionEntries.Contains(Entry) is false) Magician.CollisionEntries.Add(Entry);
-        ctx.Db.magician.identity.Update(Magician);
-    }
-
-    [Reducer]
-    public static void RemoveCollisionEntryMagician(ReducerContext ctx, CollisionEntry Entry, Identity TargetIdentity)
-    {
-        Magician Magician = ctx.Db.magician.identity.Find(TargetIdentity) ?? throw new Exception("Magician (Sender) Not Found");
-        if (Magician.CollisionEntries.Contains(Entry) is true) Magician.CollisionEntries.Remove(Entry);
-        ctx.Db.magician.identity.Update(Magician);
     }
     
 }

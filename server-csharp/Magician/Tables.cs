@@ -27,8 +27,8 @@ public static partial class Module
         public KinematicInformation KinematicInformation;
         public List<PermissionEntry> PlayerPermissionConfig;
         public List<Timer> Timers;
-
-        //public List<ThrowingCard> AttackMagazine;
+        public List<ThrowingCard> Bullets;
+        public int BulletCapacity;
     }
     
    [Table(Name = "move_all_magicians", Scheduled = nameof(MoveMagicians), ScheduledAt = nameof(scheduled_at))]
@@ -37,6 +37,7 @@ public static partial class Module
         [PrimaryKey, AutoInc] public ulong scheduled_id;
         public ScheduleAt scheduled_at;
         public float tick_rate;
+        public uint MatchId;
     }
 
     [Table(Name = "gravity_magician", Scheduled = nameof(ApplyGravityMagician), ScheduledAt = nameof(scheduled_at))]
@@ -46,6 +47,7 @@ public static partial class Module
         public ScheduleAt scheduled_at;
         public float tick_rate;
         public float gravity;
+        public uint MatchId;
     }
 
     [Table(Name = "handle_magician_timers_timer", Scheduled = nameof(HandleMagicianTimers), ScheduledAt = nameof(scheduled_at))]
@@ -54,6 +56,7 @@ public static partial class Module
         [PrimaryKey, AutoInc] public ulong scheduled_id;
         public ScheduleAt scheduled_at;
         public float tick_rate;
+        public uint MatchId;
     }
 
     

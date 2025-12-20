@@ -255,8 +255,25 @@ public static partial class Module
         return true;
     }
 
+    public static void TryReload(ReducerContext Ctx, ref Magician Character)
+    {
+        int BulletCapacity = Character.BulletCapacity;
+        int MissingBullets = BulletCapacity - Character.Bullets.Count;
+        if (MissingBullets <= 0) return; // Safe Guard
+
+        List<ThrowingCard> NewBullets = new List<ThrowingCard>(MissingBullets);
+        for (int BulletIndex = 0; BulletIndex < MissingBullets; BulletIndex++)
+            NewBullets.Add(CreateThrowingCard());
+
+        Character.Bullets.InsertRange(0, NewBullets);
+    }
+
     public static void TryPerformAttack(ReducerContext Ctx, ref Magician Character, AttackInformation AttackInformation)
     {
+        int LastIndex = Character.Bullets.Count - 1;
+        ThrowingCard Bullet = Character.Bullets[LastIndex];
+        Character.Bullets.RemoveAt(LastIndex);
+
         DbVector3 MagicianPosition = Character.Position;
 
         float MagicianYawRadians = ToRadians(Character.Rotation.Yaw);
@@ -277,7 +294,23 @@ public static partial class Module
         DbVector3 ShotDelta = Sub(AimPoint, SpawnPoint);
         DbVector3 ShotDirection = Normalize(ShotDelta);
         Raycast ShotHit = RaycastMatch(Ctx, SpawnPoint, ShotDirection, AttackInformation.MaxDistance);
+
+        if (ShotHit.Hit) 
+            Log.Info($"Hitscan Hit Type={ShotHit.HitType} Distance={ShotHit.HitDistance} EntityId={ShotHit.HitEntityId}"); 
+        
+        else
+            Log.Info("Hitscan Miss");
     } 
+
+    public static void ResetAllTimers(ref Magician Magician)
+    {
+        for (int TimerIndex = 0; TimerIndex < Magician.Timers.Count; TimerIndex++)
+        {
+            Timer CurrentTimer = Magician.Timers[TimerIndex];
+            CurrentTimer.CurrentTime = CurrentTimer.ResetTime;
+            Magician.Timers[TimerIndex] = CurrentTimer;
+        }
+    }
 
     public static int TryFindTimerIndex(ref Magician Magician, string TimerName)
     {
