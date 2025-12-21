@@ -149,7 +149,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MagicianPrefab: {fileID: 3838300054775145683, guid: 9cac75c6e83db44a488f7f31d8e9a9b3, type: 3}
-  ThrowingCardPrefab: {fileID: 4753613909389792992, guid: 45a99bf801c8a486aa152076d1859586, type: 3}
   MapPrefabs:
   - {fileID: 4101123262796976276, guid: a24d05f48d0724df69c860b4a3e8fd8e, type: 3}
   - {fileID: 6537649743902597972, guid: b3d0590656a04451da247dcf2541587e, type: 3}
@@ -520,8 +519,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1218510311}
   - component: {fileID: 1218510310}
-  - component: {fileID: 1218510309}
   - component: {fileID: 1218510312}
+  - component: {fileID: 1218510313}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -529,18 +528,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1218510309
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1218510308}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e016ef92e52934343857fd26e55140c1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1218510310
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -581,6 +568,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lockOnStart: 1
+--- !u!114 &1218510313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1218510308}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e016ef92e52934343857fd26e55140c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2128267509
 PrefabInstance:
   m_ObjectHideFlags: 0
