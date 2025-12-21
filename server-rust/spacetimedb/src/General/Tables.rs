@@ -1,9 +1,23 @@
 use std::time::Duration;
-use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use spacetimedb::{table, rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp, UniqueColumn};
 
-#[spacetimedb::table(name = config, public)]
-pub struct Config {
+#[table(name = logged_in_players, public)]
+#[table(name = logged_out_players)]
+pub struct Player {
     #[primary_key]
-    pub id: i32,
-    pub world_size: i64,
+    pub identity: Identity,
+    #[unique] #[auto_inc]
+    pub id: u64,
+    pub name: String
+
+}
+
+#[table(name = game, public)]
+pub struct Game {
+    #[unique] #[primary_key] #[auto_inc]
+    pub id: u64,
+    pub maxPlayers: u32,
+    pub currentPlayers: u32,
+    #[index(btree)]
+    pub inProgress: bool
 }

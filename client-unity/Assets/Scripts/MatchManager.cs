@@ -32,6 +32,7 @@ public class MatchManager : MonoBehaviour
 
     public void InitializeMatch(uint MatchId)
     {
+        this.MatchId = MatchId;
         Conn = GameManager.Conn;
         Conn.Db.Magician.OnInsert += AddNewCharacter;
         Conn.Db.Magician.OnDelete += RemoveCharacter;
