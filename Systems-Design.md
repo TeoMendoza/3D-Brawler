@@ -4,7 +4,7 @@ This document provides a technical overview of the backend architecture of 3D Br
 
 Lower-level implementation details and rapidly evolving subsystems are intentionally excluded to keep the document focused, approachable, and centered on the broader architectural vision.
 
-## Developer Note (Document Update)
+## Developer Note (Document Update - December 2025)
 
 This document was originally written to guide early and mid-stage development of the project and reflects the architectural understanding at that time. The majority of the structure described here remains accurate and continues to inform the current implementation.
 
