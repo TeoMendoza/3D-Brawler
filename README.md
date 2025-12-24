@@ -12,7 +12,7 @@ Though combat is grounded in realistic physics, variety emerges from both charac
 - [x] SpacetimeDB Tutorial Game  
 - [x] Systems Design Document Refinement  
 - [x] Character Design Refinement  
-- [x] Initial SpacetimeDB–Unity Integration and Basic Multiplayer Synchronization  
+- [x] Initial SpacetimeDB & Unity Integration + Basic Multiplayer Synchronization  
 - [x] Physics Engine Prototype (Primitive Colliders)  
 - [x] Physics Engine 2.0 (Generalized Convex Shape Support + GJK/EPA Collision Algorithms)  
 - [ ] Migrate SpacetimeDB Backend from C# to Rust  
