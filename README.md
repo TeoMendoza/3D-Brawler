@@ -9,16 +9,23 @@ Though combat is grounded in realistic physics, variety emerges from both charac
 ---
 
 ## Roadmap
-- [x] Spacetime DB Tutorial Game
-- [x] Systems Document Refinement
-- [x] Character Design Refinement
-- [ ] Initial Spacetime DB connection with Unity
-- [ ] Create simple rigged model with animations
-- [ ] Gameplay prototype with basic multiplayer sync, attack handling, and projectile registration.
-- [ ] Implement first playable character (The Magician)
-- [ ] Model and implement map  
-- [ ] Model and implement second and third playable characters (The Hunter, The Monk)  
-- [ ] Ending polish, gameplay balancing, map changes
+- [x] SpacetimeDB Tutorial Game  
+- [x] Systems Design Document Refinement  
+- [x] Character Design Refinement  
+- [x] Initial SpacetimeDB–Unity Integration and Basic Multiplayer Synchronization  
+- [x] Physics Engine Prototype (Primitive Colliders)  
+- [x] Physics Engine 2.0 (Generalized Convex Shape Support + GJK/EPA Collision Algorithms)  
+- [ ] Migrate SpacetimeDB Backend from C# to Rust  
+- [ ] Server-Side Raycasting for Attack and Projectile Registration  
+- [ ] Implement First Playable Character (The Magician)  
+- [ ] Model and Implement Initial Multiplayer Map  
+- [ ] Gameplay Testing, Iteration, and Mechanical Adjustment  
+- [ ] Full Art, Animation, and Sound Design for First Playable Version  
+- [ ] Final Polish, Testing, and Balance Pass  
+
+### Longer-Term / Out-of-Scope
+- [ ] Implement Additional Playable Characters (The Monk, The Hunter)  
+- [ ] Full Game Release
 
 ---
 
