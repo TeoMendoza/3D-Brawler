@@ -4,6 +4,13 @@ This document provides a technical overview of the backend architecture of 3D Br
 
 Lower-level implementation details and rapidly evolving subsystems are intentionally excluded to keep the document focused, approachable, and centered on the broader architectural vision.
 
+## Developer Note (Document Update)
+
+This document was originally written to guide early and mid-stage development of the project and reflects the architectural understanding at that time. The majority of the structure described here remains accurate and continues to inform the current implementation.
+
+As development progressed, some subsystems evolved beyond their original design, particularly those related to physics, simulation constraints, and backend performance. These changes primarily affect lower-level implementation details rather than the high-level architecture presented in this document.
+
+Following the upcoming backend migration to Rust, this document will be revised to reflect the updated architecture and performance oriented design decisions introduced during that phase.
 
 ## 1. Game Initialization & Ownership
 
