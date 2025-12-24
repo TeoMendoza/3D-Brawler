@@ -23,9 +23,9 @@ Though combat is grounded in realistic physics, variety emerges from both charac
 - [ ] Full Art, Animation, and Sound Design for First Playable Version  
 - [ ] Final Polish, Testing, and Balance Pass  
 
-### Longer-Term / Out-of-Scope
-- [ ] Implement Additional Playable Characters (The Monk, The Hunter)  
-- [ ] Full Game Release
+  ### Long Term Goals
+  - [ ] Implement Additional Playable Characters (The Monk, The Hunter)  
+  - [ ] Full Game Release
 
 ---
 
