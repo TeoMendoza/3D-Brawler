@@ -1,3 +1,10 @@
 use std::time::Duration;
-use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use spacetimedb::{table, rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use crate::*;
 
+#[spacetimedb::table(name = Map, public)]
+pub struct Map {
+    #[primary_key] #[auto_inc] pub id: u32,
+    #[unique] pub name: String,
+    pub collider: ComplexCollider,
+}

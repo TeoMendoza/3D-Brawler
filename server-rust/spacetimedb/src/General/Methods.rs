@@ -1,6 +1,12 @@
 use std::time::Duration;
 use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
 
+use crate::*;
+use crate::Collisions::*;
+use crate::Map::*;
+use crate::Magician::*;
+
+
 pub fn AddSubscriberUnique(subscribers: &mut Vec<String>, reason: &str) -> ()
 {
     if subscribers.iter().any(|existing| existing == reason) {

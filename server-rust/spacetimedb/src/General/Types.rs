@@ -2,14 +2,14 @@ use std::time::Duration;
 use spacetimedb::{table, rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp, UniqueColumn};
 
 
-#[derive(SpacetimeType, Clone, Debug)]
+#[derive(SpacetimeType, Clone, Debug, Copy)]
 struct DbVector3 {
     pub x: f32,
     pub y: f32,
     pub z: f32
 }
 
-#[derive(SpacetimeType, Clone, Debug)]
+#[derive(SpacetimeType, Clone, Debug, Copy)]
 struct DbRotation2 {
     pub yaw: f32, // Y axis, horizontal
     pub pitch: f32, // X axis, vertical
@@ -23,10 +23,10 @@ struct PermissionEntry {
 
 #[derive(SpacetimeType, Clone, Debug)]
 pub struct MovementRequest {
-    pub moveForward: bool,
-    pub moveBackward: bool,
-    pub moveLeft: bool,
-    pub moveRight: bool,
+    pub move_forward: bool,
+    pub move_backward: bool,
+    pub move_left: bool,
+    pub move_right: bool,
     pub sprint: bool,
     pub jump: bool,
     pub crouch: bool,
@@ -41,6 +41,6 @@ pub enum CharacterType {
 #[derive(SpacetimeType, Clone, Debug)]
 pub struct Timer {
     pub name: String,
-    pub resetTime: f32, // Seconds
-    pub currentTime: f32, // Seconds
+    pub reset_time: f32, // Seconds
+    pub current_time: f32, // Seconds
 }
