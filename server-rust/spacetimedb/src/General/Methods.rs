@@ -1,11 +1,6 @@
 use std::time::Duration;
 use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
-
 use crate::*;
-use crate::Collisions::*;
-use crate::Map::*;
-use crate::Magician::*;
-
 
 pub fn AddSubscriberUnique(subscribers: &mut Vec<String>, reason: &str) -> ()
 {
@@ -21,7 +16,7 @@ pub fn RemoveSubscriber(subscribers: &mut Vec<String>, reason: &str) {
     }
 }
 
-pub fn GetPermissionEntry(entries: &mut Vec<PermissionEntry>, key: &str) -> Option<&mut PermissionEntry>
+pub fn GetPermissionEntry<'a>(entries: &'a mut Vec<PermissionEntry>, key: &str) -> Option<&'a mut PermissionEntry>
 {
     for entry in entries.iter_mut() {
         if entry.key == key {
@@ -31,4 +26,5 @@ pub fn GetPermissionEntry(entries: &mut Vec<PermissionEntry>, key: &str) -> Opti
     
     None
 }
+
 

@@ -1,22 +1,22 @@
 use std::time::Duration;
 use spacetimedb::{table, rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp, UniqueColumn};
+use crate::*;
 
-
-#[derive(SpacetimeType, Clone, Debug, Copy)]
-struct DbVector3 {
+#[derive(SpacetimeType, Clone, Debug, Copy, Default)]
+pub struct DbVector3 {
     pub x: f32,
     pub y: f32,
     pub z: f32
 }
 
 #[derive(SpacetimeType, Clone, Debug, Copy)]
-struct DbRotation2 {
+pub struct DbRotation2 {
     pub yaw: f32, // Y axis, horizontal
     pub pitch: f32, // X axis, vertical
 }
 
 #[derive(SpacetimeType, Clone, Debug)]
-struct PermissionEntry {
+pub struct PermissionEntry {
     pub key: String,
     pub subscribers: Vec<String>,
 }

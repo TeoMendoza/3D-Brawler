@@ -1,9 +1,6 @@
 use std::time::Duration;
 use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
 use crate::*;
-use crate::General::Tables::*;
-use crate::Magician::Tables::*;
-use crate::Map::Tables::*;
 
 
 #[spacetimedb::reducer]
@@ -152,7 +149,7 @@ pub fn HandleActionChangeRequestMagician(ctx: &ReducerContext, request: ActionRe
 pub fn HandleMagicianTimers(ctx: &ReducerContext, timer: HandleMagicianTimersTimer) {
     let time: f32 = timer.tick_rate;
 
-    for magician_row in ctx.db.magician().match_id().filter(timer.match_id) {
+    for magician_row in ctx.db.magician().game_id().filter(timer.game_id) {
         let mut magician = magician_row;
 
         match magician.state {
@@ -211,7 +208,7 @@ pub fn HandleMagicianTimers(ctx: &ReducerContext, timer: HandleMagicianTimersTim
 pub fn ApplyGravityMagician(ctx: &ReducerContext, timer: GravityTimerMagician) {
     let time: f32 = timer.tick_rate;
 
-    for character_row in ctx.db.magician().match_id().filter(timer.match_id) {
+    for character_row in ctx.db.magician().game_id().filter(timer.game_id) {
         let mut character = character_row;
 
         if character.velocity.y > -10.0 { character.velocity.y -= timer.gravity * time; }
@@ -241,7 +238,7 @@ pub fn MoveMagicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) {
     let min_time_step: f32 = 1e-4;
     let max_substeps: i32 = 4;
 
-    for character_row in ctx.db.magician().match_id().filter(timer.match_id) {
+    for character_row in ctx.db.magician().game_id().filter(timer.game_id) {
         let mut character = character_row;
 
         let was_grounded: bool = character.kinematic_information.grounded;
@@ -255,7 +252,8 @@ pub fn MoveMagicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) {
         }
 
         if pre_contacts.len() > 0 {
-            ResolveContacts(&mut character, &pre_contacts, &character.velocity);
+            let input_velocity = character.velocity;
+            ResolveContacts(&mut character, &pre_contacts, input_velocity);
         }
 
         let mut remaining_time: f32 = tick_time;
@@ -272,8 +270,11 @@ pub fn MoveMagicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) {
                 z: character.position.z + step_velocity.z * step_time,
             };
 
-            for entry in character.collision_entries.iter() {
-                if TryForceOverlapForEntry(ctx, &mut character, entry, was_grounded) { break; }
+            let collision_entries_snapshot = character.collision_entries.clone();
+            for entry in collision_entries_snapshot.iter() {
+                if TryForceOverlapForEntry(ctx, &mut character, entry, was_grounded) {
+                    break;
+                }
             }
 
             let mut post_contacts: Vec<CollisionContact> = Vec::new();
@@ -282,7 +283,8 @@ pub fn MoveMagicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) {
             }
 
             if post_contacts.len() > 0 {
-                ResolveContacts(&mut character, &post_contacts, &character.velocity);
+                let input_velocity = character.velocity;
+                ResolveContacts(&mut character, &post_contacts, input_velocity);
             }
 
             remaining_time -= step_time;

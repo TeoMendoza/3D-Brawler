@@ -1,44 +1,40 @@
 use std::time::Duration;
 use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
 use crate::*;
-use crate::General::Tables::*;
-use crate::Magician::Tables::*;
-use crate::Map::Tables::*;
-
 
 #[spacetimedb::reducer(init)]
 pub fn init(ctx: &ReducerContext) {
     log::info!("Initializing...");
 
-    ctx.db.map().insert(Map { name: "Floor".to_string(), collider: FloorCollider });
-    ctx.db.map().insert(Map { name: "Ramp".to_string(), collider: RampCollider });
-    ctx.db.map().insert(Map { name: "Ramp2".to_string(), collider: Ramp2Collider });
-    ctx.db.map().insert(Map { name: "Platform".to_string(), collider: PlatformCollider });
+    ctx.db.map().insert(Map {id: 0, name: "Floor".to_string(), collider: FloorCollider() });
+    ctx.db.map().insert(Map {id: 0, name: "Ramp".to_string(), collider: RampCollider() });
+    ctx.db.map().insert(Map {id: 0, name: "Ramp2".to_string(), collider: Ramp2Collider() });
+    ctx.db.map().insert(Map {id: 0, name: "Platform".to_string(), collider: PlatformCollider() });
 
-    let game = ctx.db.game().insert(Game {max_players: 12, current_players: 1, in_progress: false });
+    let game = ctx.db.game().insert(Game {id: 0, max_players: 12, current_players: 1, in_progress: false });
 
     let tick_millis: u64 = 1000 / 60;
     let tick_rate: f32 = 1.0 / 60.0;
 
-    ctx.db.move_all_magicians_timer().insert(MoveAllMagiciansTimer {scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: game.id });
-    ctx.db.handle_magician_timers_timer().insert(HandleMagicianTimersTimer {scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: game.id });
-    ctx.db.gravity_magician_timer().insert(GravityTimerMagician {scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, gravity: 20, game_id: game.id });
+    ctx.db.move_all_magicians().insert(MoveAllMagiciansTimer {scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: game.id });
+    ctx.db.handle_magician_timers_timer().insert(HandleMagicianTimersTimer {scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: game.id });
+    ctx.db.gravity_magician().insert(GravityTimerMagician {scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, gravity: 20.0, game_id: game.id });
 
     ctx.db.magician().insert(Magician {
         identity: Identity::default(),
         id: 10000,
         name: "Test Magician".to_string(),
-        match_id: game.id,
+        game_id: game.id,
         position: DbVector3 { x: 0.0, y: 0.0, z: 5.0 },
-        rotation: DbRotation2 { yaw: 180, pitch: 0 },
+        rotation: DbRotation2 { yaw: 180.0, pitch: 0.0 },
         velocity: DbVector3 { x: 0.0, y: 0.0, z: 0.0 },
         corrected_velocity: DbVector3 { x: 0.0, y: 0.0, z: 0.0 },
-        collider: MagicianIdleCollider,
+        collider: MagicianIdleCollider(),
         collision_entries: vec![CollisionEntry { entry_type: CollisionEntryType::Map, id: 1 }],
         is_colliding: false,
         kinematic_information: KinematicInformation { jump: false, falling: false, crouched: false, grounded: false, sprinting: false },
         state: MagicianState::Default,
-        player_permission_config: vec![PermissionEntry { key: "CanWalk".to_string(), values: vec![] }, PermissionEntry { key: "CanRun".to_string(), values: vec![] }, PermissionEntry { key: "CanJump".to_string(), values: vec![] }, PermissionEntry { key: "CanCrouch".to_string(), values: vec![] }, PermissionEntry { key: "CanAttack".to_string(), values: vec![] }, PermissionEntry { key: "CanReload".to_string(), values: vec![] }],
+        player_permission_config: vec![PermissionEntry { key: "CanWalk".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanRun".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanJump".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanCrouch".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanAttack".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanReload".to_string(), subscribers: vec![] }],
         timers: vec![Timer { name: "Attack".to_string(), current_time: 0.7, reset_time: 0.7 }, Timer { name: "Reload".to_string(), current_time: 2.2, reset_time: 2.2 }],
         bullets: Vec::new(),
         bullet_capacity: 8,
@@ -58,32 +54,32 @@ pub fn Connect(ctx: &ReducerContext) {
     } 
 
     else {
-        ctx.db.logged_in_players().insert(Player { identity: ctx.sender, name: "Test Player".to_string() });
+        ctx.db.logged_in_players().insert(Player {id: 0, identity: ctx.sender, name: "Test Player".to_string() });
     }
 
     let player = ctx.db.logged_in_players().identity().find(ctx.sender).expect("Player not found after insert/restore");
+    let mut game: Game = match ctx.db.game().in_progress().filter(false).next() {
+        Some(existing_game) => existing_game,
+        None => {
+            let created_game = ctx.db.game().insert(Game { id: 0, max_players: 12, current_players: 0, in_progress: false });
 
-    let mut game_list: Vec<Game> = ctx.db.game().in_progress().filter(false).collect();
-    let mut game: Game;
-    if game_list.len() > 0 {
-        game = game_list[0];
-    } 
-    
-    else {
+            let tick_millis: u64 = 1000 / 60;
+            let tick_rate: f32 = 1.0 / 60.0;
 
-        game = ctx.db.game().insert(Game {max_players: 12, current_players: 0, in_progress: false });
-        let tick_millis: u64 = 1000 / 60;
-        let tick_rate: f32 = 1.0 / 60.0;
+            ctx.db.move_all_magicians().insert(MoveAllMagiciansTimer { scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: created_game.id });
+            ctx.db.handle_magician_timers_timer().insert(HandleMagicianTimersTimer { scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: created_game.id });
+            ctx.db.gravity_magician().insert(GravityTimerMagician { scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, gravity: 20.0, game_id: created_game.id });
 
-        ctx.db.move_all_magicians_timer().insert(MoveAllMagiciansTimer {scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: game.id });
-        ctx.db.handle_magician_timers_timer().insert(HandleMagicianTimersTimer {scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: game.id });
-        ctx.db.gravity_magician_timer().insert(GravityTimerMagician {scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, gravity: 20, game_id: game.id });
-    }
+            created_game
+        }
+    };
+
 
     game.current_players += 1;
+    let game_id = game.id;
     ctx.db.game().id().update(game);
 
-    let magician_config = MagicianConfig::new(player, game.id, DbVector3 { x: 0.0, y: 0.0, z: 0.0 });
+    let magician_config = MagicianConfig {player, game_id: game_id, position: DbVector3 { x: 0.0, y: 0.0, z: 0.0 }};
     let magician = CreateMagician(magician_config);
     ctx.db.magician().insert(magician);
 }
@@ -94,7 +90,7 @@ pub fn Disconnect(ctx: &ReducerContext) {
     let player = ctx.db.logged_in_players().identity().find(ctx.sender).expect("Player not found");
     let magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician not found");
 
-    let game_option = ctx.db.game().id().find(magician.match_id);
+    let game_option = ctx.db.game().id().find(magician.game_id);
     if game_option.is_some() {
         let mut game = game_option.unwrap();
         if game.current_players > 0 {
@@ -113,8 +109,8 @@ pub fn Disconnect(ctx: &ReducerContext) {
         }
     }
 
-    ctx.db.logged_out_players().insert(player);
     ctx.db.logged_in_players().identity().delete(player.identity);
-
+    ctx.db.logged_out_players().insert(player);
+    
     log::info!("{} just disconnected.", ctx.sender);
 }

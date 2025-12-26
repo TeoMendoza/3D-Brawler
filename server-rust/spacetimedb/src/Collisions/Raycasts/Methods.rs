@@ -1,9 +1,6 @@
 use std::time::Duration;
 use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
 use crate::*;
-use crate::Collisions::*;
-use crate::Map::*;
-use crate::Magician::*;
 
 pub fn RaycastMatch(ctx: &ReducerContext, ray_origin: DbVector3, ray_direction: DbVector3, max_distance: f32) -> Raycast {
     let mut has_hit: bool = false;
@@ -15,7 +12,7 @@ pub fn RaycastMatch(ctx: &ReducerContext, ray_origin: DbVector3, ray_direction: 
 
     let magician: Magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician not found");
 
-    for other in ctx.db.magician().match_id().filter(magician.match_id) {
+    for other in ctx.db.magician().game_id().filter(magician.game_id) {
         if other.identity == ctx.sender { continue; }
 
         let hit: Raycast = RaycastComplexCollider(ray_origin, ray_direction, best_distance, other.collider.clone(), other.position, ToRadians(other.rotation.yaw), RaycastHitType::Magician, other.identity, other.id as i64);

@@ -1,27 +1,23 @@
 use std::time::Duration;
 use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
-
 use crate::*;
-use crate::Collisions::*;
-use crate::Map::*;
-use crate::Magician::*;
 
 
 pub fn CreateMagician(config: MagicianConfig) -> Magician {
     let player = config.player;
-    let match_id = config.match_id;
+    let game_id = config.game_id;
     let position = config.position;
 
     let mut magician = Magician {
         identity: player.identity,
         id: player.id,
         name: player.name,
-        match_id,
+        game_id,
         position,
         rotation: DbRotation2 { yaw: 0.0, pitch: 0.0 },
         velocity: DbVector3 { x: 0.0, y: 0.0, z: 0.0 },
         corrected_velocity: DbVector3 { x: 0.0, y: 0.0, z: 0.0 },
-        collider: MagicianIdleCollider,
+        collider: MagicianIdleCollider(),
         collision_entries: vec![CollisionEntry { entry_type: CollisionEntryType::Map, id: 1 }],
         is_colliding: false,
         state: MagicianState::Default,

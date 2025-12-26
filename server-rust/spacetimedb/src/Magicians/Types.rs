@@ -1,7 +1,8 @@
 use std::time::Duration;
 use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use crate::*;
 
-#[spacetimedb::type]
+#[derive(SpacetimeType)]
 pub struct KinematicInformation {
     pub jump: bool,
     pub falling: bool,
@@ -10,14 +11,14 @@ pub struct KinematicInformation {
     pub sprinting: bool,
 }
 
-#[spacetimedb::type]
+#[derive(SpacetimeType)]
 pub struct ActionRequestMagician {
     pub state: MagicianState,
     pub attack_information: AttackInformation,
     pub reload_information: ReloadInformation,
 }
 
-#[spacetimedb::type]
+#[derive(SpacetimeType)]
 pub struct AttackInformation {
     pub camera_position_offset: DbVector3,
     pub camera_yaw_offset: f32,
@@ -26,27 +27,27 @@ pub struct AttackInformation {
     pub max_distance: f32,
 }
 
-#[spacetimedb::type]
+#[derive(SpacetimeType)]
 pub struct ReloadInformation {}
 
-#[spacetimedb::type]
+#[derive(SpacetimeType, PartialEq, Eq, Copy)]
 pub enum MagicianState {
     Default,
     Attack,
     Reload,
 }
 
-#[spacetimedb::type]
+#[derive(SpacetimeType, Clone)]
 pub struct ThrowingCard {
     pub effects: Vec<Effect>,
 }
-
-#[spacetimedb::type]
+#[derive(SpacetimeType)]
 pub struct Effect {
     pub effect_type: EffectType,
 }
 
-#[spacetimedb::type]
+#[derive(SpacetimeType)]
+#[derive(PartialEq, Eq)]
 pub enum EffectType {
     Damage,
 }

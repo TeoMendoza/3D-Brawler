@@ -1,5 +1,7 @@
 use std::time::Duration;
 use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use glam::Quat;
+use crate::*;
 
 pub fn AdjustGrounded(ctx: &ReducerContext, move_velocity: &DbVector3, magician: &mut Magician) 
 {
@@ -22,7 +24,7 @@ pub fn AdjustGrounded(ctx: &ReducerContext, move_velocity: &DbVector3, magician:
     }
 }
 
-pub fn ResolveContacts(magician: &mut Magician, contacts: &Vec<CollisionContact>, input_velocity: &DbVector3) {
+pub fn ResolveContacts(magician: &mut Magician, contacts: &Vec<CollisionContact>, input_velocity: DbVector3) {
     let world_up = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
     let min_ground_dot: f32 = 0.75;
     let depth_epsilon: f32 = 2e-3;
@@ -42,7 +44,7 @@ pub fn ResolveContacts(magician: &mut Magician, contacts: &Vec<CollisionContact>
     for contact in contacts.iter() {
         let normal = contact.normal;
 
-        let up_dot: f32 = Dot(&normal, &world_up);
+        let up_dot: f32 = Dot(normal, world_up);
         let is_walkable_map_contact: bool = contact.collision_type == CollisionEntryType::Map && up_dot >= min_ground_dot;
 
         if is_walkable_map_contact {
@@ -50,31 +52,31 @@ pub fn ResolveContacts(magician: &mut Magician, contacts: &Vec<CollisionContact>
             ground_support_normal = normal;
         }
 
-        let normal_velocity_component: f32 = Dot(&normal, &corrected_velocity);
+        let normal_velocity_component: f32 = Dot(normal, corrected_velocity);
         if normal_velocity_component < 0.0 {
-            corrected_velocity = Sub(&corrected_velocity, &Mul(&normal, normal_velocity_component));
+            corrected_velocity = Sub(corrected_velocity, Mul(normal, normal_velocity_component));
         }
 
         let mut depth: f32 = contact.penetration_depth - target_penetration;
         if depth > depth_epsilon {
             if depth > max_depth { depth = max_depth; }
             has_any_position_correction = true;
-            total_position_correction = Add(&total_position_correction, &Mul(&normal, depth));
+            total_position_correction = Add(total_position_correction, Mul(normal, depth));
         }
     }
 
     if has_any_position_correction {
-        let correction_magnitude_sq: f32 = Dot(&total_position_correction, &total_position_correction);
+        let correction_magnitude_sq: f32 = Dot(total_position_correction, total_position_correction);
         if correction_magnitude_sq > 1e-8 {
             let mut total_position_correction_local = total_position_correction.clone();
             let correction_magnitude: f32 = correction_magnitude_sq.sqrt();
 
             if correction_magnitude > max_position_correction {
-                total_position_correction_local = Mul(&Normalize(&total_position_correction_local), max_position_correction);
+                total_position_correction_local = Mul(Normalize(total_position_correction_local), max_position_correction);
             }
 
-            total_position_correction_local = Mul(&total_position_correction_local, correction_factor);
-            magician.position = Add(&magician.position, &total_position_correction_local);
+            total_position_correction_local = Mul(total_position_correction_local, correction_factor);
+            magician.position = Add(magician.position, total_position_correction_local);
         }
     }
 
@@ -88,18 +90,18 @@ pub fn ResolveContacts(magician: &mut Magician, contacts: &Vec<CollisionContact>
             let desired_horizontal_speed: f32 = desired_horizontal_speed_sq.sqrt();
             let preserved_corrected_y: f32 = corrected_velocity.y;
 
-            let tangent_velocity = Sub(&corrected_velocity, &Mul(&ground_support_normal, Dot(&corrected_velocity, &ground_support_normal)));
-            let tangent_speed_sq: f32 = Dot(&tangent_velocity, &tangent_velocity);
+            let tangent_velocity = Sub(corrected_velocity, Mul(ground_support_normal, Dot(corrected_velocity, ground_support_normal)));
+            let tangent_speed_sq: f32 = Dot(tangent_velocity, tangent_velocity);
 
             if tangent_speed_sq > 1e-8 {
-                let tangent_direction = Mul(&tangent_velocity, 1.0 / tangent_speed_sq.sqrt());
+                let tangent_direction = Mul(tangent_velocity, 1.0 / tangent_speed_sq.sqrt());
 
                 let tangent_direction_horizontal_sq: f32 = tangent_direction.x * tangent_direction.x + tangent_direction.z * tangent_direction.z;
                 if tangent_direction_horizontal_sq > 1e-8 {
                     let tangent_direction_horizontal: f32 = tangent_direction_horizontal_sq.sqrt();
                     let scale: f32 = desired_horizontal_speed / tangent_direction_horizontal;
 
-                    let desired_tangent_velocity = Mul(&tangent_direction, scale);
+                    let desired_tangent_velocity = Mul(tangent_direction, scale);
 
                     corrected_velocity.x = desired_tangent_velocity.x;
                     corrected_velocity.z = desired_tangent_velocity.z;
@@ -132,7 +134,7 @@ pub fn TryBuildContactForEntry(ctx: &ReducerContext, character_local: &Magician,
         let yaw_radians_b: f32 = ToRadians(other_magician.rotation.yaw);
 
         let mut gjk_result_magician: GjkResult = Default::default();
-        let intersects_magician: bool = SolveGjk(collider_a, position_a, yaw_radians_a, collider_b, position_b, yaw_radians_b, &mut gjk_result_magician);
+        let intersects_magician: bool = SolveGjk(collider_a, position_a, yaw_radians_a, collider_b, position_b, yaw_radians_b, &mut gjk_result_magician, 16);
         if intersects_magician == false { return false; }
 
         let center_a_world = GetColliderCenterWorld(&character_local.collider, position_a, yaw_radians_a);
@@ -157,7 +159,7 @@ pub fn TryBuildContactForEntry(ctx: &ReducerContext, character_local: &Magician,
         let yaw_radians_b: f32 = 0.0;
 
         let mut gjk_result_map: GjkResult = Default::default();
-        let intersects_map: bool = SolveGjk(collider_a, position_a, yaw_radians_a, collider_b, position_b, yaw_radians_b, &mut gjk_result_map);
+        let intersects_map: bool = SolveGjk(collider_a, position_a, yaw_radians_a, collider_b, position_b, yaw_radians_b, &mut gjk_result_map, 16);
         if intersects_map == false { return false; }
 
         let center_a_world = GetColliderCenterWorld(&character_local.collider, position_a, yaw_radians_a);
@@ -193,12 +195,12 @@ pub fn TryForceOverlapForEntry(ctx: &ReducerContext, character: &mut Magician, e
     let tiny_overlap: f32 = 0.0005;
     let overlap_enable_gap: f32 = 0.01;
 
-    let collider_a_complex = character.collider;
-    let collider_a: &Vec<ConvexHullCollider> = &collider_a_complex.convex_hulls;
+    let collider_a_complex = &character.collider;
+    let collider_a = &collider_a_complex.convex_hulls;
 
     let map_piece = ctx.db.map().id().find(entry.id).expect("Colliding Map Piece Not Found");
-    let collider_b_complex = map_piece.collider;
-    let collider_b: &Vec<ConvexHullCollider> = &collider_b_complex.convex_hulls;
+    let collider_b_complex = &map_piece.collider;
+    let collider_b = &collider_b_complex.convex_hulls;
 
     let position_a = character.position;
     let position_b = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -207,19 +209,19 @@ pub fn TryForceOverlapForEntry(ctx: &ReducerContext, character: &mut Magician, e
     let yaw_b: f32 = 0.0;
 
     let mut distance_result: GjkDistanceResult = Default::default();
-    if SolveGjkDistance(collider_a, position_a, yaw_a, collider_b, position_b, yaw_b, &mut distance_result) == false { return false; }
+    if SolveGjkDistance(collider_a, position_a, yaw_a, collider_b, position_b, yaw_b, &mut distance_result, 16) == false { return false; }
 
     let center_a_world = GetColliderCenterWorld(&collider_a_complex, position_a, yaw_a);
     let center_b_world = GetColliderCenterWorld(&collider_b_complex, position_b, yaw_b);
 
     let contact_normal = ComputeContactNormal(distance_result.separation_direction, center_a_world, center_b_world);
 
-    let up_dot: f32 = Dot(&contact_normal, &world_up);
+    let up_dot: f32 = Dot(contact_normal, world_up);
     if up_dot < min_ground_dot { return false; }
     if up_dot > floor_up_dot { return false; }
 
-    let delta = Sub(&distance_result.point_on_a, &distance_result.point_on_b);
-    let vertical_gap: f32 = Dot(&delta, &world_up);
+    let delta = Sub(distance_result.point_on_a, distance_result.point_on_b);
+    let vertical_gap: f32 = Dot(delta, world_up);
 
     if vertical_gap <= 0.0 { return false; }
     if vertical_gap > max_vertical_gap_ramp { return false; }
@@ -229,7 +231,7 @@ pub fn TryForceOverlapForEntry(ctx: &ReducerContext, character: &mut Magician, e
     if snap_down > max_vertical_snap { snap_down = max_vertical_snap; }
     if snap_down <= 1e-6 { return false; }
 
-    character.position = Add(&character.position, &Mul(&world_up, -snap_down));
+    character.position = Add(character.position, Mul(world_up, -snap_down));
     true
 }
 

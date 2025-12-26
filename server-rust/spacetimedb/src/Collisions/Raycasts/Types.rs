@@ -1,7 +1,8 @@
 use std::time::Duration;
 use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use crate::*;
 
-#[spacetimedb::type]
+#[derive(SpacetimeType)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum RaycastHitType {
     None = 0,
@@ -9,7 +10,7 @@ pub enum RaycastHitType {
     MapPiece = 2,
 }
 
-#[spacetimedb::type]
+#[derive(SpacetimeType)]
 #[derive(Copy, Clone, Debug)]
 pub struct Raycast {
     pub hit: bool,

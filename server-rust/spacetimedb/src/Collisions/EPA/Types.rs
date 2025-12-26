@@ -1,14 +1,15 @@
 use std::time::Duration;
 use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use crate::*;
 
-#[spacetimedb::type]
+#[derive(SpacetimeType)]
 pub struct CollisionContact {
     pub normal: DbVector3,
     pub penetration_depth: f32,
     pub collision_type: CollisionEntryType,
 }
 
-#[spacetimedb::type]
+#[derive(SpacetimeType)]
 pub struct EpaFace {
     pub index_a: i32,
     pub index_b: i32,
@@ -18,7 +19,7 @@ pub struct EpaFace {
     pub obsolete: bool,
 }
 
-#[spacetimedb::type]
+#[derive(SpacetimeType, Clone)]
 pub struct EpaEdge {
     pub index_a: i32,
     pub index_b: i32,

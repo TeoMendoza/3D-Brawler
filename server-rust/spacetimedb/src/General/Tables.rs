@@ -16,7 +16,7 @@ pub struct Player {
 #[table(name = game, public)]
 pub struct Game {
     #[unique] #[primary_key] #[auto_inc]
-    pub id: u64,
+    pub id: u32,
     pub max_players: u32,
     pub current_players: u32,
     #[index(btree)]

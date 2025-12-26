@@ -1,4 +1,4 @@
-use crate::{ComplexCollider, ConvexHullCollider, DbVector3};
+use crate::*;
 
 pub static Ramp2ConvexHull0Vertices: &[DbVector3] = &[
     DbVector3 { x:  7.625, y: 0.0, z:  8.125 }, DbVector3 { x:  7.625, y: 0.0, z: 11.875 },

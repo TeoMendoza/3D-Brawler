@@ -1,3 +1,5 @@
+use crate::*;
+
 pub static IdleConvexHull0Vertices: &[DbVector3] = &[
     DbVector3 { x: 0.000000, y: 0.000000, z: 0.000000 },
     DbVector3 { x: 0.209108, y: 0.240000, z: 0.000000 },

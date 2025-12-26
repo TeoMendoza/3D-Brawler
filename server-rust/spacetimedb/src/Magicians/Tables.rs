@@ -2,13 +2,12 @@ use std::time::Duration;
 use spacetimedb::{table, rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
 use crate::*;
 
-
-#[spacetimedb::table(name = magician, public, index(name = same_game_players, btree = [game_id, id]), index(name = game_id, btree = [game_id]))]
+#[table(name = magician, public)]
 pub struct Magician {
     #[primary_key] pub identity: Identity,
-    #[unique] #[auto_inc] pub id: u32,
+    #[unique] #[auto_inc] pub id: u64,
+    #[index(btree)] pub game_id: u32,
     pub name: String,
-    pub game_id: u32,
     pub position: DbVector3,
     pub rotation: DbRotation2,
     pub velocity: DbVector3,
@@ -24,7 +23,7 @@ pub struct Magician {
     pub bullet_capacity: i32,
 }
 
-#[spacetimedb::table(name = move_all_magicians, scheduled(move_magicians))]
+#[table(name = move_all_magicians, scheduled(MoveMagicians))]
 pub struct MoveAllMagiciansTimer {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,
@@ -32,7 +31,7 @@ pub struct MoveAllMagiciansTimer {
     pub game_id: u32,
 }
 
-#[spacetimedb::table(name = gravity_magician, scheduled(apply_gravity_magician))]
+#[table(name = gravity_magician, scheduled(ApplyGravityMagician))]
 pub struct GravityTimerMagician {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,
@@ -41,7 +40,7 @@ pub struct GravityTimerMagician {
     pub game_id: u32,
 }
 
-#[spacetimedb::table(name = handle_magician_timers_timer, scheduled(handle_magician_timers))]
+#[table(name = handle_magician_timers_timer, scheduled(HandleMagicianTimers))]
 pub struct HandleMagicianTimersTimer {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,

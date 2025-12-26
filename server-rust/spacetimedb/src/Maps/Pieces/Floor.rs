@@ -1,3 +1,5 @@
+use crate::*;
+
 pub static FloorConvexHull0Vertices: &[DbVector3] = &[
     DbVector3 { x: -100.0, y: 0.0, z: -100.0 },
     DbVector3 { x: -100.0, y: 0.0, z: 100.0 },

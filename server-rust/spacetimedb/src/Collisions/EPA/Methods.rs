@@ -1,10 +1,6 @@
 use std::time::Duration;
 use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
 use crate::*;
-use crate::Collisions::*;
-use crate::Map::*;
-use crate::Magician::*;
-
 
 pub fn EpaSolve(
     gjk: &GjkResult,
@@ -36,14 +32,14 @@ pub fn EpaSolve(
         let mut closest_distance: f32 = f32::MAX;
 
         for face_index in 0..faces.len() {
-            let face = faces[face_index];
+            let face = &faces[face_index];
             if face.obsolete { continue; }
             if face.distance < closest_distance { closest_distance = face.distance; closest_face_index = face_index as i32; }
         }
 
         if closest_face_index < 0 { return false; }
 
-        let closest_face = faces[closest_face_index as usize];
+        let closest_face = &faces[closest_face_index as usize];
         let search_direction = closest_face.normal;
 
         let new_vertex = SupportPairWorld(
@@ -52,24 +48,24 @@ pub fn EpaSolve(
             search_direction,
         );
 
-        let projection: f32 = Dot(&new_vertex.minkowski_point, &search_direction);
+        let projection: f32 = Dot(new_vertex.minkowski_point, search_direction);
         let improvement: f32 = projection - closest_face.distance;
 
         if improvement < epsilon {
             let mut normal = closest_face.normal;
-            let normal_length_sq: f32 = Dot(&normal, &normal);
+            let normal_length_sq: f32 = Dot(normal, normal);
 
             if normal_length_sq > 1e-12 {
-                normal = Mul(&normal, 1.0 / Sqrt(normal_length_sq));
+                normal = Mul(normal, 1.0 / Sqrt(normal_length_sq));
             } else {
-                normal = NormalizeSmallVector(&gjk.last_direction, &DbVector3 { x: 0.0, y: 1.0, z: 0.0 });
+                normal = NormalizeSmallVector(gjk.last_direction, DbVector3 { x: 0.0, y: 1.0, z: 0.0 });
             }
 
             let mut depth: f32 = closest_face.distance;
             if depth < 0.0 { depth = 0.0; }
 
-            let relative_b_to_a = Sub(&position_a, &position_b);
-            if Dot(&normal, &relative_b_to_a) < 0.0 { normal = Negate(&normal); }
+            let relative_b_to_a = Sub(position_a, position_b);
+            if Dot(normal, relative_b_to_a) < 0.0 { normal = Negate(normal); }
 
             *contact_out = Contact { normal, depth };
             return true;
@@ -84,8 +80,8 @@ pub fn EpaSolve(
             if faces[face_index].obsolete { continue; }
 
             let face_point = polytope_vertices[faces[face_index].index_a as usize].minkowski_point;
-            let to_new_point = Sub(&polytope_vertices[new_vertex_index as usize].minkowski_point, &face_point);
-            let dot_value: f32 = Dot(&faces[face_index].normal, &to_new_point);
+            let to_new_point = Sub(polytope_vertices[new_vertex_index as usize].minkowski_point, face_point);
+            let dot_value: f32 = Dot(faces[face_index].normal, to_new_point);
 
             if dot_value > 0.0 {
                 faces[face_index].obsolete = true;
@@ -103,7 +99,7 @@ pub fn EpaSolve(
         faces.retain(|face| face.obsolete == false);
 
         for edge_index in 0..edges.len() {
-            let edge = edges[edge_index];
+            let edge = &edges[edge_index];
             if edge.obsolete { continue; }
             AddFace(&polytope_vertices, &mut faces, edge.index_a, edge.index_b, new_vertex_index);
         }
@@ -113,28 +109,28 @@ pub fn EpaSolve(
     let mut final_closest_distance: f32 = f32::MAX;
 
     for face_index in 0..faces.len() {
-        let face = faces[face_index];
+        let face = &faces[face_index];
         if face.obsolete { continue; }
         if face.distance < final_closest_distance { final_closest_distance = face.distance; final_closest_face_index = face_index as i32; }
     }
 
     if final_closest_face_index >= 0 {
-        let face = faces[final_closest_face_index as usize];
+        let face = &faces[final_closest_face_index as usize];
 
         let mut normal = face.normal;
-        let normal_length_sq: f32 = Dot(&normal, &normal);
+        let normal_length_sq: f32 = Dot(normal, normal);
 
         if normal_length_sq > 1e-12 {
-            normal = Mul(&normal, 1.0 / Sqrt(normal_length_sq));
+            normal = Mul(normal, 1.0 / Sqrt(normal_length_sq));
         } else {
-            normal = NormalizeSmallVector(&gjk.last_direction, &DbVector3 { x: 0.0, y: 1.0, z: 0.0 });
+            normal = NormalizeSmallVector(gjk.last_direction, DbVector3 { x: 0.0, y: 1.0, z: 0.0 });
         }
 
         let mut depth: f32 = face.distance;
         if depth < 0.0 { depth = 0.0; }
 
-        let relative_b_to_a = Sub(&position_a, &position_b);
-        if Dot(&normal, &relative_b_to_a) < 0.0 { normal = Negate(&normal); }
+        let relative_b_to_a = Sub(position_a, position_b);
+        if Dot(normal, relative_b_to_a) < 0.0 { normal = Negate(normal); }
 
         *contact_out = Contact { normal, depth };
         return false;
@@ -148,24 +144,24 @@ pub fn AddFace(vertices: &Vec<GjkVertex>, faces: &mut Vec<EpaFace>, index_a: i32
     let point_b = vertices[index_b as usize].minkowski_point;
     let point_c = vertices[index_c as usize].minkowski_point;
 
-    let edge_ab = Sub(&point_b, &point_a);
-    let edge_ac = Sub(&point_c, &point_a);
-    let mut normal = Cross(&edge_ab, &edge_ac);
+    let edge_ab = Sub(point_b, point_a);
+    let edge_ac = Sub(point_c, point_a);
+    let mut normal = Cross(edge_ab, edge_ac);
 
-    let length_squared: f32 = Dot(&normal, &normal);
+    let length_squared: f32 = Dot(normal, normal);
     if length_squared > 1e-12 {
         let inverse_length: f32 = 1.0 / Sqrt(length_squared);
-        normal = Mul(&normal, inverse_length);
+        normal = Mul(normal, inverse_length);
     } else {
-        normal = NormalizeSmallVector(&Sub(&point_b, &point_c), &DbVector3 { x: 0.0, y: 1.0, z: 0.0 });
+        normal = NormalizeSmallVector(Sub(point_b, point_c), DbVector3 { x: 0.0, y: 1.0, z: 0.0 });
     }
 
-    let mut distance: f32 = Dot(&normal, &point_a);
+    let mut distance: f32 = Dot(normal, point_a);
     let mut final_index_b = index_b;
     let mut final_index_c = index_c;
 
     if distance < 0.0 {
-        normal = Negate(&normal);
+        normal = Negate(normal);
         distance = -distance;
         let temp = final_index_b;
         final_index_b = final_index_c;
@@ -177,7 +173,7 @@ pub fn AddFace(vertices: &Vec<GjkVertex>, faces: &mut Vec<EpaFace>, index_a: i32
 
 pub fn AddEdge(edges: &mut Vec<EpaEdge>, index_a: i32, index_b: i32) {
     for edge_index in 0..edges.len() {
-        let existing_edge = edges[edge_index];
+        let existing_edge = &edges[edge_index];
         if existing_edge.obsolete == false && existing_edge.index_a == index_b && existing_edge.index_b == index_a {
             edges[edge_index].obsolete = true;
             return;
@@ -189,18 +185,18 @@ pub fn AddEdge(edges: &mut Vec<EpaEdge>, index_a: i32, index_b: i32) {
 
 pub fn ComputeContactNormal(raw_normal: DbVector3, center_a: DbVector3, center_b: DbVector3) -> DbVector3 {
     let mut normal = raw_normal;
-    if Dot(&normal, &normal) < 1e-6 { return DbVector3 { x: 0.0, y: 1.0, z: 0.0 }; }
-    normal = Normalize(&normal);
+    if Dot(normal, normal) < 1e-6 { return DbVector3 { x: 0.0, y: 1.0, z: 0.0 }; }
+    normal = Normalize(normal);
 
-    let center_delta = Sub(&center_a, &center_b);
-    let center_delta_sq: f32 = Dot(&center_delta, &center_delta);
+    let center_delta = Sub(center_a, center_b);
+    let center_delta_sq: f32 = Dot(center_delta, center_delta);
 
     if center_delta_sq > 1e-8 {
-        if Dot(&normal, &center_delta) < 0.0 { normal = Negate(&normal); }
+        if Dot(normal, center_delta) < 0.0 { normal = Negate(normal); }
     }
 
     let world_up = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
-    let up_dot: f32 = Dot(&normal, &world_up);
+    let up_dot: f32 = Dot(normal, world_up);
 
     let floor_snap_dot: f32 = 0.98;
     let ceiling_snap_dot: f32 = 0.98;
@@ -211,8 +207,8 @@ pub fn ComputeContactNormal(raw_normal: DbVector3, center_a: DbVector3, center_b
 
     if up_dot.abs() <= wall_snap_abs_dot {
         normal.y = 0.0;
-        if Dot(&normal, &normal) < 1e-6 { return DbVector3 { x: 0.0, y: 1.0, z: 0.0 }; }
-        return Normalize(&normal);
+        if Dot(normal, normal) < 1e-6 { return DbVector3 { x: 0.0, y: 1.0, z: 0.0 }; }
+        return Normalize(normal);
     }
 
     normal
