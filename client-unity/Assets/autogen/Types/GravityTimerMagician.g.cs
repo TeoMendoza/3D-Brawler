@@ -21,22 +21,22 @@ namespace SpacetimeDB.Types
         public float TickRate;
         [DataMember(Name = "gravity")]
         public float Gravity;
-        [DataMember(Name = "MatchId")]
-        public uint MatchId;
+        [DataMember(Name = "game_id")]
+        public uint GameId;
 
         public GravityTimerMagician(
             ulong ScheduledId,
             SpacetimeDB.ScheduleAt ScheduledAt,
             float TickRate,
             float Gravity,
-            uint MatchId
+            uint GameId
         )
         {
             this.ScheduledId = ScheduledId;
             this.ScheduledAt = ScheduledAt;
             this.TickRate = TickRate;
             this.Gravity = Gravity;
-            this.MatchId = MatchId;
+            this.GameId = GameId;
         }
 
         public GravityTimerMagician()

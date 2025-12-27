@@ -11,7 +11,7 @@ using Unity.VisualScripting;
 public class MatchManager : MonoBehaviour
 {
     public static MatchManager Instance { get; private set; }
-    public uint? MatchId = 1;
+    public uint? GameId = 1;
     public DbConnection Conn;
     public Dictionary<Identity, MagicianController> Players = new();
     public MagicianController MagicianPrefab;
@@ -30,9 +30,9 @@ public class MatchManager : MonoBehaviour
 
     }
 
-    public void InitializeMatch(uint MatchId)
+    public void InitializeMatch(uint GameId)
     {
-        this.MatchId = MatchId;
+        this.GameId = GameId;
         Conn = GameManager.Conn;
         Conn.Db.Magician.OnInsert += AddNewCharacter;
         Conn.Db.Magician.OnDelete += RemoveCharacter;
@@ -41,7 +41,7 @@ public class MatchManager : MonoBehaviour
         // I'm Not Entirely Sure These Are Needed
         foreach (Magician Character in Conn.Db.Magician.Iter())
         {
-            if (Character.MatchId == MatchId)
+            if (Character.GameId == GameId)
             {
                 var prefab = Instantiate(MagicianPrefab);
                 prefab.Initalize(Character);
@@ -74,12 +74,12 @@ public class MatchManager : MonoBehaviour
 
         MapPiece Prefab = Instantiate(MatchingPrefab);
         Prefab.Initialize(MapPiece);
-        MapPieces.Add(MapPiece.Id, Prefab);
+        MapPieces.Add((uint)MapPiece.Id, Prefab);
     }
 
     public void AddNewCharacter(EventContext context, Magician Character)
     {
-        if (MatchId is not null && Character.MatchId == MatchId)
+        if (GameId is not null && Character.GameId == GameId)
         {
             var prefab = Instantiate(MagicianPrefab);
             prefab.Initalize(Character);     
@@ -90,7 +90,7 @@ public class MatchManager : MonoBehaviour
 
     public void RemoveCharacter(EventContext context, Magician Character)
     {
-        if (MatchId is not null && Character.MatchId == MatchId)
+        if (GameId is not null && Character.GameId == GameId)
         {
             Players.TryGetValue(Character.Identity, out var prefab);
             if (prefab != null)

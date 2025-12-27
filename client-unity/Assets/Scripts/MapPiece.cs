@@ -13,6 +13,6 @@ public class MapPiece : MonoBehaviour
 
     public void Initialize(Map MapPiece)
     {
-        Id = MapPiece.Id;
+        Id = (uint)MapPiece.Id;
     }
 }

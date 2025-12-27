@@ -1,51 +1,41 @@
-use std::time::Duration;
-use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use spacetimedb::{reducer, Identity, ReducerContext};
 use crate::*;
 
-
-#[spacetimedb::reducer]
-pub fn HandleMovementRequestMagician(ctx: &ReducerContext, request: MovementRequest) {
+#[reducer]
+pub fn HandleMovementRequestMagician(ctx: &ReducerContext, request: MovementRequest) 
+{
     let mut character = ctx.db.magician().identity().find(ctx.sender).expect("Magician To Move Not Found");
 
     character.rotation = request.aim;
     character.velocity = DbVector3 { x: 0.0, y: character.velocity.y, z: 0.0 };
     character.kinematic_information.jump = false;
 
-    let can_walk_blocked: bool = {
-        let entry = GetPermissionEntry(&mut character.player_permission_config, "CanWalk").expect("Permission entry not found: CanWalk");
-        entry.subscribers.len() != 0
-    };
-
-    if can_walk_blocked == false {
+    if IsPermissionUnblocked(&character.player_permission_config, "CanWalk") {
         let mut local_x: f32 = 0.0;
         let mut local_z: f32 = 0.0;
 
-        if request.move_forward && !request.move_backward { 
-            local_z = 2.0; 
+        if request.move_forward && !request.move_backward {
+            local_z = 2.0;
+        } 
+        
+        else if request.move_backward && !request.move_forward {
+            local_z = -2.0;
         }
 
-        else if request.move_backward && !request.move_forward { 
-            local_z = -2.0; 
+        if request.move_right && !request.move_left {
+            local_x = 2.0;
+        } 
+        
+        else if request.move_left && !request.move_right {
+            local_x = -2.0;
         }
 
-        if request.move_right && !request.move_left { 
-            local_x = 2.0; 
-        }
-        else if request.move_left && !request.move_right { 
-            local_x = -2.0; 
+        if IsPermissionUnblocked(&character.player_permission_config, "CanRun") && request.sprint && request.move_forward&& !request.move_backward{
+            local_z *= 2.5;
         }
 
-        let can_run_blocked: bool = {
-            let entry = GetPermissionEntry(&mut character.player_permission_config, "CanRun").expect("Permission entry not found: CanRun");
-            entry.subscribers.len() != 0
-        };
-
-        if can_run_blocked == false && request.sprint && request.move_forward && !request.move_backward { 
-            local_z *= 2.5; 
-        }
-
-        if can_run_blocked == false && request.sprint { 
-            local_x *= 1.5; 
+        if IsPermissionUnblocked(&character.player_permission_config, "CanRun") && request.sprint {
+            local_x *= 1.5;
         }
 
         let yaw_radians: f32 = ToRadians(character.rotation.yaw);
@@ -58,84 +48,53 @@ pub fn HandleMovementRequestMagician(ctx: &ReducerContext, request: MovementRequ
         character.velocity = DbVector3 { x: world_x, y: character.velocity.y, z: world_z };
     }
 
-    let can_jump_blocked: bool = {
-        let entry = GetPermissionEntry(&mut character.player_permission_config, "CanJump").expect("Permission entry not found: CanJump");
-        entry.subscribers.len() != 0
-    };
-
-    if can_jump_blocked == false && request.jump {
+    if IsPermissionUnblocked(&character.player_permission_config, "CanJump") && request.jump {
         character.kinematic_information.jump = true;
         character.velocity.y = 7.5;
     }
 
-    let can_crouch_blocked: bool = {
-        let entry = GetPermissionEntry(&mut character.player_permission_config, "CanCrouch").expect("Permission entry not found: CanCrouch");
-        entry.subscribers.len() != 0
-    };
-
-    if can_crouch_blocked == false && request.crouch {
+    if IsPermissionUnblocked(&character.player_permission_config, "CanCrouch") && request.crouch {
         character.velocity = DbVector3 { x: character.velocity.x * 0.5, y: character.velocity.y, z: character.velocity.z * 0.5 };
         character.kinematic_information.crouched = true;
-        let can_run_entry = GetPermissionEntry(&mut character.player_permission_config, "CanRun").expect("Permission entry not found: CanRun");
-        AddSubscriberUnique(&mut can_run_entry.subscribers, "Crouch");
+        AddSubscriberToPermission(&mut character.player_permission_config, "CanRun", "Crouch");
     }
 
-    if request.crouch == false {
+    if !request.crouch {
         character.kinematic_information.crouched = false;
-        let can_run_entry = GetPermissionEntry(&mut character.player_permission_config, "CanRun").expect("Permission entry not found: CanRun");
-        RemoveSubscriber(&mut can_run_entry.subscribers, "Crouch");
+        RemoveSubscriberFromPermission(&mut character.player_permission_config, "CanRun", "Crouch");
     }
 
     ctx.db.magician().identity().update(character);
 }
 
-#[spacetimedb::reducer]
-pub fn HandleActionChangeRequestMagician(ctx: &ReducerContext, request: ActionRequestMagician) {
+#[reducer]
+pub fn HandleActionChangeRequestMagician(ctx: &ReducerContext, request: ActionRequestMagician) 
+{
     let mut character = ctx.db.magician().identity().find(ctx.sender).expect("Magician Not Found");
     let old_state: MagicianState = character.state;
 
-    let can_attack_blocked: bool = {
-        let entry = GetPermissionEntry(&mut character.player_permission_config, "CanAttack").expect("Permission entry not found: CanAttack");
-        entry.subscribers.len() != 0
-    };
-
-    let can_reload_blocked: bool = {
-        let entry = GetPermissionEntry(&mut character.player_permission_config, "CanReload").expect("Permission entry not found: CanReload");
-        entry.subscribers.len() != 0
-    };
-
-    if request.state == MagicianState::Attack && can_attack_blocked == false && character.bullets.len() > 0 {
+    if request.state == MagicianState::Attack && IsPermissionUnblocked(&character.player_permission_config, "CanAttack") && character.bullets.len() > 0 {
         character.state = MagicianState::Attack;
-        let can_attack_entry = GetPermissionEntry(&mut character.player_permission_config, "CanAttack").expect("Permission entry not found: CanAttack");
-        AddSubscriberUnique(&mut can_attack_entry.subscribers, "Attack");
-
-        let can_reload_entry = GetPermissionEntry(&mut character.player_permission_config, "CanReload").expect("Permission entry not found: CanReload");
-        AddSubscriberUnique(&mut can_reload_entry.subscribers, "Attack");
-
+        AddSubscriberToPermission(&mut character.player_permission_config, "CanAttack", "Attack");
+        AddSubscriberToPermission(&mut character.player_permission_config, "CanReload", "Attack");
         TryPerformAttack(ctx, &mut character, request.attack_information);
     } 
     
-    else if request.state == MagicianState::Reload && can_reload_blocked == false && (character.bullets.len() as i32) < character.bullet_capacity {
+    else if request.state == MagicianState::Reload && IsPermissionUnblocked(&character.player_permission_config, "CanReload") && (character.bullets.len() as i32) < character.bullet_capacity {
         character.state = MagicianState::Reload;
-        let can_reload_entry = GetPermissionEntry(&mut character.player_permission_config, "CanReload").expect("Permission entry not found: CanReload");
-        AddSubscriberUnique(&mut can_reload_entry.subscribers, "Reload");
+        AddSubscriberToPermission(&mut character.player_permission_config, "CanReload", "Reload");
     }
 
-    let state_switched: bool = old_state != character.state;
-    if state_switched {
+    if old_state != character.state {
         ResetAllTimers(&mut character);
         match old_state {
             MagicianState::Attack => {
-                let can_attack_entry = GetPermissionEntry(&mut character.player_permission_config, "CanAttack").expect("Permission entry not found: CanAttack");
-                RemoveSubscriber(&mut can_attack_entry.subscribers, "Attack");
-
-                let can_reload_entry = GetPermissionEntry(&mut character.player_permission_config, "CanReload").expect("Permission entry not found: CanReload");
-                RemoveSubscriber(&mut can_reload_entry.subscribers, "Attack");
+                RemoveSubscriberFromPermission(&mut character.player_permission_config, "CanAttack", "Attack");
+                RemoveSubscriberFromPermission(&mut character.player_permission_config, "CanReload", "Attack");
             }
 
             MagicianState::Reload => {
-                let can_reload_entry = GetPermissionEntry(&mut character.player_permission_config, "CanReload").expect("Permission entry not found: CanReload");
-                RemoveSubscriber(&mut can_reload_entry.subscribers, "Reload");
+                RemoveSubscriberFromPermission(&mut character.player_permission_config, "CanReload", "Reload");
             }
 
             MagicianState::Default => {}
@@ -145,56 +104,35 @@ pub fn HandleActionChangeRequestMagician(ctx: &ReducerContext, request: ActionRe
     ctx.db.magician().identity().update(character);
 }
 
-#[spacetimedb::reducer]
+
+#[reducer]
 pub fn HandleMagicianTimers(ctx: &ReducerContext, timer: HandleMagicianTimersTimer) {
     let time: f32 = timer.tick_rate;
 
-    for magician_row in ctx.db.magician().game_id().filter(timer.game_id) {
-        let mut magician = magician_row;
-
+    for mut magician in ctx.db.magician().game_id().filter(timer.game_id) {
         match magician.state {
             MagicianState::Attack => {
-                let timer_index = TryFindTimerIndex(&magician, "Attack");
-                let mut current_timer = magician.timers[timer_index].clone();
-                current_timer.current_time -= time;
-
-                if current_timer.current_time <= 0.0 {
-                    current_timer.current_time = current_timer.reset_time;
-
+                if TickTimerAndCheckExpired(&mut magician, "Attack", time) {
                     if magician.bullets.len() > 0 {
                         magician.state = MagicianState::Default;
                     } 
                     
                     else {
                         magician.state = MagicianState::Reload;
-                        let can_reload_entry = GetPermissionEntry(&mut magician.player_permission_config, "CanReload").expect("Permission entry not found: CanReload");
-                        AddSubscriberUnique(&mut can_reload_entry.subscribers, "Reload");
+                        AddSubscriberToPermission(&mut magician.player_permission_config, "CanReload", "Reload");
                     }
 
-                    let can_attack_entry = GetPermissionEntry(&mut magician.player_permission_config, "CanAttack").expect("Permission entry not found: CanAttack");
-                    RemoveSubscriber(&mut can_attack_entry.subscribers, "Attack");
-
-                    let can_reload_entry = GetPermissionEntry(&mut magician.player_permission_config, "CanReload").expect("Permission entry not found: CanReload");
-                    RemoveSubscriber(&mut can_reload_entry.subscribers, "Attack");
+                    RemoveSubscriberFromPermission(&mut magician.player_permission_config, "CanAttack", "Attack");
+                    RemoveSubscriberFromPermission(&mut magician.player_permission_config, "CanReload", "Attack");
                 }
-
-                magician.timers[timer_index] = current_timer;
             }
 
             MagicianState::Reload => {
-                let timer_index = TryFindTimerIndex(&magician, "Reload");
-                let mut current_timer = magician.timers[timer_index].clone();
-                current_timer.current_time -= time;
-
-                if current_timer.current_time <= 0.0 {
-                    current_timer.current_time = current_timer.reset_time;
+                if TickTimerAndCheckExpired(&mut magician, "Reload", time) {
                     magician.state = MagicianState::Default;
-                    let can_reload_entry = GetPermissionEntry(&mut magician.player_permission_config, "CanReload").expect("Permission entry not found: CanReload");
-                    RemoveSubscriber(&mut can_reload_entry.subscribers, "Reload");
+                    RemoveSubscriberFromPermission(&mut magician.player_permission_config, "CanReload", "Reload");
                     TryReload(ctx, &mut magician);
                 }
-
-                magician.timers[timer_index] = current_timer;
             }
 
             MagicianState::Default => {}
@@ -204,43 +142,55 @@ pub fn HandleMagicianTimers(ctx: &ReducerContext, timer: HandleMagicianTimersTim
     }
 }
 
-#[spacetimedb::reducer]
-pub fn ApplyGravityMagician(ctx: &ReducerContext, timer: GravityTimerMagician) {
+
+#[reducer]
+pub fn ApplyGravityMagician(ctx: &ReducerContext, timer: GravityTimerMagician) 
+{
     let time: f32 = timer.tick_rate;
 
     for character_row in ctx.db.magician().game_id().filter(timer.game_id) {
         let mut character = character_row;
 
-        if character.velocity.y > -10.0 { character.velocity.y -= timer.gravity * time; }
-        else { character.velocity.y = -10.0; }
+        if character.velocity.y > -10.0 { 
+            character.velocity.y -= timer.gravity * time; 
+        }
+
+        else { 
+            character.velocity.y = -10.0; 
+        }
 
         ctx.db.magician().identity().update(character);
     }
 }
 
-#[spacetimedb::reducer]
-pub fn AddCollisionEntryMagician(ctx: &ReducerContext, entry: CollisionEntry, target_identity: Identity) {
+#[reducer]
+pub fn AddCollisionEntryMagician(ctx: &ReducerContext, entry: CollisionEntry, target_identity: Identity) 
+{
     let mut magician = ctx.db.magician().identity().find(target_identity).expect("Magician (Sender) Not Found");
-    if magician.collision_entries.contains(&entry) == false { magician.collision_entries.push(entry); }
+    if magician.collision_entries.contains(&entry) == false { 
+        magician.collision_entries.push(entry); 
+    }
     ctx.db.magician().identity().update(magician);
 }
 
-#[spacetimedb::reducer]
-pub fn RemoveCollisionEntryMagician(ctx: &ReducerContext, entry: CollisionEntry, target_identity: Identity) {
+#[reducer]
+pub fn RemoveCollisionEntryMagician(ctx: &ReducerContext, entry: CollisionEntry, target_identity: Identity) 
+{
     let mut magician = ctx.db.magician().identity().find(target_identity).expect("Magician (Sender) Not Found");
-    if magician.collision_entries.contains(&entry) { magician.collision_entries.retain(|existing| existing != &entry); }
+    if magician.collision_entries.contains(&entry) { 
+        magician.collision_entries.retain(|existing| existing != &entry); 
+    }
     ctx.db.magician().identity().update(magician);
 }
 
-#[spacetimedb::reducer]
-pub fn MoveMagicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) {
+#[reducer]
+pub fn MoveMagicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) 
+{
     let tick_time: f32 = timer.tick_rate;
     let min_time_step: f32 = 1e-4;
-    let max_substeps: i32 = 4;
+    let max_substeps: i32 = 16;
 
-    for character_row in ctx.db.magician().game_id().filter(timer.game_id) {
-        let mut character = character_row;
-
+    for mut character in ctx.db.magician().game_id().filter(timer.game_id) {
         let was_grounded: bool = character.kinematic_information.grounded;
         character.kinematic_information.grounded = false;
         character.is_colliding = false;

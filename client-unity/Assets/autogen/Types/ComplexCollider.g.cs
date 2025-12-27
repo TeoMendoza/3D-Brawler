@@ -13,9 +13,9 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class ComplexCollider
     {
-        [DataMember(Name = "ConvexHulls")]
+        [DataMember(Name = "convex_hulls")]
         public System.Collections.Generic.List<ConvexHullCollider> ConvexHulls;
-        [DataMember(Name = "CenterPoint")]
+        [DataMember(Name = "center_point")]
         public DbVector3 CenterPoint;
 
         public ComplexCollider(

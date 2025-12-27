@@ -13,11 +13,11 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class Timer
     {
-        [DataMember(Name = "Name")]
+        [DataMember(Name = "name")]
         public string Name;
-        [DataMember(Name = "ResetTime")]
+        [DataMember(Name = "reset_time")]
         public float ResetTime;
-        [DataMember(Name = "CurrentTime")]
+        [DataMember(Name = "current_time")]
         public float CurrentTime;
 
         public Timer(

@@ -13,15 +13,15 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class Map
     {
-        [DataMember(Name = "Id")]
-        public uint Id;
-        [DataMember(Name = "Name")]
+        [DataMember(Name = "id")]
+        public ulong Id;
+        [DataMember(Name = "name")]
         public string Name;
-        [DataMember(Name = "Collider")]
+        [DataMember(Name = "collider")]
         public ComplexCollider Collider;
 
         public Map(
-            uint Id,
+            ulong Id,
             string Name,
             ComplexCollider Collider
         )

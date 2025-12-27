@@ -15,14 +15,14 @@ namespace SpacetimeDB.Types
     {
         [DataMember(Name = "identity")]
         public SpacetimeDB.Identity Identity;
-        [DataMember(Name = "Id")]
-        public uint Id;
-        [DataMember(Name = "Name")]
+        [DataMember(Name = "id")]
+        public ulong Id;
+        [DataMember(Name = "name")]
         public string Name;
 
         public Player(
             SpacetimeDB.Identity Identity,
-            uint Id,
+            ulong Id,
             string Name
         )
         {

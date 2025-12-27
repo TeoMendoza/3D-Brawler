@@ -1,5 +1,4 @@
-use std::time::Duration;
-use spacetimedb::{table, rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use spacetimedb::{table, Identity, ScheduleAt};
 use crate::*;
 
 #[table(name = magician, public)]

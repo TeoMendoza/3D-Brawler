@@ -1,8 +1,8 @@
-use std::time::Duration;
-use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use spacetimedb::{Identity, ReducerContext, Table};
 use crate::*;
 
-pub fn RaycastMatch(ctx: &ReducerContext, ray_origin: DbVector3, ray_direction: DbVector3, max_distance: f32) -> Raycast {
+pub fn RaycastMatch(ctx: &ReducerContext, ray_origin: DbVector3, ray_direction: DbVector3, max_distance: f32) -> Raycast 
+{
     let mut has_hit: bool = false;
     let mut best_distance: f32 = max_distance;
     let mut best_point: DbVector3 = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -41,7 +41,8 @@ pub fn RaycastMatch(ctx: &ReducerContext, ray_origin: DbVector3, ray_direction: 
     Raycast { hit: has_hit, hit_distance: best_distance, hit_point: best_point, hit_type: best_type, hit_identity: best_identity, hit_entity_id: best_entity_id }
 }
 
-pub fn RaycastComplexCollider(ray_origin: DbVector3, ray_direction: DbVector3, max_distance: f32, collider: ComplexCollider, collider_world_position: DbVector3, collider_yaw_radians: f32, hit_type: RaycastHitType, hit_identity: Identity, hit_entity_id: i64) -> Raycast {
+pub fn RaycastComplexCollider(ray_origin: DbVector3, ray_direction: DbVector3, max_distance: f32, collider: ComplexCollider, collider_world_position: DbVector3, collider_yaw_radians: f32, hit_type: RaycastHitType, hit_identity: Identity, hit_entity_id: i64) -> Raycast 
+{
     let mut has_hit: bool = false;
     let mut best_distance: f32 = max_distance;
     let mut best_point: DbVector3 = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -62,7 +63,8 @@ pub fn RaycastComplexCollider(ray_origin: DbVector3, ray_direction: DbVector3, m
     Raycast { hit: has_hit, hit_distance: best_distance, hit_point: best_point, hit_type: if has_hit { hit_type } else { RaycastHitType::None }, hit_identity, hit_entity_id }
 }
 
-pub fn RaycastComplexColliderWorldSpace(ray_origin: DbVector3, ray_direction: DbVector3, max_distance: f32, collider: ComplexCollider, hit_type: RaycastHitType, hit_identity: Identity, hit_entity_id: i64) -> Raycast {
+pub fn RaycastComplexColliderWorldSpace(ray_origin: DbVector3, ray_direction: DbVector3, max_distance: f32, collider: ComplexCollider, hit_type: RaycastHitType, hit_identity: Identity, hit_entity_id: i64) -> Raycast 
+{
     let mut has_hit: bool = false;
     let mut best_distance: f32 = max_distance;
     let mut best_point: DbVector3 = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -79,7 +81,8 @@ pub fn RaycastComplexColliderWorldSpace(ray_origin: DbVector3, ray_direction: Db
     Raycast { hit: has_hit, hit_distance: best_distance, hit_point: best_point, hit_type: if has_hit { hit_type } else { RaycastHitType::None }, hit_identity, hit_entity_id }
 }
 
-pub fn RaycastConvexHullTriangles(ray_origin_local: DbVector3, ray_direction_local: DbVector3, max_distance: f32, hull: &ConvexHullCollider, hit_distance_out: &mut f32) -> bool {
+pub fn RaycastConvexHullTriangles(ray_origin_local: DbVector3, ray_direction_local: DbVector3, max_distance: f32, hull: &ConvexHullCollider, hit_distance_out: &mut f32) -> bool 
+{
     *hit_distance_out = max_distance;
     let mut has_hit: bool = false;
 
@@ -106,7 +109,8 @@ pub fn RaycastConvexHullTriangles(ray_origin_local: DbVector3, ray_direction_loc
     has_hit
 }
 
-pub fn RayIntersectsTriangle(ray_origin: DbVector3, ray_direction: DbVector3, a: DbVector3, b: DbVector3, c: DbVector3, distance_out: &mut f32) -> bool {
+pub fn RayIntersectsTriangle(ray_origin: DbVector3, ray_direction: DbVector3, a: DbVector3, b: DbVector3, c: DbVector3, distance_out: &mut f32) -> bool 
+{
     *distance_out = 0.0;
 
     let edge1: DbVector3 = Sub(b, a);

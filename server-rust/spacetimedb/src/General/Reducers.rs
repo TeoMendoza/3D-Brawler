@@ -1,8 +1,8 @@
 use std::time::Duration;
-use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use spacetimedb::{reducer, Identity, ReducerContext, ScheduleAt, Table};
 use crate::*;
 
-#[spacetimedb::reducer(init)]
+#[reducer(init)]
 pub fn init(ctx: &ReducerContext) {
     log::info!("Initializing...");
 
@@ -41,7 +41,7 @@ pub fn init(ctx: &ReducerContext) {
     });
 }
 
-#[spacetimedb::reducer(client_connected)]
+#[reducer(client_connected)]
 pub fn Connect(ctx: &ReducerContext) {
     log::info!("{} just connected.", ctx.sender);
 
@@ -85,7 +85,7 @@ pub fn Connect(ctx: &ReducerContext) {
 }
 
 
-#[spacetimedb::reducer(client_disconnected)]
+#[reducer(client_disconnected)]
 pub fn Disconnect(ctx: &ReducerContext) {
     let player = ctx.db.logged_in_players().identity().find(ctx.sender).expect("Player not found");
     let magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician not found");

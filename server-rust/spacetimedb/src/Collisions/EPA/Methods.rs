@@ -1,19 +1,8 @@
-use std::time::Duration;
-use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
 use crate::*;
 
-pub fn EpaSolve(
-    gjk: &GjkResult,
-    collider_a: &Vec<ConvexHullCollider>,
-    position_a: DbVector3,
-    yaw_radians_a: f32,
-    collider_b: &Vec<ConvexHullCollider>,
-    position_b: DbVector3,
-    yaw_radians_b: f32,
-    contact_out: &mut Contact,
-) -> bool {
-    let max_iterations: i32 = 32;
-    let epsilon: f32 = 5e-4;
+pub fn EpaSolve(gjk: &GjkResult,collider_a: &Vec<ConvexHullCollider>, position_a: DbVector3, yaw_radians_a: f32, collider_b: &Vec<ConvexHullCollider>, position_b: DbVector3, yaw_radians_b: f32, contact_out: &mut Contact) -> bool {
+    let max_iterations: i32 = 16;
+    let epsilon: f32 = 2e-4;
 
     *contact_out = Contact { normal: DbVector3 { x: 0.0, y: 1.0, z: 0.0 }, depth: 0.0 };
 
@@ -34,7 +23,10 @@ pub fn EpaSolve(
         for face_index in 0..faces.len() {
             let face = &faces[face_index];
             if face.obsolete { continue; }
-            if face.distance < closest_distance { closest_distance = face.distance; closest_face_index = face_index as i32; }
+            if face.distance < closest_distance { 
+                closest_distance = face.distance; 
+                closest_face_index = face_index as i32; 
+            }
         }
 
         if closest_face_index < 0 { return false; }
@@ -42,11 +34,7 @@ pub fn EpaSolve(
         let closest_face = &faces[closest_face_index as usize];
         let search_direction = closest_face.normal;
 
-        let new_vertex = SupportPairWorld(
-            collider_a, position_a, yaw_radians_a,
-            collider_b, position_b, yaw_radians_b,
-            search_direction,
-        );
+        let new_vertex = SupportPairWorld(collider_a, position_a, yaw_radians_a,collider_b, position_b, yaw_radians_b,search_direction,);
 
         let projection: f32 = Dot(new_vertex.minkowski_point, search_direction);
         let improvement: f32 = projection - closest_face.distance;
@@ -57,7 +45,9 @@ pub fn EpaSolve(
 
             if normal_length_sq > 1e-12 {
                 normal = Mul(normal, 1.0 / Sqrt(normal_length_sq));
-            } else {
+            } 
+            
+            else {
                 normal = NormalizeSmallVector(gjk.last_direction, DbVector3 { x: 0.0, y: 1.0, z: 0.0 });
             }
 
@@ -65,7 +55,9 @@ pub fn EpaSolve(
             if depth < 0.0 { depth = 0.0; }
 
             let relative_b_to_a = Sub(position_a, position_b);
-            if Dot(normal, relative_b_to_a) < 0.0 { normal = Negate(normal); }
+            if Dot(normal, relative_b_to_a) < 0.0 { 
+                normal = Negate(normal); 
+            }
 
             *contact_out = Contact { normal, depth };
             return true;
@@ -111,7 +103,10 @@ pub fn EpaSolve(
     for face_index in 0..faces.len() {
         let face = &faces[face_index];
         if face.obsolete { continue; }
-        if face.distance < final_closest_distance { final_closest_distance = face.distance; final_closest_face_index = face_index as i32; }
+        if face.distance < final_closest_distance { 
+            final_closest_distance = face.distance; 
+            final_closest_face_index = face_index as i32; 
+        }
     }
 
     if final_closest_face_index >= 0 {
@@ -122,7 +117,9 @@ pub fn EpaSolve(
 
         if normal_length_sq > 1e-12 {
             normal = Mul(normal, 1.0 / Sqrt(normal_length_sq));
-        } else {
+        } 
+        
+        else {
             normal = NormalizeSmallVector(gjk.last_direction, DbVector3 { x: 0.0, y: 1.0, z: 0.0 });
         }
 
@@ -130,7 +127,9 @@ pub fn EpaSolve(
         if depth < 0.0 { depth = 0.0; }
 
         let relative_b_to_a = Sub(position_a, position_b);
-        if Dot(normal, relative_b_to_a) < 0.0 { normal = Negate(normal); }
+        if Dot(normal, relative_b_to_a) < 0.0 { 
+            normal = Negate(normal); 
+        }
 
         *contact_out = Contact { normal, depth };
         return false;
@@ -139,7 +138,8 @@ pub fn EpaSolve(
     false
 }
 
-pub fn AddFace(vertices: &Vec<GjkVertex>, faces: &mut Vec<EpaFace>, index_a: i32, index_b: i32, index_c: i32) {
+pub fn AddFace(vertices: &Vec<GjkVertex>, faces: &mut Vec<EpaFace>, index_a: i32, index_b: i32, index_c: i32) 
+{
     let point_a = vertices[index_a as usize].minkowski_point;
     let point_b = vertices[index_b as usize].minkowski_point;
     let point_c = vertices[index_c as usize].minkowski_point;
@@ -149,10 +149,13 @@ pub fn AddFace(vertices: &Vec<GjkVertex>, faces: &mut Vec<EpaFace>, index_a: i32
     let mut normal = Cross(edge_ab, edge_ac);
 
     let length_squared: f32 = Dot(normal, normal);
+
     if length_squared > 1e-12 {
         let inverse_length: f32 = 1.0 / Sqrt(length_squared);
         normal = Mul(normal, inverse_length);
-    } else {
+    } 
+    
+    else {
         normal = NormalizeSmallVector(Sub(point_b, point_c), DbVector3 { x: 0.0, y: 1.0, z: 0.0 });
     }
 
@@ -171,7 +174,8 @@ pub fn AddFace(vertices: &Vec<GjkVertex>, faces: &mut Vec<EpaFace>, index_a: i32
     faces.push(EpaFace { index_a, index_b: final_index_b, index_c: final_index_c, normal, distance, obsolete: false });
 }
 
-pub fn AddEdge(edges: &mut Vec<EpaEdge>, index_a: i32, index_b: i32) {
+pub fn AddEdge(edges: &mut Vec<EpaEdge>, index_a: i32, index_b: i32) 
+{
     for edge_index in 0..edges.len() {
         let existing_edge = &edges[edge_index];
         if existing_edge.obsolete == false && existing_edge.index_a == index_b && existing_edge.index_b == index_a {
@@ -183,9 +187,12 @@ pub fn AddEdge(edges: &mut Vec<EpaEdge>, index_a: i32, index_b: i32) {
     edges.push(EpaEdge { index_a, index_b, obsolete: false });
 }
 
-pub fn ComputeContactNormal(raw_normal: DbVector3, center_a: DbVector3, center_b: DbVector3) -> DbVector3 {
+pub fn ComputeContactNormal(raw_normal: DbVector3, center_a: DbVector3, center_b: DbVector3) -> DbVector3 
+{
     let mut normal = raw_normal;
-    if Dot(normal, normal) < 1e-6 { return DbVector3 { x: 0.0, y: 1.0, z: 0.0 }; }
+    if Dot(normal, normal) < 1e-6 { 
+        return DbVector3 { x: 0.0, y: 1.0, z: 0.0 }; 
+    }
     normal = Normalize(normal);
 
     let center_delta = Sub(center_a, center_b);
@@ -199,15 +206,19 @@ pub fn ComputeContactNormal(raw_normal: DbVector3, center_a: DbVector3, center_b
     let up_dot: f32 = Dot(normal, world_up);
 
     let floor_snap_dot: f32 = 0.98;
-    let ceiling_snap_dot: f32 = 0.98;
+    let ceiling_snap_dot: f32 = -0.98;
     let wall_snap_abs_dot: f32 = 0.05;
 
-    if up_dot >= floor_snap_dot { return world_up; }
-    if up_dot <= -ceiling_snap_dot { return DbVector3 { x: 0.0, y: -1.0, z: 0.0 }; }
+    if up_dot >= floor_snap_dot { 
+        return world_up; 
+    }
+
+    if up_dot <= ceiling_snap_dot { 
+        return DbVector3 { x: 0.0, y: -1.0, z: 0.0 }; 
+    }
 
     if up_dot.abs() <= wall_snap_abs_dot {
         normal.y = 0.0;
-        if Dot(normal, normal) < 1e-6 { return DbVector3 { x: 0.0, y: 1.0, z: 0.0 }; }
         return Normalize(normal);
     }
 

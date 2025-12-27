@@ -13,9 +13,9 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class PermissionEntry
     {
-        [DataMember(Name = "Key")]
+        [DataMember(Name = "key")]
         public string Key;
-        [DataMember(Name = "Subscribers")]
+        [DataMember(Name = "subscribers")]
         public System.Collections.Generic.List<string> Subscribers;
 
         public PermissionEntry(

@@ -1,7 +1,4 @@
-use std::time::Duration;
-use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
 use crate::*;
-
 
 pub fn CreateMagician(config: MagicianConfig) -> Magician {
     let player = config.player;
@@ -40,7 +37,7 @@ pub fn CreateMagician(config: MagicianConfig) -> Magician {
 
     let mut bullets: Vec<ThrowingCard> = Vec::with_capacity(magician.bullet_capacity as usize);
     for _i in 0..magician.bullet_capacity {
-        let throwing_card = CreateThrowingCard();
+        let throwing_card: ThrowingCard = CreateThrowingCard();
         bullets.push(throwing_card);
     }
     magician.bullets = bullets;

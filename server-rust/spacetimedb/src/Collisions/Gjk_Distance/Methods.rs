@@ -1,28 +1,15 @@
-use std::time::Duration;
-use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
 use crate::*;
 
-pub fn SolveGjkDistance(
-    collider_a: &Vec<ConvexHullCollider>,
-    position_a: DbVector3,
-    yaw_radians_a: f32,
-    collider_b: &Vec<ConvexHullCollider>,
-    position_b: DbVector3,
-    yaw_radians_b: f32,
-    result_out: &mut GjkDistanceResult,
-    max_iterations: i32,
-) -> bool {
+pub fn SolveGjkDistance(collider_a: &ComplexCollider, position_a: DbVector3, yaw_radians_a: f32, collider_b: &ComplexCollider, position_b: DbVector3, yaw_radians_b: f32, result_out: &mut GjkDistanceResult, max_iterations: i32) -> bool 
+{
     let progress_epsilon: f32 = 1e-4;
-
     let mut simplex: Vec<GjkVertex> = Vec::with_capacity(4);
+    let mut search_direction = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
+    
+    let convex_hulls_a = &collider_a.convex_hulls;
+    let convex_hulls_b = &collider_b.convex_hulls;
 
-    let center_a_world = GetColliderCenterWorld(&ComplexCollider { convex_hulls: collider_a.clone(), center_point: DbVector3 { x: 0.0, y: 0.0, z: 0.0 } }, position_a, yaw_radians_a);
-    let center_b_world = GetColliderCenterWorld(&ComplexCollider { convex_hulls: collider_b.clone(), center_point: DbVector3 { x: 0.0, y: 0.0, z: 0.0 } }, position_b, yaw_radians_b);
-
-    let center_delta = Sub(center_b_world, center_a_world);
-    let mut search_direction = if NearZero(center_delta) { DbVector3 { x: 0.0, y: 1.0, z: 0.0 } } else { Normalize(center_delta) };
-
-    let initial_vertex = SupportPairWorld(collider_a, position_a, yaw_radians_a, collider_b, position_b, yaw_radians_b, search_direction);
+    let initial_vertex = SupportPairWorld(convex_hulls_a, position_a, yaw_radians_a, convex_hulls_b, position_b, yaw_radians_b, search_direction);
     simplex.push(initial_vertex);
 
     for _iteration_index in 0..max_iterations {
@@ -32,14 +19,7 @@ pub fn SolveGjkDistance(
         let mut current_separation_direction = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
         let mut closest_minkowski_point = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
 
-        ComputeDistanceFromSimplex(
-            &simplex,
-            &mut current_distance,
-            &mut current_point_on_a,
-            &mut current_point_on_b,
-            &mut current_separation_direction,
-            &mut closest_minkowski_point,
-        );
+        ComputeDistanceFromSimplex(&simplex,&mut current_distance, &mut current_point_on_a, &mut current_point_on_b, &mut current_separation_direction, &mut closest_minkowski_point,);
 
         if current_distance <= 1e-6 {
             let separation_direction = if NearZero(current_separation_direction) { DbVector3 { x: 0.0, y: 1.0, z: 0.0 } } else { Normalize(current_separation_direction) };
@@ -54,7 +34,7 @@ pub fn SolveGjkDistance(
             return true;
         }
 
-        let support_vertex = SupportPairWorld(collider_a, position_a, yaw_radians_a, collider_b, position_b, yaw_radians_b, search_direction);
+        let support_vertex = SupportPairWorld(convex_hulls_a, position_a, yaw_radians_a, convex_hulls_b, position_b, yaw_radians_b, search_direction);
 
         let closest_dot: f32 = Dot(closest_minkowski_point, search_direction);
         let support_dot: f32 = Dot(support_vertex.minkowski_point, search_direction);
@@ -82,27 +62,13 @@ pub fn SolveGjkDistance(
     let mut final_separation_direction = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
     let mut final_closest_minkowski_point = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
 
-    ComputeDistanceFromSimplex(
-        &simplex,
-        &mut final_distance,
-        &mut final_point_on_a,
-        &mut final_point_on_b,
-        &mut final_separation_direction,
-        &mut final_closest_minkowski_point,
-    );
-
+    ComputeDistanceFromSimplex(&simplex, &mut final_distance, &mut final_point_on_a, &mut final_point_on_b, &mut final_separation_direction, &mut final_closest_minkowski_point);
     *result_out = GjkDistanceResult { intersects: false, distance: final_distance, separation_direction: final_separation_direction, point_on_a: final_point_on_a, point_on_b: final_point_on_b, simplex, last_direction: Negate(final_closest_minkowski_point) };
     true
 }
 
-pub fn ComputeDistanceFromSimplex(
-    simplex: &Vec<GjkVertex>,
-    distance_out: &mut f32,
-    point_on_a_out: &mut DbVector3,
-    point_on_b_out: &mut DbVector3,
-    separation_direction_out: &mut DbVector3,
-    closest_minkowski_point_out: &mut DbVector3,
-) {
+pub fn ComputeDistanceFromSimplex(simplex: &Vec<GjkVertex>, distance_out: &mut f32, point_on_a_out: &mut DbVector3, point_on_b_out: &mut DbVector3, separation_direction_out: &mut DbVector3, closest_minkowski_point_out: &mut DbVector3) 
+{
     if simplex.len() == 0 {
         *distance_out = 0.0;
         *point_on_a_out = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -139,15 +105,8 @@ pub fn ComputeDistanceFromSimplex(
     ComputeDistanceFromTetrahedron(simplex[0], simplex[1], simplex[2], simplex[3], distance_out, point_on_a_out, point_on_b_out, separation_direction_out, closest_minkowski_point_out);
 }
 
-pub fn ComputeDistanceFromSegment(
-    vertex_a: GjkVertex,
-    vertex_b: GjkVertex,
-    distance_out: &mut f32,
-    point_on_a_out: &mut DbVector3,
-    point_on_b_out: &mut DbVector3,
-    separation_direction_out: &mut DbVector3,
-    closest_minkowski_point_out: &mut DbVector3,
-) {
+pub fn ComputeDistanceFromSegment(vertex_a: GjkVertex, vertex_b: GjkVertex, distance_out: &mut f32, point_on_a_out: &mut DbVector3, point_on_b_out: &mut DbVector3, separation_direction_out: &mut DbVector3, closest_minkowski_point_out: &mut DbVector3) 
+{
     let a = vertex_a.minkowski_point;
     let b = vertex_b.minkowski_point;
     let ab = Sub(b, a);
@@ -162,22 +121,14 @@ pub fn ComputeDistanceFromSegment(
     *point_on_a_out = Add(vertex_a.support_point_a, Mul(Sub(vertex_b.support_point_a, vertex_a.support_point_a), t));
     *point_on_b_out = Add(vertex_a.support_point_b, Mul(Sub(vertex_b.support_point_b, vertex_a.support_point_b), t));
 
-    *distance_out = Length(closest_minkowski_point_out);
+    *distance_out = Length(*closest_minkowski_point_out);
 
-    let direction = Negate(closest_minkowski_point_out);
+    let direction = Negate(*closest_minkowski_point_out);
     *separation_direction_out = if NearZero(direction) { DbVector3 { x: 0.0, y: 1.0, z: 0.0 } } else { Normalize(direction) };
 }
 
-pub fn ComputeDistanceFromTriangle(
-    vertex_a: GjkVertex,
-    vertex_b: GjkVertex,
-    vertex_c: GjkVertex,
-    distance_out: &mut f32,
-    point_on_a_out: &mut DbVector3,
-    point_on_b_out: &mut DbVector3,
-    separation_direction_out: &mut DbVector3,
-    closest_minkowski_point_out: &mut DbVector3,
-) {
+pub fn ComputeDistanceFromTriangle(vertex_a: GjkVertex, vertex_b: GjkVertex, vertex_c: GjkVertex, distance_out: &mut f32, point_on_a_out: &mut DbVector3, point_on_b_out: &mut DbVector3, separation_direction_out: &mut DbVector3, closest_minkowski_point_out: &mut DbVector3) 
+{
     let a = vertex_a.minkowski_point;
     let b = vertex_b.minkowski_point;
     let c = vertex_c.minkowski_point;
@@ -193,8 +144,8 @@ pub fn ComputeDistanceFromTriangle(
         *closest_minkowski_point_out = a;
         *point_on_a_out = vertex_a.support_point_a;
         *point_on_b_out = vertex_a.support_point_b;
-        *distance_out = Length(closest_minkowski_point_out);
-        let direction = Negate(closest_minkowski_point_out);
+        *distance_out = Length(*closest_minkowski_point_out);
+        let direction = Negate(*closest_minkowski_point_out);
         *separation_direction_out = if NearZero(direction) { DbVector3 { x: 0.0, y: 1.0, z: 0.0 } } else { Normalize(direction) };
         return;
     }
@@ -207,8 +158,8 @@ pub fn ComputeDistanceFromTriangle(
         *closest_minkowski_point_out = b;
         *point_on_a_out = vertex_b.support_point_a;
         *point_on_b_out = vertex_b.support_point_b;
-        *distance_out = Length(closest_minkowski_point_out);
-        let direction = Negate(closest_minkowski_point_out);
+        *distance_out = Length(*closest_minkowski_point_out);
+        let direction = Negate(*closest_minkowski_point_out);
         *separation_direction_out = if NearZero(direction) { DbVector3 { x: 0.0, y: 1.0, z: 0.0 } } else { Normalize(direction) };
         return;
     }
@@ -222,8 +173,8 @@ pub fn ComputeDistanceFromTriangle(
         *point_on_a_out = Add(vertex_a.support_point_a, Mul(Sub(vertex_b.support_point_a, vertex_a.support_point_a), v));
         *point_on_b_out = Add(vertex_a.support_point_b, Mul(Sub(vertex_b.support_point_b, vertex_a.support_point_b), v));
 
-        *distance_out = Length(closest_minkowski_point_out);
-        let direction = Negate(closest_minkowski_point_out);
+        *distance_out = Length(*closest_minkowski_point_out);
+        let direction = Negate(*closest_minkowski_point_out);
         *separation_direction_out = if NearZero(direction) { DbVector3 { x: 0.0, y: 1.0, z: 0.0 } } else { Normalize(direction) };
         return;
     }
@@ -236,8 +187,8 @@ pub fn ComputeDistanceFromTriangle(
         *closest_minkowski_point_out = c;
         *point_on_a_out = vertex_c.support_point_a;
         *point_on_b_out = vertex_c.support_point_b;
-        *distance_out = Length(closest_minkowski_point_out);
-        let direction = Negate(closest_minkowski_point_out);
+        *distance_out = Length(*closest_minkowski_point_out);
+        let direction = Negate(*closest_minkowski_point_out);
         *separation_direction_out = if NearZero(direction) { DbVector3 { x: 0.0, y: 1.0, z: 0.0 } } else { Normalize(direction) };
         return;
     }
@@ -251,8 +202,8 @@ pub fn ComputeDistanceFromTriangle(
         *point_on_a_out = Add(vertex_a.support_point_a, Mul(Sub(vertex_c.support_point_a, vertex_a.support_point_a), w));
         *point_on_b_out = Add(vertex_a.support_point_b, Mul(Sub(vertex_c.support_point_b, vertex_a.support_point_b), w));
 
-        *distance_out = Length(closest_minkowski_point_out);
-        let direction = Negate(closest_minkowski_point_out);
+        *distance_out = Length(*closest_minkowski_point_out);
+        let direction = Negate(*closest_minkowski_point_out);
         *separation_direction_out = if NearZero(direction) { DbVector3 { x: 0.0, y: 1.0, z: 0.0 } } else { Normalize(direction) };
         return;
     }
@@ -267,8 +218,8 @@ pub fn ComputeDistanceFromTriangle(
         *point_on_a_out = Add(vertex_b.support_point_a, Mul(Sub(vertex_c.support_point_a, vertex_b.support_point_a), w));
         *point_on_b_out = Add(vertex_b.support_point_b, Mul(Sub(vertex_c.support_point_b, vertex_b.support_point_b), w));
 
-        *distance_out = Length(closest_minkowski_point_out);
-        let direction = Negate(closest_minkowski_point_out);
+        *distance_out = Length(*closest_minkowski_point_out);
+        let direction = Negate(*closest_minkowski_point_out);
         *separation_direction_out = if NearZero(direction) { DbVector3 { x: 0.0, y: 1.0, z: 0.0 } } else { Normalize(direction) };
         return;
     }
@@ -278,8 +229,8 @@ pub fn ComputeDistanceFromTriangle(
         *closest_minkowski_point_out = a;
         *point_on_a_out = vertex_a.support_point_a;
         *point_on_b_out = vertex_a.support_point_b;
-        *distance_out = Length(closest_minkowski_point_out);
-        let direction = Negate(closest_minkowski_point_out);
+        *distance_out = Length(*closest_minkowski_point_out);
+        let direction = Negate(*closest_minkowski_point_out);
         *separation_direction_out = if NearZero(direction) { DbVector3 { x: 0.0, y: 1.0, z: 0.0 } } else { Normalize(direction) };
         return;
     }
@@ -294,23 +245,14 @@ pub fn ComputeDistanceFromTriangle(
     *point_on_a_out = Add(Add(Mul(vertex_a.support_point_a, u_face), Mul(vertex_b.support_point_a, v_face)), Mul(vertex_c.support_point_a, w_face));
     *point_on_b_out = Add(Add(Mul(vertex_a.support_point_b, u_face), Mul(vertex_b.support_point_b, v_face)), Mul(vertex_c.support_point_b, w_face));
 
-    *distance_out = Length(closest_minkowski_point_out);
+    *distance_out = Length(*closest_minkowski_point_out);
 
-    let direction_face = Negate(closest_minkowski_point_out);
+    let direction_face = Negate(*closest_minkowski_point_out);
     *separation_direction_out = if NearZero(direction_face) { DbVector3 { x: 0.0, y: 1.0, z: 0.0 } } else { Normalize(direction_face) };
 }
 
-pub fn ComputeDistanceFromTetrahedron(
-    vertex_a: GjkVertex,
-    vertex_b: GjkVertex,
-    vertex_c: GjkVertex,
-    vertex_d: GjkVertex,
-    distance_out: &mut f32,
-    point_on_a_out: &mut DbVector3,
-    point_on_b_out: &mut DbVector3,
-    separation_direction_out: &mut DbVector3,
-    closest_minkowski_point_out: &mut DbVector3,
-) {
+pub fn ComputeDistanceFromTetrahedron(vertex_a: GjkVertex, vertex_b: GjkVertex, vertex_c: GjkVertex, vertex_d: GjkVertex, distance_out: &mut f32, point_on_a_out: &mut DbVector3, point_on_b_out: &mut DbVector3, separation_direction_out: &mut DbVector3, closest_minkowski_point_out: &mut DbVector3) 
+{
     let mut best_distance: f32 = f32::MAX;
 
     *distance_out = 0.0;
@@ -325,17 +267,8 @@ pub fn ComputeDistanceFromTetrahedron(
     EvaluateFace(vertex_b, vertex_d, vertex_c, &mut best_distance, distance_out, point_on_a_out, point_on_b_out, separation_direction_out, closest_minkowski_point_out);
 }
 
-pub fn EvaluateFace(
-    face_a: GjkVertex,
-    face_b: GjkVertex,
-    face_c: GjkVertex,
-    best_distance: &mut f32,
-    distance_out: &mut f32,
-    point_on_a_out: &mut DbVector3,
-    point_on_b_out: &mut DbVector3,
-    separation_direction_out: &mut DbVector3,
-    closest_minkowski_point_out: &mut DbVector3,
-) {
+pub fn EvaluateFace(face_a: GjkVertex, face_b: GjkVertex, face_c: GjkVertex, best_distance: &mut f32, distance_out: &mut f32, point_on_a_out: &mut DbVector3, point_on_b_out: &mut DbVector3, separation_direction_out: &mut DbVector3, closest_minkowski_point_out: &mut DbVector3) 
+{
     let mut face_distance: f32 = 0.0;
     let mut face_point_on_a = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut face_point_on_b = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };

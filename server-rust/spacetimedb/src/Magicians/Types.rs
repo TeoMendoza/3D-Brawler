@@ -1,5 +1,4 @@
-use std::time::Duration;
-use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use spacetimedb::{SpacetimeType};
 use crate::*;
 
 #[derive(SpacetimeType)]
@@ -30,7 +29,7 @@ pub struct AttackInformation {
 #[derive(SpacetimeType)]
 pub struct ReloadInformation {}
 
-#[derive(SpacetimeType, PartialEq, Eq, Copy)]
+#[derive(SpacetimeType, PartialEq, Eq, Clone, Copy)]
 pub enum MagicianState {
     Default,
     Attack,
@@ -41,13 +40,12 @@ pub enum MagicianState {
 pub struct ThrowingCard {
     pub effects: Vec<Effect>,
 }
-#[derive(SpacetimeType)]
+#[derive(SpacetimeType, Clone)]
 pub struct Effect {
     pub effect_type: EffectType,
 }
 
-#[derive(SpacetimeType)]
-#[derive(PartialEq, Eq)]
+#[derive(SpacetimeType, PartialEq, Eq, Clone)]
 pub enum EffectType {
     Damage,
 }

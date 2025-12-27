@@ -15,11 +15,11 @@ namespace SpacetimeDB.Types
     {
         public sealed class MapHandle : RemoteTableHandle<EventContext, Map>
         {
-            protected override string RemoteTableName => "Map";
+            protected override string RemoteTableName => "map";
 
-            public sealed class IdUniqueIndex : UniqueIndexBase<uint>
+            public sealed class IdUniqueIndex : UniqueIndexBase<ulong>
             {
-                protected override uint GetKey(Map row) => row.Id;
+                protected override ulong GetKey(Map row) => row.Id;
 
                 public IdUniqueIndex(MapHandle table) : base(table) { }
             }

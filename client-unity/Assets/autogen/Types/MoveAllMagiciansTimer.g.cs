@@ -19,20 +19,20 @@ namespace SpacetimeDB.Types
         public SpacetimeDB.ScheduleAt ScheduledAt;
         [DataMember(Name = "tick_rate")]
         public float TickRate;
-        [DataMember(Name = "MatchId")]
-        public uint MatchId;
+        [DataMember(Name = "game_id")]
+        public uint GameId;
 
         public MoveAllMagiciansTimer(
             ulong ScheduledId,
             SpacetimeDB.ScheduleAt ScheduledAt,
             float TickRate,
-            uint MatchId
+            uint GameId
         )
         {
             this.ScheduledId = ScheduledId;
             this.ScheduledAt = ScheduledAt;
             this.TickRate = TickRate;
-            this.MatchId = MatchId;
+            this.GameId = GameId;
         }
 
         public MoveAllMagiciansTimer()

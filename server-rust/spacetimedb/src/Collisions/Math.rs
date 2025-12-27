@@ -1,5 +1,3 @@
-use std::time::Duration;
-use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
 use glam::{Quat, Vec3};
 use crate::*;
 
@@ -59,4 +57,19 @@ pub fn NearZero(vector: DbVector3) -> bool { Dot(vector, vector) <= 1e-12 }
 pub fn Perp(vector: DbVector3) -> DbVector3 {
     if vector.x.abs() > vector.z.abs() { return DbVector3 { x: -vector.y, y: vector.x, z: 0.0 }; }
     DbVector3 { x: 0.0, y: -vector.z, z: vector.y }
+}
+
+pub fn RotateAroundYAxis(vector: DbVector3, yaw_radians: f32) -> DbVector3 {
+    let cos_yaw: f32 = yaw_radians.cos();
+    let sin_yaw: f32 = yaw_radians.sin();
+
+    let rotated_x: f32 = vector.x * cos_yaw + vector.z * sin_yaw;
+    let rotated_z: f32 = -vector.x * sin_yaw + vector.z * cos_yaw;
+
+    DbVector3 { x: rotated_x, y: vector.y, z: rotated_z }
+}
+
+pub fn GetColliderCenterWorld(collider: &ComplexCollider, position: DbVector3, yaw_radians: f32) -> DbVector3 {
+    let rotated_center = RotateAroundYAxis(collider.center_point, yaw_radians);
+    Add(position, rotated_center)
 }

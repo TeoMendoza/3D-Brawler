@@ -48,7 +48,7 @@ namespace SpacetimeDB.Types
         [DataContract]
         public sealed partial class ApplyGravityMagician : Reducer, IReducerArgs
         {
-            [DataMember(Name = "Timer")]
+            [DataMember(Name = "timer")]
             public GravityTimerMagician Timer;
 
             public ApplyGravityMagician(GravityTimerMagician Timer)

@@ -17,9 +17,9 @@ namespace SpacetimeDB.Types
         {
             protected override string RemoteTableName => "logged_out_players";
 
-            public sealed class IdUniqueIndex : UniqueIndexBase<uint>
+            public sealed class IdUniqueIndex : UniqueIndexBase<ulong>
             {
-                protected override uint GetKey(Player row) => row.Id;
+                protected override ulong GetKey(Player row) => row.Id;
 
                 public IdUniqueIndex(LoggedOutPlayersHandle table) : base(table) { }
             }

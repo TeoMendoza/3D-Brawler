@@ -48,7 +48,7 @@ namespace SpacetimeDB.Types
         [DataContract]
         public sealed partial class MoveMagicians : Reducer, IReducerArgs
         {
-            [DataMember(Name = "Timer")]
+            [DataMember(Name = "timer")]
             public MoveAllMagiciansTimer Timer;
 
             public MoveMagicians(MoveAllMagiciansTimer Timer)

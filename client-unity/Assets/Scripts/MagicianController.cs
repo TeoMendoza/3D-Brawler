@@ -45,9 +45,9 @@ public class MagicianController : MonoBehaviour
     public void Initalize(Magician Character)
     {
         Identity = Character.Identity;
-        Id = Character.Id;
+        Id = (uint)Character.Id;
         Name = Character.Name;
-        MatchId = Character.MatchId;
+        MatchId = Character.GameId;
 
         transform.position = Character.Position;
         TargetPosition = Character.Position;
@@ -188,7 +188,7 @@ public class MagicianController : MonoBehaviour
             MagicianController Player = other.gameObject.GetComponent<MagicianController>();
             if (Player.Id != Id)
             {
-                CollisionEntry Entry = new(Type: CollisionEntryType.Magician, Id: Player.Id);
+                CollisionEntry Entry = new(EntryType: CollisionEntryType.Magician, Id: Player.Id);
                 GameManager.Conn.Reducers.AddCollisionEntryMagician(Entry, Identity);
             }
         }
@@ -196,7 +196,7 @@ public class MagicianController : MonoBehaviour
         else if (other.gameObject.CompareTag("Map"))
         {
             MapPiece Map = other.gameObject.GetComponent<MapPiece>();
-            CollisionEntry Entry = new(Type: CollisionEntryType.Map, Id: Map.Id);
+            CollisionEntry Entry = new(EntryType: CollisionEntryType.Map, Id: Map.Id);
             GameManager.Conn.Reducers.AddCollisionEntryMagician(Entry, Identity);
         }
     }
@@ -208,7 +208,7 @@ public class MagicianController : MonoBehaviour
             MagicianController Player = other.gameObject.GetComponent<MagicianController>();
             if (Player.Id != Id)
             {
-                CollisionEntry Entry = new(Type: CollisionEntryType.Magician, Id: Player.Id);
+                CollisionEntry Entry = new(EntryType: CollisionEntryType.Magician, Id: Player.Id);
                 GameManager.Conn.Reducers.RemoveCollisionEntryMagician(Entry, Identity);
             }
         }
@@ -216,7 +216,7 @@ public class MagicianController : MonoBehaviour
         else if (other.gameObject.CompareTag("Map"))
         {
             MapPiece Map = other.gameObject.GetComponent<MapPiece>();
-            CollisionEntry Entry = new(Type: CollisionEntryType.Map, Id: Map.Id);
+            CollisionEntry Entry = new(EntryType: CollisionEntryType.Map, Id: Map.Id);
             GameManager.Conn.Reducers.RemoveCollisionEntryMagician(Entry, Identity);
         }
     }

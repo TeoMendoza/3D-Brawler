@@ -1,17 +1,14 @@
-use std::time::Duration;
-use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use spacetimedb::{Identity, SpacetimeType};
 use crate::*;
 
-#[derive(SpacetimeType)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(SpacetimeType, Copy, Clone, Debug, PartialEq, Eq)]
 pub enum RaycastHitType {
     None = 0,
     Magician = 1,
     MapPiece = 2,
 }
 
-#[derive(SpacetimeType)]
-#[derive(Copy, Clone, Debug)]
+#[derive(SpacetimeType, Copy, Clone, Debug)]
 pub struct Raycast {
     pub hit: bool,
     pub hit_distance: f32,

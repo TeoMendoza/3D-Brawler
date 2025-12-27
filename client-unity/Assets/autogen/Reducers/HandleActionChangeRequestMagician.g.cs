@@ -48,7 +48,7 @@ namespace SpacetimeDB.Types
         [DataContract]
         public sealed partial class HandleActionChangeRequestMagician : Reducer, IReducerArgs
         {
-            [DataMember(Name = "Request")]
+            [DataMember(Name = "request")]
             public ActionRequestMagician Request;
 
             public HandleActionChangeRequestMagician(ActionRequestMagician Request)

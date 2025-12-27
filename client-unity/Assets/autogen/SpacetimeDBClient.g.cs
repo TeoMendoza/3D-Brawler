@@ -28,13 +28,13 @@ namespace SpacetimeDB.Types
     {
         public RemoteTables(DbConnection conn)
         {
-            AddTable(Map = new(conn));
+            AddTable(Game = new(conn));
             AddTable(GravityMagician = new(conn));
             AddTable(HandleMagicianTimersTimer = new(conn));
             AddTable(LoggedInPlayers = new(conn));
             AddTable(LoggedOutPlayers = new(conn));
             AddTable(Magician = new(conn));
-            AddTable(Match = new(conn));
+            AddTable(Map = new(conn));
             AddTable(MoveAllMagicians = new(conn));
         }
     }
@@ -604,7 +604,6 @@ namespace SpacetimeDB.Types
                 "HandleMagicianTimers" => BSATNHelpers.Decode<Reducer.HandleMagicianTimers>(encodedArgs),
                 "HandleMovementRequestMagician" => BSATNHelpers.Decode<Reducer.HandleMovementRequestMagician>(encodedArgs),
                 "MoveMagicians" => BSATNHelpers.Decode<Reducer.MoveMagicians>(encodedArgs),
-                "MoveMagiciansCCD" => BSATNHelpers.Decode<Reducer.MoveMagiciansCcd>(encodedArgs),
                 "RemoveCollisionEntryMagician" => BSATNHelpers.Decode<Reducer.RemoveCollisionEntryMagician>(encodedArgs),
                 "" => throw new SpacetimeDBEmptyReducerNameException("Reducer name is empty"),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
@@ -639,7 +638,6 @@ namespace SpacetimeDB.Types
                 Reducer.HandleMagicianTimers args => Reducers.InvokeHandleMagicianTimers(eventContext, args),
                 Reducer.HandleMovementRequestMagician args => Reducers.InvokeHandleMovementRequestMagician(eventContext, args),
                 Reducer.MoveMagicians args => Reducers.InvokeMoveMagicians(eventContext, args),
-                Reducer.MoveMagiciansCcd args => Reducers.InvokeMoveMagiciansCcd(eventContext, args),
                 Reducer.RemoveCollisionEntryMagician args => Reducers.InvokeRemoveCollisionEntryMagician(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };

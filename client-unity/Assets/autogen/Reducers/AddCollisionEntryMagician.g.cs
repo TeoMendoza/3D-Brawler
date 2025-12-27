@@ -49,9 +49,9 @@ namespace SpacetimeDB.Types
         [DataContract]
         public sealed partial class AddCollisionEntryMagician : Reducer, IReducerArgs
         {
-            [DataMember(Name = "Entry")]
+            [DataMember(Name = "entry")]
             public CollisionEntry Entry;
-            [DataMember(Name = "TargetIdentity")]
+            [DataMember(Name = "target_identity")]
             public SpacetimeDB.Identity TargetIdentity;
 
             public AddCollisionEntryMagician(

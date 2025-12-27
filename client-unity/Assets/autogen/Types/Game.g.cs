@@ -11,18 +11,18 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class Match
+    public sealed partial class Game
     {
-        [DataMember(Name = "Id")]
+        [DataMember(Name = "id")]
         public uint Id;
-        [DataMember(Name = "maxPlayers")]
+        [DataMember(Name = "max_players")]
         public uint MaxPlayers;
-        [DataMember(Name = "currentPlayers")]
+        [DataMember(Name = "current_players")]
         public uint CurrentPlayers;
-        [DataMember(Name = "inProgress")]
+        [DataMember(Name = "in_progress")]
         public bool InProgress;
 
-        public Match(
+        public Game(
             uint Id,
             uint MaxPlayers,
             uint CurrentPlayers,
@@ -35,7 +35,7 @@ namespace SpacetimeDB.Types
             this.InProgress = InProgress;
         }
 
-        public Match()
+        public Game()
         {
         }
     }

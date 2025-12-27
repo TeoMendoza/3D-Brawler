@@ -13,17 +13,17 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class CollisionEntry
     {
-        [DataMember(Name = "Type")]
-        public CollisionEntryType Type;
-        [DataMember(Name = "Id")]
-        public uint Id;
+        [DataMember(Name = "entry_type")]
+        public CollisionEntryType EntryType;
+        [DataMember(Name = "id")]
+        public ulong Id;
 
         public CollisionEntry(
-            CollisionEntryType Type,
-            uint Id
+            CollisionEntryType EntryType,
+            ulong Id
         )
         {
-            this.Type = Type;
+            this.EntryType = EntryType;
             this.Id = Id;
         }
 

@@ -13,21 +13,21 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class MovementRequest
     {
-        [DataMember(Name = "MoveForward")]
+        [DataMember(Name = "move_forward")]
         public bool MoveForward;
-        [DataMember(Name = "MoveBackward")]
+        [DataMember(Name = "move_backward")]
         public bool MoveBackward;
-        [DataMember(Name = "MoveLeft")]
+        [DataMember(Name = "move_left")]
         public bool MoveLeft;
-        [DataMember(Name = "MoveRight")]
+        [DataMember(Name = "move_right")]
         public bool MoveRight;
-        [DataMember(Name = "Sprint")]
+        [DataMember(Name = "sprint")]
         public bool Sprint;
-        [DataMember(Name = "Jump")]
+        [DataMember(Name = "jump")]
         public bool Jump;
-        [DataMember(Name = "Crouch")]
+        [DataMember(Name = "crouch")]
         public bool Crouch;
-        [DataMember(Name = "Aim")]
+        [DataMember(Name = "aim")]
         public DbRotation2 Aim;
 
         public MovementRequest(

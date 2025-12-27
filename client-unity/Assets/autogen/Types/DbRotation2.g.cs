@@ -13,9 +13,9 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class DbRotation2
     {
-        [DataMember(Name = "Yaw")]
+        [DataMember(Name = "yaw")]
         public float Yaw;
-        [DataMember(Name = "Pitch")]
+        [DataMember(Name = "pitch")]
         public float Pitch;
 
         public DbRotation2(

@@ -13,12 +13,12 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class Effect
     {
-        [DataMember(Name = "Type")]
-        public EffectType Type;
+        [DataMember(Name = "effect_type")]
+        public EffectType EffectType;
 
-        public Effect(EffectType Type)
+        public Effect(EffectType EffectType)
         {
-            this.Type = Type;
+            this.EffectType = EffectType;
         }
 
         public Effect()

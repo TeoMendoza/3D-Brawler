@@ -13,11 +13,11 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class ActionRequestMagician
     {
-        [DataMember(Name = "State")]
+        [DataMember(Name = "state")]
         public MagicianState State;
-        [DataMember(Name = "AttackInformation")]
+        [DataMember(Name = "attack_information")]
         public AttackInformation AttackInformation;
-        [DataMember(Name = "ReloadInformation")]
+        [DataMember(Name = "reload_information")]
         public ReloadInformation ReloadInformation;
 
         public ActionRequestMagician(

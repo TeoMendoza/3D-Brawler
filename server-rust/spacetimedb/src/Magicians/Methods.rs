@@ -1,30 +1,26 @@
-use std::time::Duration;
-use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
+use spacetimedb::{ReducerContext};
 use glam::Quat;
 use crate::*;
 
-pub fn AdjustGrounded(ctx: &ReducerContext, move_velocity: &DbVector3, magician: &mut Magician) 
+pub fn AdjustGrounded(_ctx: &ReducerContext, move_velocity: &DbVector3, magician: &mut Magician) 
 {
     if magician.kinematic_information.grounded {
         magician.kinematic_information.falling = false;
-        let can_jump_entry = GetPermissionEntry(&mut magician.player_permission_config, "CanJump").expect("Permission entry not found: CanJump");
-        RemoveSubscriber(&mut can_jump_entry.subscribers, "Jump");
 
-        let can_crouch_entry = GetPermissionEntry(&mut magician.player_permission_config, "CanCrouch").expect("Permission entry not found: CanCrouch");
-        RemoveSubscriber(&mut can_crouch_entry.subscribers, "Jump");
+        RemoveSubscriberFromPermission(&mut magician.player_permission_config, "CanJump", "Jump");
+        RemoveSubscriberFromPermission(&mut magician.player_permission_config, "CanCrouch", "Jump");
     } 
     
     else {
         magician.kinematic_information.falling = move_velocity.y < -2.0;
-        let can_jump_entry = GetPermissionEntry(&mut magician.player_permission_config, "CanJump").expect("Permission entry not found: CanJump");
-        AddSubscriberUnique(&mut can_jump_entry.subscribers, "Jump");
 
-        let can_crouch_entry = GetPermissionEntry(&mut magician.player_permission_config, "CanCrouch").expect("Permission entry not found: CanCrouch");
-        AddSubscriberUnique(&mut can_crouch_entry.subscribers, "Jump");
+        AddSubscriberToPermission(&mut magician.player_permission_config, "CanJump", "Jump");
+        AddSubscriberToPermission(&mut magician.player_permission_config, "CanCrouch", "Jump");
     }
 }
 
-pub fn ResolveContacts(magician: &mut Magician, contacts: &Vec<CollisionContact>, input_velocity: DbVector3) {
+pub fn ResolveContacts(magician: &mut Magician, contacts: &Vec<CollisionContact>, input_velocity: DbVector3) 
+{
     let world_up = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
     let min_ground_dot: f32 = 0.75;
     let depth_epsilon: f32 = 2e-3;
@@ -36,21 +32,15 @@ pub fn ResolveContacts(magician: &mut Magician, contacts: &Vec<CollisionContact>
     let input_up_cancel_threshold: f32 = 0.03;
 
     let mut corrected_velocity = input_velocity.clone();
-    let mut is_grounded_on_map: bool = false;
-    let mut ground_support_normal = world_up.clone();
     let mut has_any_position_correction: bool = false;
+    let mut is_grounded_on_map: bool = false;
     let mut total_position_correction = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
 
     for contact in contacts.iter() {
         let normal = contact.normal;
 
         let up_dot: f32 = Dot(normal, world_up);
-        let is_walkable_map_contact: bool = contact.collision_type == CollisionEntryType::Map && up_dot >= min_ground_dot;
-
-        if is_walkable_map_contact {
-            is_grounded_on_map = true;
-            ground_support_normal = normal;
-        }
+        is_grounded_on_map = contact.collision_type == CollisionEntryType::Map && up_dot >= min_ground_dot;
 
         let normal_velocity_component: f32 = Dot(normal, corrected_velocity);
         if normal_velocity_component < 0.0 {
@@ -86,32 +76,15 @@ pub fn ResolveContacts(magician: &mut Magician, contacts: &Vec<CollisionContact>
         if desired_horizontal_speed_sq < 0.001 {
             corrected_velocity.x = 0.0;
             corrected_velocity.z = 0.0;
-        } else {
-            let desired_horizontal_speed: f32 = desired_horizontal_speed_sq.sqrt();
-            let preserved_corrected_y: f32 = corrected_velocity.y;
-
-            let tangent_velocity = Sub(corrected_velocity, Mul(ground_support_normal, Dot(corrected_velocity, ground_support_normal)));
-            let tangent_speed_sq: f32 = Dot(tangent_velocity, tangent_velocity);
-
-            if tangent_speed_sq > 1e-8 {
-                let tangent_direction = Mul(tangent_velocity, 1.0 / tangent_speed_sq.sqrt());
-
-                let tangent_direction_horizontal_sq: f32 = tangent_direction.x * tangent_direction.x + tangent_direction.z * tangent_direction.z;
-                if tangent_direction_horizontal_sq > 1e-8 {
-                    let tangent_direction_horizontal: f32 = tangent_direction_horizontal_sq.sqrt();
-                    let scale: f32 = desired_horizontal_speed / tangent_direction_horizontal;
-
-                    let desired_tangent_velocity = Mul(tangent_direction, scale);
-
-                    corrected_velocity.x = desired_tangent_velocity.x;
-                    corrected_velocity.z = desired_tangent_velocity.z;
-                    corrected_velocity.y = preserved_corrected_y;
-                }
-            }
+        } 
+        
+        if corrected_velocity.y <= ground_stick_up_threshold { 
+            corrected_velocity.y = 0.0; 
         }
 
-        if corrected_velocity.y <= ground_stick_up_threshold { corrected_velocity.y = 0.0; }
-        if input_velocity.y <= input_up_cancel_threshold { magician.velocity.y = 0.0; }
+        if input_velocity.y <= input_up_cancel_threshold { 
+            magician.velocity.y = 0.0; 
+        }
     }
 
     magician.is_colliding = contacts.len() > 0;
@@ -119,7 +92,8 @@ pub fn ResolveContacts(magician: &mut Magician, contacts: &Vec<CollisionContact>
     magician.kinematic_information.grounded = magician.kinematic_information.grounded || is_grounded_on_map;
 }
 
-pub fn TryBuildContactForEntry(ctx: &ReducerContext, character_local: &Magician, collision_entry: &CollisionEntry, contacts: &mut Vec<CollisionContact>) -> bool {
+pub fn TryBuildContactForEntry(ctx: &ReducerContext, character_local: &Magician, collision_entry: &CollisionEntry, contacts: &mut Vec<CollisionContact>) -> bool 
+{
     let position_a = character_local.position;
     let yaw_radians_a: f32 = ToRadians(character_local.rotation.yaw);
 
@@ -134,7 +108,7 @@ pub fn TryBuildContactForEntry(ctx: &ReducerContext, character_local: &Magician,
         let yaw_radians_b: f32 = ToRadians(other_magician.rotation.yaw);
 
         let mut gjk_result_magician: GjkResult = Default::default();
-        let intersects_magician: bool = SolveGjk(collider_a, position_a, yaw_radians_a, collider_b, position_b, yaw_radians_b, &mut gjk_result_magician, 16);
+        let intersects_magician: bool = SolveGjk(collider_a, position_a, yaw_radians_a, collider_b, position_b, yaw_radians_b, &mut gjk_result_magician, 24);
         if intersects_magician == false { return false; }
 
         let center_a_world = GetColliderCenterWorld(&character_local.collider, position_a, yaw_radians_a);
@@ -159,7 +133,7 @@ pub fn TryBuildContactForEntry(ctx: &ReducerContext, character_local: &Magician,
         let yaw_radians_b: f32 = 0.0;
 
         let mut gjk_result_map: GjkResult = Default::default();
-        let intersects_map: bool = SolveGjk(collider_a, position_a, yaw_radians_a, collider_b, position_b, yaw_radians_b, &mut gjk_result_map, 16);
+        let intersects_map: bool = SolveGjk(collider_a, position_a, yaw_radians_a, collider_b, position_b, yaw_radians_b, &mut gjk_result_map, 24);
         if intersects_map == false { return false; }
 
         let center_a_world = GetColliderCenterWorld(&character_local.collider, position_a, yaw_radians_a);
@@ -177,7 +151,8 @@ pub fn TryBuildContactForEntry(ctx: &ReducerContext, character_local: &Magician,
     false
 }
 
-pub fn TryForceOverlapForEntry(ctx: &ReducerContext, character: &mut Magician, entry: &CollisionEntry, was_grounded: bool) -> bool {
+pub fn TryForceOverlapForEntry(ctx: &ReducerContext, character: &mut Magician, entry: &CollisionEntry, was_grounded: bool) -> bool 
+{
     if entry.entry_type != CollisionEntryType::Map { return false; }
     if was_grounded == false && character.kinematic_information.grounded == false { return false; }
 
@@ -195,12 +170,10 @@ pub fn TryForceOverlapForEntry(ctx: &ReducerContext, character: &mut Magician, e
     let tiny_overlap: f32 = 0.0005;
     let overlap_enable_gap: f32 = 0.01;
 
-    let collider_a_complex = &character.collider;
-    let collider_a = &collider_a_complex.convex_hulls;
+    let collider_a = &character.collider;
 
     let map_piece = ctx.db.map().id().find(entry.id).expect("Colliding Map Piece Not Found");
-    let collider_b_complex = &map_piece.collider;
-    let collider_b = &collider_b_complex.convex_hulls;
+    let collider_b = &map_piece.collider;
 
     let position_a = character.position;
     let position_b = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -209,10 +182,10 @@ pub fn TryForceOverlapForEntry(ctx: &ReducerContext, character: &mut Magician, e
     let yaw_b: f32 = 0.0;
 
     let mut distance_result: GjkDistanceResult = Default::default();
-    if SolveGjkDistance(collider_a, position_a, yaw_a, collider_b, position_b, yaw_b, &mut distance_result, 16) == false { return false; }
+    if SolveGjkDistance(collider_a, position_a, yaw_a, collider_b, position_b, yaw_b, &mut distance_result, 24) == false { return false; }
 
-    let center_a_world = GetColliderCenterWorld(&collider_a_complex, position_a, yaw_a);
-    let center_b_world = GetColliderCenterWorld(&collider_b_complex, position_b, yaw_b);
+    let center_a_world = GetColliderCenterWorld(&collider_a, position_a, yaw_a);
+    let center_b_world = GetColliderCenterWorld(&collider_b, position_b, yaw_b);
 
     let contact_normal = ComputeContactNormal(distance_result.separation_direction, center_a_world, center_b_world);
 
@@ -235,7 +208,8 @@ pub fn TryForceOverlapForEntry(ctx: &ReducerContext, character: &mut Magician, e
     true
 }
 
-pub fn TryReload(ctx: &ReducerContext, magician: &mut Magician) {
+pub fn TryReload(_ctx: &ReducerContext, magician: &mut Magician) 
+{
     let bullet_capacity: i32 = magician.bullet_capacity;
     let missing_bullets: i32 = bullet_capacity - magician.bullets.len() as i32;
     if missing_bullets <= 0 { return; }
@@ -248,9 +222,10 @@ pub fn TryReload(ctx: &ReducerContext, magician: &mut Magician) {
     magician.bullets.splice(0..0, new_bullets);
 }
 
-pub fn TryPerformAttack(ctx: &ReducerContext, magician: &mut Magician, attack_information: AttackInformation) {
+pub fn TryPerformAttack(ctx: &ReducerContext, magician: &mut Magician, attack_information: AttackInformation) 
+{
     let last_index: usize = magician.bullets.len() - 1;
-    let bullet: ThrowingCard = magician.bullets[last_index].clone();
+    let bullet: ThrowingCard = magician.bullets[last_index].clone(); // Will Be Used Later To Process Effects
     magician.bullets.remove(last_index);
 
     let magician_position = magician.position;
@@ -275,7 +250,7 @@ pub fn TryPerformAttack(ctx: &ReducerContext, magician: &mut Magician, attack_in
     let shot_hit = RaycastMatch(ctx, spawn_point, shot_direction, attack_information.max_distance);
 
     if shot_hit.hit {
-        log::info!("Hitscan Hit Type={} Distance={} EntityId={}", shot_hit.hit_type, shot_hit.hit_distance, shot_hit.hit_entity_id);
+        log::info!("Hitscan Hit Type={:?} Distance={} EntityId={}", shot_hit.hit_type, shot_hit.hit_distance, shot_hit.hit_entity_id);
     } 
     
     else {
@@ -283,17 +258,32 @@ pub fn TryPerformAttack(ctx: &ReducerContext, magician: &mut Magician, attack_in
     }
 }
 
-pub fn ResetAllTimers(magician: &mut Magician) {
-    for timer_index in 0..magician.timers.len() {
-        let mut current_timer = magician.timers[timer_index].clone();
-        current_timer.current_time = current_timer.reset_time;
-        magician.timers[timer_index] = current_timer;
+pub fn ResetAllTimers(magician: &mut Magician) 
+{
+    for timer in magician.timers.iter_mut() {
+        timer.current_time = timer.reset_time;
     }
 }
 
-pub fn TryFindTimerIndex(magician: &Magician, timer_name: &str) -> usize {
-    for timer_index in 0..magician.timers.len() {
-        if magician.timers[timer_index].name == timer_name { return timer_index; }
+pub fn TickTimerAndCheckExpired(magician: &mut Magician, key: &str, delta_time: f32) -> bool 
+{
+    let timer = TryFindTimer(&mut magician.timers, key);
+    timer.current_time -= delta_time;
+
+    if timer.current_time <= 0.0 {
+        timer.current_time = timer.reset_time;
+        return true;
     }
-    panic!("Requested Timer Not Found");
+
+    false
+}
+
+pub fn TryFindTimer<'a>(timers: &'a mut [Timer], key: &str) -> &'a mut Timer 
+{
+    for timer in timers.iter_mut() {
+        if timer.name == key {
+            return timer;
+        }
+    }
+    panic!("Timer not found: {}", key);
 }

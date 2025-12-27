@@ -13,15 +13,15 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class AttackInformation
     {
-        [DataMember(Name = "CameraPositionOffset")]
+        [DataMember(Name = "camera_position_offset")]
         public DbVector3 CameraPositionOffset;
-        [DataMember(Name = "CameraYawOffset")]
+        [DataMember(Name = "camera_yaw_offset")]
         public float CameraYawOffset;
-        [DataMember(Name = "CameraPitchOffset")]
+        [DataMember(Name = "camera_pitch_offset")]
         public float CameraPitchOffset;
-        [DataMember(Name = "SpawnPointOffset")]
+        [DataMember(Name = "spawn_point_offset")]
         public DbVector3 SpawnPointOffset;
-        [DataMember(Name = "MaxDistance")]
+        [DataMember(Name = "max_distance")]
         public float MaxDistance;
 
         public AttackInformation(

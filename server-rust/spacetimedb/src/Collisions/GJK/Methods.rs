@@ -1,17 +1,7 @@
-use std::time::Duration;
-use spacetimedb::{rand::Rng, Identity, SpacetimeType, ReducerContext, ScheduleAt, Table, Timestamp};
 use crate::*;
 
-pub fn SolveGjk(
-    collider_a: &Vec<ConvexHullCollider>,
-    position_a: DbVector3,
-    yaw_radians_a: f32,
-    collider_b: &Vec<ConvexHullCollider>,
-    position_b: DbVector3,
-    yaw_radians_b: f32,
-    result_out: &mut GjkResult,
-    max_iterations: i32,
-) -> bool {
+pub fn SolveGjk(collider_a: &Vec<ConvexHullCollider>, position_a: DbVector3, yaw_radians_a: f32, collider_b: &Vec<ConvexHullCollider>, position_b: DbVector3, yaw_radians_b: f32, result_out: &mut GjkResult, max_iterations: i32) -> bool 
+{
     let mut simplex: Vec<GjkVertex> = Vec::with_capacity(4);
     let mut search_direction = DbVector3 { x: 0.0, y: 0.0, z: 1.0 };
 
@@ -176,28 +166,23 @@ pub fn UpdateSimplex(simplex: &mut Vec<GjkVertex>, search_direction: &mut DbVect
     false
 }
 
-pub fn SupportPairWorld(
-    complex_collider_a: &Vec<ConvexHullCollider>,
-    position_a: DbVector3,
-    yaw_radians_a: f32,
-    complex_collider_b: &Vec<ConvexHullCollider>,
-    position_b: DbVector3,
-    yaw_radians_b: f32,
-    direction_world: DbVector3,
-) -> GjkVertex {
+pub fn SupportPairWorld(complex_collider_a: &Vec<ConvexHullCollider>, position_a: DbVector3, yaw_radians_a: f32, complex_collider_b: &Vec<ConvexHullCollider>, position_b: DbVector3, yaw_radians_b: f32, direction_world: DbVector3) -> GjkVertex 
+{
     let support_point_a_world = SupportWorldComplex(complex_collider_a, position_a, yaw_radians_a, direction_world);
     let support_point_b_world = SupportWorldComplex(complex_collider_b, position_b, yaw_radians_b, Negate(direction_world));
     GjkVertex { support_point_a: support_point_a_world, support_point_b: support_point_b_world, minkowski_point: Sub(support_point_a_world, support_point_b_world) }
 }
 
-pub fn SupportWorldComplex(complex_collider: &Vec<ConvexHullCollider>, world_position: DbVector3, yaw_radians: f32, direction_world: DbVector3) -> DbVector3 {
+pub fn SupportWorldComplex(complex_collider: &Vec<ConvexHullCollider>, world_position: DbVector3, yaw_radians: f32, direction_world: DbVector3) -> DbVector3 
+{
     let direction_local = RotateAroundYAxis(direction_world, -yaw_radians);
     let support_local_point = SupportLocalComplex(complex_collider, direction_local);
     let support_world_rotated = RotateAroundYAxis(support_local_point, yaw_radians);
     Add(support_world_rotated, world_position)
 }
 
-pub fn SupportLocalComplex(complex_collider: &Vec<ConvexHullCollider>, direction_local: DbVector3) -> DbVector3 {
+pub fn SupportLocalComplex(complex_collider: &Vec<ConvexHullCollider>, direction_local: DbVector3) -> DbVector3 
+{
     let mut best_dot: f32 = f32::NEG_INFINITY;
     let mut best_point = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -214,7 +199,8 @@ pub fn SupportLocalComplex(complex_collider: &Vec<ConvexHullCollider>, direction
     best_point
 }
 
-pub fn SupportLocal(collider: &ConvexHullCollider, direction: DbVector3) -> DbVector3 {
+pub fn SupportLocal(collider: &ConvexHullCollider, direction: DbVector3) -> DbVector3 
+{
     let vertices: &Vec<DbVector3> = &collider.vertices_local;
 
     let mut best_vertex_index: usize = 0;
@@ -244,17 +230,4 @@ pub fn SupportLocal(collider: &ConvexHullCollider, direction: DbVector3) -> DbVe
     best_vertex
 }
 
-pub fn RotateAroundYAxis(vector: DbVector3, yaw_radians: f32) -> DbVector3 {
-    let cos_yaw: f32 = yaw_radians.cos();
-    let sin_yaw: f32 = yaw_radians.sin();
 
-    let rotated_x: f32 = vector.x * cos_yaw + vector.z * sin_yaw;
-    let rotated_z: f32 = -vector.x * sin_yaw + vector.z * cos_yaw;
-
-    DbVector3 { x: rotated_x, y: vector.y, z: rotated_z }
-}
-
-pub fn GetColliderCenterWorld(collider: &ComplexCollider, position: DbVector3, yaw_radians: f32) -> DbVector3 {
-    let rotated_center = RotateAroundYAxis(collider.center_point, yaw_radians);
-    Add(position, rotated_center)
-}

@@ -17,32 +17,23 @@ namespace SpacetimeDB.Types
         {
             protected override string RemoteTableName => "magician";
 
-            public sealed class IdUniqueIndex : UniqueIndexBase<uint>
+            public sealed class GameIdIndex : BTreeIndexBase<uint>
             {
-                protected override uint GetKey(Magician row) => row.Id;
+                protected override uint GetKey(Magician row) => row.GameId;
+
+                public GameIdIndex(MagicianHandle table) : base(table) { }
+            }
+
+            public readonly GameIdIndex GameId;
+
+            public sealed class IdUniqueIndex : UniqueIndexBase<ulong>
+            {
+                protected override ulong GetKey(Magician row) => row.Id;
 
                 public IdUniqueIndex(MagicianHandle table) : base(table) { }
             }
 
             public readonly IdUniqueIndex Id;
-
-            public sealed class SameMatchPlayersIndex : BTreeIndexBase<(uint MatchId, uint Id)>
-            {
-                protected override (uint MatchId, uint Id) GetKey(Magician row) => (row.MatchId, row.Id);
-
-                public SameMatchPlayersIndex(MagicianHandle table) : base(table) { }
-            }
-
-            public readonly SameMatchPlayersIndex SameMatchPlayers;
-
-            public sealed class MatchIdIndex : BTreeIndexBase<uint>
-            {
-                protected override uint GetKey(Magician row) => row.MatchId;
-
-                public MatchIdIndex(MagicianHandle table) : base(table) { }
-            }
-
-            public readonly MatchIdIndex MatchId;
 
             public sealed class IdentityUniqueIndex : UniqueIndexBase<SpacetimeDB.Identity>
             {
@@ -55,9 +46,8 @@ namespace SpacetimeDB.Types
 
             internal MagicianHandle(DbConnection conn) : base(conn)
             {
+                GameId = new(this);
                 Id = new(this);
-                SameMatchPlayers = new(this);
-                MatchId = new(this);
                 Identity = new(this);
             }
 

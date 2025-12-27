@@ -13,7 +13,7 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class ThrowingCard
     {
-        [DataMember(Name = "Effects")]
+        [DataMember(Name = "effects")]
         public System.Collections.Generic.List<Effect> Effects;
 
         public ThrowingCard(System.Collections.Generic.List<Effect> Effects)

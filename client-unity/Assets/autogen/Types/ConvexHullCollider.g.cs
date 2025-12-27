@@ -13,11 +13,11 @@ namespace SpacetimeDB.Types
     [DataContract]
     public sealed partial class ConvexHullCollider
     {
-        [DataMember(Name = "VerticesLocal")]
+        [DataMember(Name = "vertices_local")]
         public System.Collections.Generic.List<DbVector3> VerticesLocal;
-        [DataMember(Name = "TriangleIndicesLocal")]
+        [DataMember(Name = "triangle_indices_local")]
         public System.Collections.Generic.List<int> TriangleIndicesLocal;
-        [DataMember(Name = "Margin")]
+        [DataMember(Name = "margin")]
         public float Margin;
 
         public ConvexHullCollider(

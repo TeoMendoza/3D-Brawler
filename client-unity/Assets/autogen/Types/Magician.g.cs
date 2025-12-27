@@ -15,44 +15,44 @@ namespace SpacetimeDB.Types
     {
         [DataMember(Name = "identity")]
         public SpacetimeDB.Identity Identity;
-        [DataMember(Name = "Id")]
-        public uint Id;
-        [DataMember(Name = "Name")]
+        [DataMember(Name = "id")]
+        public ulong Id;
+        [DataMember(Name = "game_id")]
+        public uint GameId;
+        [DataMember(Name = "name")]
         public string Name;
-        [DataMember(Name = "MatchId")]
-        public uint MatchId;
-        [DataMember(Name = "Position")]
+        [DataMember(Name = "position")]
         public DbVector3 Position;
-        [DataMember(Name = "Rotation")]
+        [DataMember(Name = "rotation")]
         public DbRotation2 Rotation;
-        [DataMember(Name = "Velocity")]
+        [DataMember(Name = "velocity")]
         public DbVector3 Velocity;
-        [DataMember(Name = "CorrectedVelocity")]
+        [DataMember(Name = "corrected_velocity")]
         public DbVector3 CorrectedVelocity;
-        [DataMember(Name = "Collider")]
+        [DataMember(Name = "collider")]
         public ComplexCollider Collider;
-        [DataMember(Name = "CollisionEntries")]
+        [DataMember(Name = "collision_entries")]
         public System.Collections.Generic.List<CollisionEntry> CollisionEntries;
-        [DataMember(Name = "IsColliding")]
+        [DataMember(Name = "is_colliding")]
         public bool IsColliding;
-        [DataMember(Name = "State")]
+        [DataMember(Name = "state")]
         public MagicianState State;
-        [DataMember(Name = "KinematicInformation")]
+        [DataMember(Name = "kinematic_information")]
         public KinematicInformation KinematicInformation;
-        [DataMember(Name = "PlayerPermissionConfig")]
+        [DataMember(Name = "player_permission_config")]
         public System.Collections.Generic.List<PermissionEntry> PlayerPermissionConfig;
-        [DataMember(Name = "Timers")]
+        [DataMember(Name = "timers")]
         public System.Collections.Generic.List<Timer> Timers;
-        [DataMember(Name = "Bullets")]
+        [DataMember(Name = "bullets")]
         public System.Collections.Generic.List<ThrowingCard> Bullets;
-        [DataMember(Name = "BulletCapacity")]
+        [DataMember(Name = "bullet_capacity")]
         public int BulletCapacity;
 
         public Magician(
             SpacetimeDB.Identity Identity,
-            uint Id,
+            ulong Id,
+            uint GameId,
             string Name,
-            uint MatchId,
             DbVector3 Position,
             DbRotation2 Rotation,
             DbVector3 Velocity,
@@ -70,8 +70,8 @@ namespace SpacetimeDB.Types
         {
             this.Identity = Identity;
             this.Id = Id;
+            this.GameId = GameId;
             this.Name = Name;
-            this.MatchId = MatchId;
             this.Position = Position;
             this.Rotation = Rotation;
             this.Velocity = Velocity;
