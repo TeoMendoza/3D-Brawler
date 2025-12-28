@@ -1,9 +1,16 @@
 use crate::*;
 
-pub fn CreateMagician(config: MagicianConfig) -> Magician {
+pub fn create_magician(config: MagicianConfig) -> Magician {
     let player = config.player;
     let game_id = config.game_id;
     let position = config.position;
+
+    let bullet_capacity: i32 = 8;
+
+    let mut bullets: Vec<ThrowingCard> = Vec::with_capacity(bullet_capacity as usize);
+    for _i in 0..bullet_capacity {
+        bullets.push(create_throwing_card());
+    }
 
     let mut magician = Magician {
         identity: player.identity,
@@ -31,21 +38,14 @@ pub fn CreateMagician(config: MagicianConfig) -> Magician {
             Timer { name: "Attack".to_string(), current_time: 0.7, reset_time: 0.7 },
             Timer { name: "Reload".to_string(), current_time: 2.2, reset_time: 2.2 },
         ],
-        bullets: Vec::new(),
-        bullet_capacity: 8,
+        bullets: bullets,
+        bullet_capacity: bullet_capacity,
     };
-
-    let mut bullets: Vec<ThrowingCard> = Vec::with_capacity(magician.bullet_capacity as usize);
-    for _i in 0..magician.bullet_capacity {
-        let throwing_card: ThrowingCard = CreateThrowingCard();
-        bullets.push(throwing_card);
-    }
-    magician.bullets = bullets;
 
     magician
 }
 
-pub fn CreateThrowingCard() -> ThrowingCard {
+pub fn create_throwing_card() -> ThrowingCard {
     let effects: Vec<Effect> = vec![Effect { effect_type: EffectType::Damage }];
     ThrowingCard { effects }
 }

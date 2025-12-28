@@ -42,7 +42,7 @@ namespace SpacetimeDB.Types
         [DataContract]
         public sealed partial class Connect : Reducer, IReducerArgs
         {
-            string IReducerArgs.ReducerName => "Connect";
+            string IReducerArgs.ReducerName => "connect";
         }
     }
 }

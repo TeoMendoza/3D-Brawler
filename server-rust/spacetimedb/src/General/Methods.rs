@@ -1,12 +1,12 @@
 use crate::*;
 
-pub fn IsPermissionUnblocked(entries: &[PermissionEntry], key: &str) -> bool
+pub fn is_permission_unblocked(entries: &[PermissionEntry], key: &str) -> bool
 {
-    let entry: &PermissionEntry = GetPermissionEntry(entries, key).expect("Permission entry not found");
-    return entry.subscribers.len() == 0;
+    let entry: &PermissionEntry = get_permission_entry(entries, key).expect("Permission entry not found");
+    return entry.subscribers.is_empty()
 }
 
-pub fn GetPermissionEntry<'a>(entries: &'a [PermissionEntry], key: &str) -> Option<&'a PermissionEntry>
+pub fn get_permission_entry<'a>(entries: &'a [PermissionEntry], key: &str) -> Option<&'a PermissionEntry>
 {
     for entry in entries.iter() {
         if entry.key == key {
@@ -17,39 +17,41 @@ pub fn GetPermissionEntry<'a>(entries: &'a [PermissionEntry], key: &str) -> Opti
     None
 }
 
-pub fn AddSubscriberToPermission(entries: &mut [PermissionEntry], key: &str, subscriber: &str) {
-    for entry in entries.iter_mut() {
-        if entry.key == key {
-            AddSubscriberUnique(&mut entry.subscribers, subscriber);
-            return;
-        }
-    }
-    panic!("Permission entry not found: {}", key);
-}
-
-pub fn RemoveSubscriberFromPermission(entries: &mut [PermissionEntry], key: &str, subscriber: &str) {
-    for entry in entries.iter_mut() {
-        if entry.key == key {
-            RemoveSubscriber(&mut entry.subscribers, subscriber);
-            return;
-        }
-    }
-    panic!("Permission entry not found: {}", key);
-}
-
-pub fn AddSubscriberUnique(subscribers: &mut Vec<String>, reason: &str) -> ()
+pub fn add_subscriber_to_permission(entries: &mut [PermissionEntry], key: &str, subscriber: &str) 
 {
-    if subscribers.iter().any(|existing: &String| existing == reason) {
-        return;
+    for entry in entries.iter_mut() {
+        if entry.key == key {
+            add_subscriber_unique(&mut entry.subscribers, subscriber);
+            return;
+        }
     }
+    panic!("Permission entry not found: {}", key);
+}
+
+pub fn remove_subscriber_from_permission(entries: &mut [PermissionEntry], key: &str, subscriber: &str) 
+{
+    for entry in entries.iter_mut() {
+        if entry.key == key {
+            remove_subscriber(&mut entry.subscribers, subscriber);
+            return;
+        }
+    }
+    panic!("Permission entry not found: {}", key);
+}
+
+pub fn add_subscriber_unique(subscribers: &mut Vec<String>, reason: &str)
+{
+    if subscribers.iter().any(|existing: &String| existing == reason) { return; }
     subscribers.push(reason.to_string());
 }
 
-pub fn RemoveSubscriber(subscribers: &mut Vec<String>, reason: &str) {
-    if let Some(index) = subscribers.iter().rposition(|existing| existing == reason) {
-        subscribers.remove(index);
+pub fn remove_subscriber(subscribers: &mut Vec<String>, reason: &str) 
+{
+    if let Some(index) = subscribers.iter().position(|existing| existing == reason) {
+        subscribers.swap_remove(index);
     }
 }
+
 
 
 

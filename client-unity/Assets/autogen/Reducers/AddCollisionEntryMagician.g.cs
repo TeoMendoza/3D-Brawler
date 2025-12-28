@@ -68,7 +68,7 @@ namespace SpacetimeDB.Types
                 this.Entry = new();
             }
 
-            string IReducerArgs.ReducerName => "AddCollisionEntryMagician";
+            string IReducerArgs.ReducerName => "add_collision_entry_magician";
         }
     }
 

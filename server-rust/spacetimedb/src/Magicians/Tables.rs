@@ -22,7 +22,7 @@ pub struct Magician {
     pub bullet_capacity: i32,
 }
 
-#[table(name = move_all_magicians, scheduled(MoveMagicians))]
+#[table(name = move_all_magicians, scheduled(move_magicians))]
 pub struct MoveAllMagiciansTimer {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,
@@ -30,7 +30,7 @@ pub struct MoveAllMagiciansTimer {
     pub game_id: u32,
 }
 
-#[table(name = gravity_magician, scheduled(ApplyGravityMagician))]
+#[table(name = gravity_magician, scheduled(apply_gravity_magician))]
 pub struct GravityTimerMagician {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,
@@ -39,7 +39,7 @@ pub struct GravityTimerMagician {
     pub game_id: u32,
 }
 
-#[table(name = handle_magician_timers_timer, scheduled(HandleMagicianTimers))]
+#[table(name = handle_magician_timers_timer, scheduled(handle_magician_timers))]
 pub struct HandleMagicianTimersTimer {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,

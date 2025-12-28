@@ -61,7 +61,7 @@ namespace SpacetimeDB.Types
                 this.Timer = new();
             }
 
-            string IReducerArgs.ReducerName => "MoveMagicians";
+            string IReducerArgs.ReducerName => "move_magicians";
         }
     }
 

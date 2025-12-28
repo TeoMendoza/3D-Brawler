@@ -596,15 +596,15 @@ namespace SpacetimeDB.Types
             var encodedArgs = update.ReducerCall.Args;
             return update.ReducerCall.ReducerName switch
             {
-                "AddCollisionEntryMagician" => BSATNHelpers.Decode<Reducer.AddCollisionEntryMagician>(encodedArgs),
-                "ApplyGravityMagician" => BSATNHelpers.Decode<Reducer.ApplyGravityMagician>(encodedArgs),
-                "Connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
-                "Disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
-                "HandleActionChangeRequestMagician" => BSATNHelpers.Decode<Reducer.HandleActionChangeRequestMagician>(encodedArgs),
-                "HandleMagicianTimers" => BSATNHelpers.Decode<Reducer.HandleMagicianTimers>(encodedArgs),
-                "HandleMovementRequestMagician" => BSATNHelpers.Decode<Reducer.HandleMovementRequestMagician>(encodedArgs),
-                "MoveMagicians" => BSATNHelpers.Decode<Reducer.MoveMagicians>(encodedArgs),
-                "RemoveCollisionEntryMagician" => BSATNHelpers.Decode<Reducer.RemoveCollisionEntryMagician>(encodedArgs),
+                "add_collision_entry_magician" => BSATNHelpers.Decode<Reducer.AddCollisionEntryMagician>(encodedArgs),
+                "apply_gravity_magician" => BSATNHelpers.Decode<Reducer.ApplyGravityMagician>(encodedArgs),
+                "connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
+                "disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
+                "handle_action_change_request_magician" => BSATNHelpers.Decode<Reducer.HandleActionChangeRequestMagician>(encodedArgs),
+                "handle_magician_timers" => BSATNHelpers.Decode<Reducer.HandleMagicianTimers>(encodedArgs),
+                "handle_movement_request_magician" => BSATNHelpers.Decode<Reducer.HandleMovementRequestMagician>(encodedArgs),
+                "move_magicians" => BSATNHelpers.Decode<Reducer.MoveMagicians>(encodedArgs),
+                "remove_collision_entry_magician" => BSATNHelpers.Decode<Reducer.RemoveCollisionEntryMagician>(encodedArgs),
                 "" => throw new SpacetimeDBEmptyReducerNameException("Reducer name is empty"),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };

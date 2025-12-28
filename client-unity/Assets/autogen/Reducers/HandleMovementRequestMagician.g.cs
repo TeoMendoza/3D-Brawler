@@ -61,7 +61,7 @@ namespace SpacetimeDB.Types
                 this.Request = new();
             }
 
-            string IReducerArgs.ReducerName => "HandleMovementRequestMagician";
+            string IReducerArgs.ReducerName => "handle_movement_request_magician";
         }
     }
 

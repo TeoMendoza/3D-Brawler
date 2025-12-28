@@ -8,7 +8,7 @@ pub fn init(ctx: &ReducerContext) {
 
     ctx.db.map().insert(Map {id: 0, name: "Floor".to_string(), collider: FloorCollider() });
     ctx.db.map().insert(Map {id: 0, name: "Ramp".to_string(), collider: RampCollider() });
-    ctx.db.map().insert(Map {id: 0, name: "Ramp2".to_string(), collider: Ramp2Collider() });
+    ctx.db.map().insert(Map {id: 0, name: "Ramp2".to_string(), collider: ramp_2_collider() });
     ctx.db.map().insert(Map {id: 0, name: "Platform".to_string(), collider: PlatformCollider() });
 
     let game = ctx.db.game().insert(Game {id: 0, max_players: 12, current_players: 1, in_progress: false });
@@ -42,7 +42,7 @@ pub fn init(ctx: &ReducerContext) {
 }
 
 #[reducer(client_connected)]
-pub fn Connect(ctx: &ReducerContext) {
+pub fn connect(ctx: &ReducerContext) {
     log::info!("{} just connected.", ctx.sender);
 
     let logged_out_player_option = ctx.db.logged_out_players().identity().find(ctx.sender);
@@ -80,13 +80,13 @@ pub fn Connect(ctx: &ReducerContext) {
     ctx.db.game().id().update(game);
 
     let magician_config = MagicianConfig {player, game_id: game_id, position: DbVector3 { x: 0.0, y: 0.0, z: 0.0 }};
-    let magician = CreateMagician(magician_config);
+    let magician = create_magician(magician_config);
     ctx.db.magician().insert(magician);
 }
 
 
 #[reducer(client_disconnected)]
-pub fn Disconnect(ctx: &ReducerContext) {
+pub fn disconnect(ctx: &ReducerContext) {
     let player = ctx.db.logged_in_players().identity().find(ctx.sender).expect("Player not found");
     let magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician not found");
 
@@ -103,8 +103,8 @@ pub fn Disconnect(ctx: &ReducerContext) {
 
     let collision_entry = CollisionEntry { entry_type: CollisionEntryType::Magician, id: magician.id };
     for mut other in ctx.db.magician().game_id().filter(magician.game_id) {
-        if other.collision_entries.contains(&collision_entry) {
-            other.collision_entries.retain(|entry| entry != &collision_entry);
+        if let Some(index) = other.collision_entries.iter().position(|entry| *entry == collision_entry) {
+            other.collision_entries.swap_remove(index);
             ctx.db.magician().id().update(other);
         }
     }
