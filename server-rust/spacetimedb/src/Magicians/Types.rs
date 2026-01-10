@@ -26,6 +26,7 @@ pub struct AttackInformation {
     pub max_distance: f32,
 }
 
+
 #[derive(SpacetimeType)]
 pub struct ReloadInformation {}
 

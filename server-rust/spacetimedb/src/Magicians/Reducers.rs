@@ -86,18 +86,13 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
     }
 
     if old_state != character.state {
-        reset_all_timers(&mut character);
+        reset_timer_for_state(&mut character, old_state);
         match old_state {
-            MagicianState::Attack => {
-                remove_subscriber_from_permission(&mut character.player_permission_config, "CanAttack", "Attack");
-                remove_subscriber_from_permission(&mut character.player_permission_config, "CanReload", "Attack");
-            }
-
             MagicianState::Reload => {
                 remove_subscriber_from_permission(&mut character.player_permission_config, "CanReload", "Reload");
             }
 
-            MagicianState::Default => {}
+            _ => {}
         }
     }
 
@@ -112,7 +107,7 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
     for mut magician in ctx.db.magician().game_id().filter(timer.game_id) {
         match magician.state {
             MagicianState::Attack => {
-                if tick_timer_and_check_expired(&mut magician, "Attack", time) {
+                if tick_active_timer_and_check_expired(&mut magician, "Attack", time) {
                     if magician.bullets.len() > 0 {
                         magician.state = MagicianState::Default;
                     } 
@@ -122,15 +117,13 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
                         add_subscriber_to_permission(&mut magician.player_permission_config, "CanReload", "Reload");
                     }
 
-                    remove_subscriber_from_permission(&mut magician.player_permission_config, "CanAttack", "Attack");
                     remove_subscriber_from_permission(&mut magician.player_permission_config, "CanReload", "Attack");
                 }
             }
 
-            MagicianState::Reload => {
-                if tick_timer_and_check_expired(&mut magician, "Reload", time) {
+            MagicianState::Reload => {  
+                if tick_active_timer_and_check_expired(&mut magician, "Reload", time) {
                     magician.state = MagicianState::Default;
-                    remove_subscriber_from_permission(&mut magician.player_permission_config, "CanReload", "Reload");
                     try_reload(ctx, &mut magician);
                 }
             }
@@ -138,9 +131,20 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
             MagicianState::Default => {}
         }
 
+        for i in 0..magician.timers.len() {
+            if let Some(expired_timer_name) = tick_cooldown_timer_and_check_expired(&mut magician.timers[i], time) {
+                match expired_timer_name.as_str() {
+                    "Attack" => remove_subscriber_from_permission(&mut magician.player_permission_config, "CanAttack", "Attack"),
+                    "Reload" => remove_subscriber_from_permission(&mut magician.player_permission_config, "CanReload", "Reload"),
+                    _ => {}
+                }
+            }
+        }
+
         ctx.db.magician().identity().update(magician);
     }
 }
+
 
 
 #[reducer]

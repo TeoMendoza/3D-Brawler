@@ -270,25 +270,55 @@ pub fn try_perform_attack(ctx: &ReducerContext, magician: &mut Magician, attack_
     }
 }
 
-pub fn reset_all_timers(magician: &mut Magician) 
+pub fn reset_timer_by_key(magician: &mut Magician, key: &str)
 {
-    for timer in magician.timers.iter_mut() {
-        timer.current_time = timer.reset_time;
+    let timer: &mut Timer = try_find_timer(&mut magician.timers, key);
+    timer.current_time = 0.0;
+    timer.state = TimerState::Inactive;
+}
+
+pub fn reset_timer_for_state(magician: &mut Magician, state: MagicianState)
+{
+    match state {
+        MagicianState::Attack => reset_timer_by_key(magician, "Attack"),
+        MagicianState::Reload => reset_timer_by_key(magician, "Reload"),
+        MagicianState::Default => {}
     }
 }
 
-pub fn tick_timer_and_check_expired(magician: &mut Magician, key: &str, delta_time: f32) -> bool 
-{
-    let timer = try_find_timer(&mut magician.timers, key);
-    timer.current_time -= delta_time;
 
-    if timer.current_time <= 0.0 {
-        timer.current_time = timer.reset_time;
+pub fn tick_active_timer_and_check_expired(magician: &mut Magician, key: &str, delta_time: f32) -> bool {
+    let timer = try_find_timer(&mut magician.timers, key);
+    timer.current_time += delta_time;
+
+    if timer.state == TimerState::Inactive {
+        timer.state = TimerState::InUse;
+    }
+
+    if timer.state == TimerState::InUse && timer.current_time >= timer.use_finished_time {
+        timer.state = TimerState::InCooldown;
         return true;
     }
 
     false
 }
+
+pub fn tick_cooldown_timer_and_check_expired(timer: &mut Timer, delta_time: f32) -> Option<String> {
+    if timer.state != TimerState::InCooldown {
+        return None;
+    }
+
+    timer.current_time += delta_time;
+
+    if timer.current_time >= timer.cooldown_time {
+        timer.current_time = 0.0;
+        timer.state = TimerState::Inactive;
+        return Some(timer.name.clone());
+    }
+
+    None
+}
+
 
 pub fn try_find_timer<'a>(timers: &'a mut [Timer], key: &str) -> &'a mut Timer 
 {

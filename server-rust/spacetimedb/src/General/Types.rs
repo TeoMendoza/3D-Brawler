@@ -39,6 +39,15 @@ pub enum CharacterType {
 #[derive(SpacetimeType, Clone, Debug)]
 pub struct Timer {
     pub name: String,
-    pub reset_time: f32, // Seconds
+    pub state: TimerState,
+    pub cooldown_time: f32, // Seconds
+    pub use_finished_time: f32, // Seconds
     pub current_time: f32, // Seconds
+}
+
+#[derive(SpacetimeType, Clone, Debug, Eq, PartialEq)]
+pub enum TimerState {
+    Inactive,
+    InUse,
+    InCooldown
 }

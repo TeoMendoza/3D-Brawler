@@ -34,10 +34,6 @@ public class MagicianController : MonoBehaviour
     float pitchCurrent;
     float pitchVel;
 
-    Vector3 CameraPositionOffset;
-    float CameraYawOffset;
-    float CameraPitchOffset;
-
     float TargetForwardSpeed;
     float TargetHorizontalSpeed;
     readonly float SpeedBlendTime = 0.15f;
@@ -57,26 +53,11 @@ public class MagicianController : MonoBehaviour
 
         IsOwner = Identity.Equals(GameManager.LocalIdentity);
 
-        if (thirdPersonCam != null && IsOwner) thirdPersonCam.gameObject.SetActive(true);
+        if (thirdPersonCam != null)
+            thirdPersonCam.gameObject.SetActive(IsOwner);
 
-        mainCamera = FindFirstObjectByType<CinemachineBrain>().OutputCamera != null ? FindFirstObjectByType<CinemachineBrain>().OutputCamera: throw new System.Exception("No Main Camera Brain");
-
-        Vector3 CameraWorldPosition = mainCamera.transform.position;
-        Vector3 CharacterWorldPosition = transform.position;
-        CameraPositionOffset = CameraWorldPosition - CharacterWorldPosition;
-
-        CameraYawOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.y);
-        CameraPitchOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.x);
-
-        Vector2 Reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
-        Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
-        Vector3 D = AimRay.direction.normalized;
-
-        Quaternion MagicianRotation = Quaternion.Euler(TargetRotation.Pitch, TargetRotation.Yaw, 0f);
-        Vector3 LocalDir = Quaternion.Inverse(MagicianRotation) * D;
-
-        CameraYawOffset = Mathf.Atan2(LocalDir.x, LocalDir.z);
-        CameraPitchOffset = Mathf.Asin(Mathf.Clamp(LocalDir.y, -1f, 1f));
+        if (IsOwner)
+            mainCamera = FindFirstObjectByType<CinemachineBrain>()?.OutputCamera ?? throw new System.Exception("No Main Camera Brain OutputCamera");
     }
 
     void Start()
@@ -109,8 +90,30 @@ public class MagicianController : MonoBehaviour
         GameManager.Conn.Reducers.HandleMovementRequestMagician(req);
 
         if (Input.GetMouseButton(0))
-            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack, new AttackInformation(CameraPositionOffset: CameraPositionOffset, CameraYawOffset: CameraYawOffset, CameraPitchOffset: CameraPitchOffset, SpawnPointOffset: new(0f, 1.15f, 0.45f), MaxDistance: 100f), new ReloadInformation()));
-        
+        {
+            Vector2 reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
+            Ray aimRay = mainCamera.ScreenPointToRay(reticle);
+            Vector3 clientReticleDirection = aimRay.direction.normalized;
+
+            Vector3 cameraWorldPosition = mainCamera.transform.position;
+            Vector3 characterWorldPosition = transform.position;
+            Vector3 cameraWorldDelta = cameraWorldPosition - characterWorldPosition;
+
+            Quaternion magicianRotation = Quaternion.Euler(pitch, yaw, 0f);
+            Vector3 localDir = Quaternion.Inverse(magicianRotation) * clientReticleDirection;
+
+            float cameraYawOffset = Mathf.Atan2(localDir.x, localDir.z);
+            float cameraPitchOffset = Mathf.Asin(Mathf.Clamp(localDir.y, -1f, 1f));
+
+            float cameraYawRadians = (yaw * Mathf.Deg2Rad) + cameraYawOffset;
+            float cameraPitchRadians = (pitch * Mathf.Deg2Rad) + cameraPitchOffset;
+            Quaternion cameraRotation = Quaternion.Euler(0f, cameraYawRadians * Mathf.Rad2Deg, 0f) * Quaternion.Euler(cameraPitchRadians * Mathf.Rad2Deg, 0f, 0f);
+
+            Vector3 cameraOffsetLocal = Quaternion.Inverse(cameraRotation) * cameraWorldDelta;
+
+            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack, new AttackInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.15f, 0.45f), MaxDistance: 100f), new ReloadInformation()));
+        }
+
         if (Input.GetKey(KeyCode.R))     
             GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Reload, new AttackInformation(), new ReloadInformation()));
         

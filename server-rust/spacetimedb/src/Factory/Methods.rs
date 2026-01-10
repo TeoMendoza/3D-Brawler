@@ -12,7 +12,7 @@ pub fn create_magician(config: MagicianConfig) -> Magician {
         bullets.push(create_throwing_card());
     }
 
-    let mut magician = Magician {
+    let magician = Magician {
         identity: player.identity,
         id: player.id,
         name: player.name,
@@ -35,8 +35,8 @@ pub fn create_magician(config: MagicianConfig) -> Magician {
             PermissionEntry { key: "CanReload".to_string(), subscribers: Vec::new() },
         ],
         timers: vec![
-            Timer { name: "Attack".to_string(), current_time: 0.7, reset_time: 0.7 },
-            Timer { name: "Reload".to_string(), current_time: 2.2, reset_time: 2.2 },
+            Timer { name: "Attack".to_string(), state: TimerState::Inactive, cooldown_time: 0.7, use_finished_time: 0.7, current_time: 0.0 },
+            Timer { name: "Reload".to_string(), state: TimerState::Inactive, cooldown_time: 2.2, use_finished_time: 2.2, current_time: 0.0 },
         ],
         bullets: bullets,
         bullet_capacity: bullet_capacity,

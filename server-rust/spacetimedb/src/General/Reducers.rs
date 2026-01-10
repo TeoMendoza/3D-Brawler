@@ -35,7 +35,7 @@ pub fn init(ctx: &ReducerContext) {
         kinematic_information: KinematicInformation { jump: false, falling: false, crouched: false, grounded: false, sprinting: false },
         state: MagicianState::Default,
         player_permission_config: vec![PermissionEntry { key: "CanWalk".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanRun".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanJump".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanCrouch".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanAttack".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanReload".to_string(), subscribers: vec![] }],
-        timers: vec![Timer { name: "Attack".to_string(), current_time: 0.7, reset_time: 0.7 }, Timer { name: "Reload".to_string(), current_time: 2.2, reset_time: 2.2 }],
+        timers: vec![Timer { name: "Attack".to_string(), state: TimerState::Inactive, cooldown_time: 0.7, use_finished_time: 0.7, current_time: 0.0 }, Timer { name: "Reload".to_string(), state: TimerState::Inactive, cooldown_time: 2.2, use_finished_time: 2.2, current_time: 0.0 }],
         bullets: Vec::new(),
         bullet_capacity: 8,
     });

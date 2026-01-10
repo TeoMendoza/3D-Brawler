@@ -15,19 +15,27 @@ namespace SpacetimeDB.Types
     {
         [DataMember(Name = "name")]
         public string Name;
-        [DataMember(Name = "reset_time")]
-        public float ResetTime;
+        [DataMember(Name = "state")]
+        public TimerState State;
+        [DataMember(Name = "cooldown_time")]
+        public float CooldownTime;
+        [DataMember(Name = "use_finished_time")]
+        public float UseFinishedTime;
         [DataMember(Name = "current_time")]
         public float CurrentTime;
 
         public Timer(
             string Name,
-            float ResetTime,
+            TimerState State,
+            float CooldownTime,
+            float UseFinishedTime,
             float CurrentTime
         )
         {
             this.Name = Name;
-            this.ResetTime = ResetTime;
+            this.State = State;
+            this.CooldownTime = CooldownTime;
+            this.UseFinishedTime = UseFinishedTime;
             this.CurrentTime = CurrentTime;
         }
 
