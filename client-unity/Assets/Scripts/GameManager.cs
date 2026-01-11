@@ -43,8 +43,6 @@ public class GameManager : MonoBehaviour
         // server.
         Conn = builder.Build();
         MatchManager.Instance.InitializeMatch(GameId: 1);
-        PingHud.Instance.Initialize(Conn);
-
     }
 
     // Called when we connect to SpacetimeDB and receive our client identity

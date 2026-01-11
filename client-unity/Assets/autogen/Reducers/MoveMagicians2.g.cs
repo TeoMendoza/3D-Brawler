@@ -12,17 +12,17 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void PingHandler(ReducerEventContext ctx, uint sequence);
-        public event PingHandler? OnPing;
+        public delegate void MoveMagicians2Handler(ReducerEventContext ctx, SpacetimeDB.Types.MoveAllMagiciansTimer timer);
+        public event MoveMagicians2Handler? OnMoveMagicians2;
 
-        public void Ping(uint sequence)
+        public void MoveMagicians2(SpacetimeDB.Types.MoveAllMagiciansTimer timer)
         {
-            conn.InternalCallReducer(new Reducer.Ping(sequence), this.SetCallReducerFlags.PingFlags);
+            conn.InternalCallReducer(new Reducer.MoveMagicians2(timer), this.SetCallReducerFlags.MoveMagicians2Flags);
         }
 
-        public bool InvokePing(ReducerEventContext ctx, Reducer.Ping args)
+        public bool InvokeMoveMagicians2(ReducerEventContext ctx, Reducer.MoveMagicians2 args)
         {
-            if (OnPing == null)
+            if (OnMoveMagicians2 == null)
             {
                 if (InternalOnUnhandledReducerError != null)
                 {
@@ -34,9 +34,9 @@ namespace SpacetimeDB.Types
                 }
                 return false;
             }
-            OnPing(
+            OnMoveMagicians2(
                 ctx,
-                args.Sequence
+                args.Timer
             );
             return true;
         }
@@ -46,27 +46,28 @@ namespace SpacetimeDB.Types
     {
         [SpacetimeDB.Type]
         [DataContract]
-        public sealed partial class Ping : Reducer, IReducerArgs
+        public sealed partial class MoveMagicians2 : Reducer, IReducerArgs
         {
-            [DataMember(Name = "sequence")]
-            public uint Sequence;
+            [DataMember(Name = "timer")]
+            public MoveAllMagiciansTimer Timer;
 
-            public Ping(uint Sequence)
+            public MoveMagicians2(MoveAllMagiciansTimer Timer)
             {
-                this.Sequence = Sequence;
+                this.Timer = Timer;
             }
 
-            public Ping()
+            public MoveMagicians2()
             {
+                this.Timer = new();
             }
 
-            string IReducerArgs.ReducerName => "ping";
+            string IReducerArgs.ReducerName => "move_magicians2";
         }
     }
 
     public sealed partial class SetReducerFlags
     {
-        internal CallReducerFlags PingFlags;
-        public void Ping(CallReducerFlags flags) => PingFlags = flags;
+        internal CallReducerFlags MoveMagicians2Flags;
+        public void MoveMagicians2(CallReducerFlags flags) => MoveMagicians2Flags = flags;
     }
 }

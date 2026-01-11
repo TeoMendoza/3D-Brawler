@@ -20,25 +20,25 @@ pub fn init(ctx: &ReducerContext) {
     ctx.db.handle_magician_timers_timer().insert(HandleMagicianTimersTimer {scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: game.id });
     ctx.db.gravity_magician().insert(GravityTimerMagician {scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, gravity: 20.0, game_id: game.id });
 
-    ctx.db.magician().insert(Magician {
-        identity: Identity::default(),
-        id: 10000,
-        name: "Test Magician".to_string(),
-        game_id: game.id,
-        position: DbVector3 { x: 0.0, y: 0.0, z: 5.0 },
-        rotation: DbRotation2 { yaw: 180.0, pitch: 0.0 },
-        velocity: DbVector3 { x: 0.0, y: 0.0, z: 0.0 },
-        corrected_velocity: DbVector3 { x: 0.0, y: 0.0, z: 0.0 },
-        collider: MagicianIdleCollider(),
-        collision_entries: vec![CollisionEntry { entry_type: CollisionEntryType::Map, id: 1 }],
-        is_colliding: false,
-        kinematic_information: KinematicInformation { jump: false, falling: false, crouched: false, grounded: false, sprinting: false },
-        state: MagicianState::Default,
-        player_permission_config: vec![PermissionEntry { key: "CanWalk".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanRun".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanJump".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanCrouch".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanAttack".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanReload".to_string(), subscribers: vec![] }],
-        timers: vec![Timer { name: "Attack".to_string(), state: TimerState::Inactive, cooldown_time: 0.7, use_finished_time: 0.7, current_time: 0.0 }, Timer { name: "Reload".to_string(), state: TimerState::Inactive, cooldown_time: 2.2, use_finished_time: 2.2, current_time: 0.0 }],
-        bullets: Vec::new(),
-        bullet_capacity: 8,
-    });
+    // ctx.db.magician().insert(Magician {
+    //     identity: Identity::default(),
+    //     id: 10000,
+    //     name: "Test Magician".to_string(),
+    //     game_id: game.id,
+    //     position: DbVector3 { x: 0.0, y: 0.0, z: 5.0 },
+    //     rotation: DbRotation2 { yaw: 180.0, pitch: 0.0 },
+    //     velocity: DbVector3 { x: 0.0, y: 0.0, z: 0.0 },
+    //     corrected_velocity: DbVector3 { x: 0.0, y: 0.0, z: 0.0 },
+    //     collider: MagicianIdleCollider(),
+    //     collision_entries: vec![CollisionEntry { entry_type: CollisionEntryType::Map, id: 1 }],
+    //     is_colliding: false,
+    //     kinematic_information: KinematicInformation { jump: false, falling: false, crouched: false, grounded: false, sprinting: false },
+    //     state: MagicianState::Default,
+    //     player_permission_config: vec![PermissionEntry { key: "CanWalk".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanRun".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanJump".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanCrouch".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanAttack".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanReload".to_string(), subscribers: vec![] }],
+    //     timers: vec![Timer { name: "Attack".to_string(), state: TimerState::Inactive, cooldown_time: 0.7, use_finished_time: 0.7, current_time: 0.0 }, Timer { name: "Reload".to_string(), state: TimerState::Inactive, cooldown_time: 2.2, use_finished_time: 2.2, current_time: 0.0 }],
+    //     bullets: Vec::new(),
+    //     bullet_capacity: 8,
+    // });
 }
 
 #[reducer(client_connected)]

@@ -2,7 +2,7 @@ use crate::*;
 
 pub fn epa_solve(gjk: &GjkResult, collider_a: &Vec<ConvexHullCollider>, position_a: DbVector3, yaw_radians_a: f32, collider_b: &Vec<ConvexHullCollider>, position_b: DbVector3, yaw_radians_b: f32, contact_out: &mut Contact) -> bool {
     let max_iterations: i32 = 16;
-    let epsilon: f32 = 2e-4;
+    let epsilon: f32 = 2e-3;
     let max_polytope_vertices: usize = 64;
 
     *contact_out = Contact { normal: DbVector3 { x: 0.0, y: 1.0, z: 0.0 }, depth: 0.0 };

@@ -103,7 +103,6 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
 #[reducer]
 pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersTimer) {
     let time: f32 = timer.tick_rate;
-
     for mut magician in ctx.db.magician().game_id().filter(timer.game_id) {
         match magician.state {
             MagicianState::Attack => {
@@ -144,8 +143,6 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
         ctx.db.magician().identity().update(magician);
     }
 }
-
-
 
 #[reducer]
 pub fn apply_gravity_magician(ctx: &ReducerContext, timer: GravityTimerMagician) 
@@ -192,22 +189,22 @@ pub fn move_magicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer)
 {
     let tick_time: f32 = timer.tick_rate;
     let min_time_step: f32 = 1e-4;
-    let max_substeps: i32 = 8;
+    let max_substeps: i32 = 4;
 
-    for mut character in ctx.db.magician().game_id().filter(timer.game_id) {
-        let was_grounded: bool = character.kinematic_information.grounded;
-        character.kinematic_information.grounded = false;
-        character.is_colliding = false;
-        character.corrected_velocity = character.velocity;
+    for mut magician in ctx.db.magician().game_id().filter(timer.game_id) {
+        let was_grounded: bool = magician.kinematic_information.grounded;
+        magician.kinematic_information.grounded = false;
+        magician.is_colliding = false;
+        magician.corrected_velocity = magician.velocity;
 
         let mut pre_contacts: Vec<CollisionContact> = Vec::new();
-        for entry in character.collision_entries.iter() {
-            try_build_contact_for_entry(ctx, &character, entry, &mut pre_contacts);
+        for entry in magician.collision_entries.iter() {
+            try_build_contact_for_entry(ctx, &magician, entry, &mut pre_contacts);
         }
 
         if pre_contacts.is_empty() == false {
-            let input_velocity = character.velocity;
-            resolve_contacts(&mut character, &pre_contacts, input_velocity);
+            let input_velocity = magician.velocity;
+            resolve_contacts(&mut magician, &pre_contacts, input_velocity);
         }
 
         let mut remaining_time: f32 = tick_time;
@@ -218,42 +215,66 @@ pub fn move_magicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer)
         while remaining_time > min_time_step && substep_count < max_substeps {
             substep_count += 1;
             let step_time: f32 = remaining_time / ((max_substeps - substep_count + 1) as f32);
-            let step_velocity = if character.is_colliding { character.corrected_velocity } else { character.velocity };
+            let step_velocity = if magician.is_colliding { magician.corrected_velocity } else { magician.velocity };
 
-            character.position = add(character.position, mul(step_velocity, step_time));
+            magician.position = add(magician.position, mul(step_velocity, step_time));
 
-            let collision_entry_count: usize = character.collision_entries.len();
+            let collision_entry_count: usize = magician.collision_entries.len();
             for entry_index in 0..collision_entry_count {
-                let entry: CollisionEntry = character.collision_entries[entry_index];
-                if try_force_overlap_for_entry(ctx, &mut character, &entry, was_grounded) {
+                let entry: CollisionEntry = magician.collision_entries[entry_index];
+                if try_force_overlap_for_entry(ctx, &mut magician, &entry, was_grounded) {
                     break;
                 }
             }
 
             post_contacts.clear();
-            for entry in character.collision_entries.iter() {
-                try_build_contact_for_entry(ctx, &character, entry, &mut post_contacts);
+            for entry in magician.collision_entries.iter() {
+                try_build_contact_for_entry(ctx, &magician, entry, &mut post_contacts);
             }
 
             if post_contacts.is_empty() == false {
-                let input_velocity = character.velocity;
-                resolve_contacts(&mut character, &post_contacts, input_velocity);
+                let input_velocity = magician.velocity;
+                resolve_contacts(&mut magician, &post_contacts, input_velocity);
             }
 
             remaining_time -= step_time;
         }
 
-        let final_step_velocity = if character.is_colliding { character.corrected_velocity } else { character.velocity };
+        let final_step_velocity = if magician.is_colliding { magician.corrected_velocity } else { magician.velocity };
 
         let ground_stick_velocity_threshold: f32 = 2.0;
-        let grounded_this_tick: bool = character.kinematic_information.grounded;
+        let grounded_this_tick: bool = magician.kinematic_information.grounded;
 
         if grounded_this_tick == false && was_grounded && final_step_velocity.y.abs() < ground_stick_velocity_threshold {
-            character.kinematic_information.grounded = true;
+            magician.kinematic_information.grounded = true;
         }
 
-        adjust_grounded(ctx, was_grounded, &final_step_velocity, &mut character);
-        ctx.db.magician().identity().update(character);
+        adjust_grounded(ctx, was_grounded, &final_step_velocity, &mut magician);
+        ctx.db.magician().identity().update(magician);
     }
 }
+
+#[reducer]
+pub fn move_magicians2(ctx: &ReducerContext, timer: MoveAllMagiciansTimer)
+{
+    let delta_time: f32 = timer.tick_rate;
+
+    for mut magician in ctx.db.magician().game_id().filter(timer.game_id) {
+        magician.position.x += magician.velocity.x * delta_time;
+        magician.position.y += magician.velocity.y * delta_time;
+        magician.position.z += magician.velocity.z * delta_time;
+
+        if magician.position.y < 0.0 {
+            magician.position.y = 0.0;
+
+            if magician.velocity.y < 0.0 {
+                magician.velocity.y = 0.0;
+            }
+        }
+
+        ctx.db.magician().identity().update(magician);
+    }
+}
+
+
 

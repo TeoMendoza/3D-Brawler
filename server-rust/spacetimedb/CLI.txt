@@ -1,0 +1,10 @@
+Spacetime DB Useful CLI Commands
+
+Generate C# Unity Bindings - spacetime generate --lang csharp --out-dir ../../client-unity/Assets/autogen
+Publish Module Locally - spacetime publish --server local 3dbrawler --delete-data
+Check Rust Module Compiles - spacetime build
+
+View Local DB Logs - spacetime logs 3dbrawler
+Start Spacetime Locally - spacetime start
+
+Publish Module To Maincloud - spacetime publish --server maincloud 3dbrawler --delete-data

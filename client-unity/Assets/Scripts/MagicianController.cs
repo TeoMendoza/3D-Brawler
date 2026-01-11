@@ -22,13 +22,19 @@ public class MagicianController : MonoBehaviour
     public Animator Animator;
     private Camera mainCamera;
 
-    float yaw = 0f;
-    float pitch = 0f;
+    public float SendRateHz = 20f;
+    float NextSendTime;
+    MovementRequest PreviousSentRequest;
+    bool HasPreviousSentRequest;
+    public float AimYawThresholdDegrees = 0.75f;
+    public float AimPitchThresholdDegrees = 0.75f;
 
-    private readonly float sensX = 200f;
-    private readonly float sensY = 100f;
-    private readonly float minPitch = -50f;
-    private readonly float maxPitch = 75f;
+    float Yaw;
+    float Pitch;
+    private readonly float SensX = 200f;
+    private readonly float SensY = 100f;
+    private readonly float MinPitch = -50f;
+    private readonly float MaxPitch = 75f;
 
     readonly float pitchSmooth = 0.08f;
     float pitchCurrent;
@@ -69,25 +75,26 @@ public class MagicianController : MonoBehaviour
     {
         if (!IsOwner) return;
 
-        MovementRequest req = new(MoveForward: false, MoveBackward: false, MoveLeft: false, MoveRight: false, Sprint: false, Jump: false, Crouch: false, Aim: new DbRotation2(0, 0) );
+        MovementRequest CurrentRequest = BuildMovementRequest();
+        bool ForceSendThisFrame = CurrentRequest.Jump;
 
-        if (Input.GetKey(KeyCode.W)) req.MoveForward = true;
-        if (Input.GetKey(KeyCode.S)) req.MoveBackward = true;
-        if (Input.GetKey(KeyCode.A)) req.MoveLeft = true;
-        if (Input.GetKey(KeyCode.D)) req.MoveRight = true;
+        float SendIntervalSeconds = 1f / Mathf.Max(1f, SendRateHz);
+        bool PassedSendInterval = Time.time >= NextSendTime;
+        bool RequestMeaningfullyChanged = !HasPreviousSentRequest || HasMeaningfulChange(PreviousSentRequest, CurrentRequest);
 
-        if (Input.GetKey(KeyCode.LeftShift)) req.Sprint = true;
-        if (Input.GetKeyDown(KeyCode.Space)) req.Jump = true;
-        if (Input.GetKey(KeyCode.LeftControl)) req.Crouch = true;
+        if ((PassedSendInterval && RequestMeaningfullyChanged) || ForceSendThisFrame)
+        {
+            GameManager.Conn.Reducers.HandleMovementRequestMagician(CurrentRequest);
 
-        float mx = Input.GetAxis("Mouse X");
-        float my = Input.GetAxis("Mouse Y");
+            PreviousSentRequest = CurrentRequest;
+            HasPreviousSentRequest = true;
 
-        yaw = Mathf.Repeat(yaw + mx * sensX * Time.deltaTime, 360f);
-        pitch = Mathf.Clamp(pitch - my * sensY * Time.deltaTime, minPitch, maxPitch);
-        req.Aim = new DbRotation2(yaw, pitch);
-
-        GameManager.Conn.Reducers.HandleMovementRequestMagician(req);
+            if (!PassedSendInterval)
+                NextSendTime = Time.time + SendIntervalSeconds;
+                
+            else
+                NextSendTime += SendIntervalSeconds;
+        }
 
         if (Input.GetMouseButton(0))
         {
@@ -99,14 +106,14 @@ public class MagicianController : MonoBehaviour
             Vector3 characterWorldPosition = transform.position;
             Vector3 cameraWorldDelta = cameraWorldPosition - characterWorldPosition;
 
-            Quaternion magicianRotation = Quaternion.Euler(pitch, yaw, 0f);
+            Quaternion magicianRotation = Quaternion.Euler(Pitch, Yaw, 0f);
             Vector3 localDir = Quaternion.Inverse(magicianRotation) * clientReticleDirection;
 
             float cameraYawOffset = Mathf.Atan2(localDir.x, localDir.z);
             float cameraPitchOffset = Mathf.Asin(Mathf.Clamp(localDir.y, -1f, 1f));
 
-            float cameraYawRadians = (yaw * Mathf.Deg2Rad) + cameraYawOffset;
-            float cameraPitchRadians = (pitch * Mathf.Deg2Rad) + cameraPitchOffset;
+            float cameraYawRadians = (Yaw * Mathf.Deg2Rad) + cameraYawOffset;
+            float cameraPitchRadians = (Pitch * Mathf.Deg2Rad) + cameraPitchOffset;
             Quaternion cameraRotation = Quaternion.Euler(0f, cameraYawRadians * Mathf.Rad2Deg, 0f) * Quaternion.Euler(cameraPitchRadians * Mathf.Rad2Deg, 0f, 0f);
 
             Vector3 cameraOffsetLocal = Quaternion.Inverse(cameraRotation) * cameraWorldDelta;
@@ -116,7 +123,49 @@ public class MagicianController : MonoBehaviour
 
         if (Input.GetKey(KeyCode.R))     
             GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Reload, new AttackInformation(), new ReloadInformation()));
-        
+    }
+
+    public MovementRequest BuildMovementRequest()
+    {
+        MovementRequest CurrentRequest = new(MoveForward: false, MoveBackward: false, MoveLeft: false, MoveRight: false, Sprint: false, Jump: false, Crouch: false, Aim: new DbRotation2(0, 0));
+
+        if (Input.GetKey(KeyCode.W)) CurrentRequest.MoveForward = true;
+        if (Input.GetKey(KeyCode.S)) CurrentRequest.MoveBackward = true;
+        if (Input.GetKey(KeyCode.A)) CurrentRequest.MoveLeft = true;
+        if (Input.GetKey(KeyCode.D)) CurrentRequest.MoveRight = true;
+
+        if (Input.GetKey(KeyCode.LeftShift)) CurrentRequest.Sprint = true;
+        if (Input.GetKeyDown(KeyCode.Space)) CurrentRequest.Jump = true;
+        if (Input.GetKey(KeyCode.LeftControl)) CurrentRequest.Crouch = true;
+
+        float MouseX = Input.GetAxis("Mouse X");
+        float MouseY = Input.GetAxis("Mouse Y");
+
+        Yaw = Mathf.Repeat(Yaw + MouseX * SensX * Time.deltaTime, 360f);
+        Pitch = Mathf.Clamp(Pitch - MouseY * SensY * Time.deltaTime, MinPitch, MaxPitch);
+
+        CurrentRequest.Aim = new DbRotation2(Yaw, Pitch);
+
+        return CurrentRequest;
+    }
+
+    public bool HasMeaningfulChange(MovementRequest PreviousRequest, MovementRequest CurrentRequest)
+    {
+        if (PreviousRequest.MoveForward != CurrentRequest.MoveForward) return true;
+        if (PreviousRequest.MoveBackward != CurrentRequest.MoveBackward) return true;
+        if (PreviousRequest.MoveLeft != CurrentRequest.MoveLeft) return true;
+        if (PreviousRequest.MoveRight != CurrentRequest.MoveRight) return true;
+
+        if (PreviousRequest.Sprint != CurrentRequest.Sprint) return true;
+        if (PreviousRequest.Crouch != CurrentRequest.Crouch) return true;
+
+        float YawDelta = Mathf.Abs(Mathf.DeltaAngle(PreviousRequest.Aim.Yaw, CurrentRequest.Aim.Yaw));
+        float PitchDelta = Mathf.Abs(PreviousRequest.Aim.Pitch - CurrentRequest.Aim.Pitch);
+
+        if (YawDelta >= AimYawThresholdDegrees) return true;
+        if (PitchDelta >= AimPitchThresholdDegrees) return true;
+
+        return false;
     }
 
     void LateUpdate()
