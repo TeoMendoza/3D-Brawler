@@ -99,7 +99,6 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
     ctx.db.magician().identity().update(character);
 }
 
-
 #[reducer]
 pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersTimer) {
     let time: f32 = timer.tick_rate;
