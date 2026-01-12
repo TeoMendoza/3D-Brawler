@@ -255,14 +255,6 @@ pub fn move_magicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer)
 }
 
 #[reducer]
-pub fn add_effects_to_magician(ctx: &ReducerContext, effects: Vec<Effect>, target_magician_id: u64)
-{
-    let mut target = ctx.db.magician().id().find(target_magician_id).expect("Magician Not Found");
-    target.effects.extend(effects);
-    ctx.db.magician().id().update(target);
-}
-
-#[reducer]
 pub fn handle_magician_effects(ctx: &ReducerContext, timer: HandleMagicianEffectsTimer)
 {
     for mut magician in ctx.db.magician().game_id().filter(timer.game_id) {
@@ -274,6 +266,14 @@ pub fn handle_magician_effects(ctx: &ReducerContext, timer: HandleMagicianEffect
         
         ctx.db.magician().id().update(magician);
     }
+}
+
+#[reducer]
+pub fn add_effects_to_magician(ctx: &ReducerContext, effects: Vec<Effect>, target_magician_id: u64)
+{
+    let mut target = ctx.db.magician().id().find(target_magician_id).expect("Magician Not Found");
+    target.effects.extend(effects);
+    ctx.db.magician().id().update(target);
 }
 
 #[reducer]

@@ -259,12 +259,9 @@ pub fn try_perform_attack(ctx: &ReducerContext, magician: &mut Magician, attack_
     let shot_direction = normalize_small_vector(shot_delta, camera_forward);
     let shot_hit = raycast_match(ctx, spawn_point, shot_direction, attack_information.max_distance);
 
-    if shot_hit.hit {
-        log::info!("Hitscan Hit Type={:?} EntityId={}", shot_hit.hit_type, shot_hit.hit_entity_id);
-        if shot_hit.hit_type == RaycastHitType::Magician {
-            let effects: Vec<Effect> = magician.bullets.pop().expect("No bullets").effects;
-            add_effects_to_magician(ctx, effects, shot_hit.hit_entity_id);
-        }
+    if shot_hit.hit && shot_hit.hit_type == RaycastHitType::Magician {
+        let effects: Vec<Effect> = magician.bullets.pop().expect("No bullets").effects;
+        add_effects_to_magician(ctx, effects, shot_hit.hit_entity_id);
     }
 } 
 
