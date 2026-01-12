@@ -11,8 +11,14 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class Effect
+    public sealed partial class PlayerEffects
     {
+        [DataMember(Name = "id")]
+        public ulong Id;
+        [DataMember(Name = "target_id")]
+        public ulong TargetId;
+        [DataMember(Name = "game_id")]
+        public uint GameId;
         [DataMember(Name = "effect_type")]
         public EffectType EffectType;
         [DataMember(Name = "application_information")]
@@ -20,18 +26,24 @@ namespace SpacetimeDB.Types
         [DataMember(Name = "damage_information")]
         public DamageInformation? DamageInformation;
 
-        public Effect(
+        public PlayerEffects(
+            ulong Id,
+            ulong TargetId,
+            uint GameId,
             EffectType EffectType,
             ApplicationInformation ApplicationInformation,
             DamageInformation? DamageInformation
         )
         {
+            this.Id = Id;
+            this.TargetId = TargetId;
+            this.GameId = GameId;
             this.EffectType = EffectType;
             this.ApplicationInformation = ApplicationInformation;
             this.DamageInformation = DamageInformation;
         }
 
-        public Effect()
+        public PlayerEffects()
         {
             this.ApplicationInformation = new();
         }

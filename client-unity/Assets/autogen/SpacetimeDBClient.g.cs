@@ -36,6 +36,7 @@ namespace SpacetimeDB.Types
             AddTable(Magician = new(conn));
             AddTable(Map = new(conn));
             AddTable(MoveAllMagicians = new(conn));
+            AddTable(PlayerEffects = new(conn));
         }
     }
 
@@ -604,7 +605,7 @@ namespace SpacetimeDB.Types
                 "handle_magician_timers" => BSATNHelpers.Decode<Reducer.HandleMagicianTimers>(encodedArgs),
                 "handle_movement_request_magician" => BSATNHelpers.Decode<Reducer.HandleMovementRequestMagician>(encodedArgs),
                 "move_magicians" => BSATNHelpers.Decode<Reducer.MoveMagicians>(encodedArgs),
-                "move_magicians2" => BSATNHelpers.Decode<Reducer.MoveMagicians2>(encodedArgs),
+                "move_magicians_lag_test" => BSATNHelpers.Decode<Reducer.MoveMagiciansLagTest>(encodedArgs),
                 "remove_collision_entry_magician" => BSATNHelpers.Decode<Reducer.RemoveCollisionEntryMagician>(encodedArgs),
                 "" => throw new SpacetimeDBEmptyReducerNameException("Reducer name is empty"),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
@@ -639,7 +640,7 @@ namespace SpacetimeDB.Types
                 Reducer.HandleMagicianTimers args => Reducers.InvokeHandleMagicianTimers(eventContext, args),
                 Reducer.HandleMovementRequestMagician args => Reducers.InvokeHandleMovementRequestMagician(eventContext, args),
                 Reducer.MoveMagicians args => Reducers.InvokeMoveMagicians(eventContext, args),
-                Reducer.MoveMagicians2 args => Reducers.InvokeMoveMagicians2(eventContext, args),
+                Reducer.MoveMagiciansLagTest args => Reducers.InvokeMoveMagiciansLagTest(eventContext, args),
                 Reducer.RemoveCollisionEntryMagician args => Reducers.InvokeRemoveCollisionEntryMagician(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };

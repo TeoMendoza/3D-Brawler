@@ -41,13 +41,3 @@ pub enum MagicianState {
 pub struct ThrowingCard {
     pub effects: Vec<Effect>,
 }
-
-#[derive(SpacetimeType, Clone)]
-pub struct Effect {
-    pub effect_type: EffectType,
-}
-
-#[derive(SpacetimeType, PartialEq, Eq, Clone)]
-pub enum EffectType {
-    Damage,
-}

@@ -263,11 +263,13 @@ pub fn try_perform_attack(ctx: &ReducerContext, magician: &mut Magician, attack_
 
     if shot_hit.hit {
         log::info!("Hitscan Hit Type={:?} Distance={} EntityId={}", shot_hit.hit_type, shot_hit.hit_distance, shot_hit.hit_entity_id);
+        if shot_hit.hit_type == RaycastHitType::Magician {
+            let mut _target = ctx.db.magician().id().find(shot_hit.hit_entity_id);
+        }
     } 
     
-    else {
-        log::info!("Hitscan Miss");
-    }
+
+    
 }
 
 pub fn reset_timer_by_key(magician: &mut Magician, key: &str)

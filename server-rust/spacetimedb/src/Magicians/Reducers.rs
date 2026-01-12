@@ -255,7 +255,7 @@ pub fn move_magicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer)
 }
 
 #[reducer]
-pub fn move_magicians2(ctx: &ReducerContext, timer: MoveAllMagiciansTimer)
+pub fn move_magicians_lag_test(ctx: &ReducerContext, timer: MoveAllMagiciansTimer)
 {
     let delta_time: f32 = timer.tick_rate;
 

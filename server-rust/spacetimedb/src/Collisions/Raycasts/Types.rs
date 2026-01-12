@@ -15,5 +15,5 @@ pub struct Raycast {
     pub hit_point: DbVector3,
     pub hit_type: RaycastHitType,
     pub hit_identity: Identity,
-    pub hit_entity_id: i64,
+    pub hit_entity_id: u64,
 }

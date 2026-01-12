@@ -12,17 +12,17 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void MoveMagicians2Handler(ReducerEventContext ctx, SpacetimeDB.Types.MoveAllMagiciansTimer timer);
-        public event MoveMagicians2Handler? OnMoveMagicians2;
+        public delegate void MoveMagiciansLagTestHandler(ReducerEventContext ctx, SpacetimeDB.Types.MoveAllMagiciansTimer timer);
+        public event MoveMagiciansLagTestHandler? OnMoveMagiciansLagTest;
 
-        public void MoveMagicians2(SpacetimeDB.Types.MoveAllMagiciansTimer timer)
+        public void MoveMagiciansLagTest(SpacetimeDB.Types.MoveAllMagiciansTimer timer)
         {
-            conn.InternalCallReducer(new Reducer.MoveMagicians2(timer), this.SetCallReducerFlags.MoveMagicians2Flags);
+            conn.InternalCallReducer(new Reducer.MoveMagiciansLagTest(timer), this.SetCallReducerFlags.MoveMagiciansLagTestFlags);
         }
 
-        public bool InvokeMoveMagicians2(ReducerEventContext ctx, Reducer.MoveMagicians2 args)
+        public bool InvokeMoveMagiciansLagTest(ReducerEventContext ctx, Reducer.MoveMagiciansLagTest args)
         {
-            if (OnMoveMagicians2 == null)
+            if (OnMoveMagiciansLagTest == null)
             {
                 if (InternalOnUnhandledReducerError != null)
                 {
@@ -34,7 +34,7 @@ namespace SpacetimeDB.Types
                 }
                 return false;
             }
-            OnMoveMagicians2(
+            OnMoveMagiciansLagTest(
                 ctx,
                 args.Timer
             );
@@ -46,28 +46,28 @@ namespace SpacetimeDB.Types
     {
         [SpacetimeDB.Type]
         [DataContract]
-        public sealed partial class MoveMagicians2 : Reducer, IReducerArgs
+        public sealed partial class MoveMagiciansLagTest : Reducer, IReducerArgs
         {
             [DataMember(Name = "timer")]
             public MoveAllMagiciansTimer Timer;
 
-            public MoveMagicians2(MoveAllMagiciansTimer Timer)
+            public MoveMagiciansLagTest(MoveAllMagiciansTimer Timer)
             {
                 this.Timer = Timer;
             }
 
-            public MoveMagicians2()
+            public MoveMagiciansLagTest()
             {
                 this.Timer = new();
             }
 
-            string IReducerArgs.ReducerName => "move_magicians2";
+            string IReducerArgs.ReducerName => "move_magicians_lag_test";
         }
     }
 
     public sealed partial class SetReducerFlags
     {
-        internal CallReducerFlags MoveMagicians2Flags;
-        public void MoveMagicians2(CallReducerFlags flags) => MoveMagicians2Flags = flags;
+        internal CallReducerFlags MoveMagiciansLagTestFlags;
+        public void MoveMagiciansLagTest(CallReducerFlags flags) => MoveMagiciansLagTestFlags = flags;
     }
 }

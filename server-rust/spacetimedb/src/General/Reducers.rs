@@ -1,15 +1,15 @@
 use std::time::Duration;
-use spacetimedb::{reducer, Identity, ReducerContext, ScheduleAt, Table};
+use spacetimedb::{reducer, ReducerContext, ScheduleAt, Table};
 use crate::*;
 
 #[reducer(init)]
 pub fn init(ctx: &ReducerContext) {
     log::info!("Initializing...");
 
-    ctx.db.map().insert(Map {id: 0, name: "Floor".to_string(), collider: FloorCollider() });
-    ctx.db.map().insert(Map {id: 0, name: "Ramp".to_string(), collider: RampCollider() });
+    ctx.db.map().insert(Map {id: 0, name: "Floor".to_string(), collider: floor_collider() });
+    ctx.db.map().insert(Map {id: 0, name: "Ramp".to_string(), collider: ramp_collider() });
     ctx.db.map().insert(Map {id: 0, name: "Ramp2".to_string(), collider: ramp_2_collider() });
-    ctx.db.map().insert(Map {id: 0, name: "Platform".to_string(), collider: PlatformCollider() });
+    ctx.db.map().insert(Map {id: 0, name: "Platform".to_string(), collider: platform_collider() });
 
     let game = ctx.db.game().insert(Game {id: 0, max_players: 12, current_players: 1, in_progress: false });
 

@@ -7,7 +7,7 @@ pub fn raycast_match(ctx: &ReducerContext, ray_origin: DbVector3, ray_direction:
     let mut best_point: DbVector3 = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut best_type: RaycastHitType = RaycastHitType::None;
     let mut best_identity: Identity = Identity::default();
-    let mut best_entity_id: i64 = 0;
+    let mut best_entity_id: u64 = 0;
 
     let ray_direction_unit: DbVector3 = normalize_small_vector(ray_direction, DbVector3 { x: 0.0, y: 0.0, z: 1.0 });
 
@@ -16,7 +16,7 @@ pub fn raycast_match(ctx: &ReducerContext, ray_origin: DbVector3, ray_direction:
     for other in ctx.db.magician().game_id().filter(magician.game_id) {
         if other.identity == ctx.sender { continue; }
 
-        let hit: Raycast = raycast_complex_collider(ray_origin, ray_direction_unit, best_distance, &other.collider, other.position, to_radians(other.rotation.yaw), RaycastHitType::Magician, other.identity, other.id as i64);
+        let hit: Raycast = raycast_complex_collider(ray_origin, ray_direction_unit, best_distance, &other.collider, other.position, to_radians(other.rotation.yaw), RaycastHitType::Magician, other.identity, other.id as u64);
         if hit.hit && hit.hit_distance < best_distance {
             has_hit = true;
             best_distance = hit.hit_distance;
@@ -28,7 +28,7 @@ pub fn raycast_match(ctx: &ReducerContext, ray_origin: DbVector3, ray_direction:
     }
 
     for map_piece in ctx.db.map().iter() {
-        let hit: Raycast = raycast_complex_collider_world_space(ray_origin, ray_direction_unit, best_distance, &map_piece.collider, RaycastHitType::MapPiece, Identity::default(), map_piece.id as i64);
+        let hit: Raycast = raycast_complex_collider_world_space(ray_origin, ray_direction_unit, best_distance, &map_piece.collider, RaycastHitType::MapPiece, Identity::default(), map_piece.id as u64);
         if hit.hit && hit.hit_distance < best_distance {
             has_hit = true;
             best_distance = hit.hit_distance;
@@ -42,7 +42,7 @@ pub fn raycast_match(ctx: &ReducerContext, ray_origin: DbVector3, ray_direction:
     Raycast { hit: has_hit, hit_distance: best_distance, hit_point: best_point, hit_type: best_type, hit_identity: best_identity, hit_entity_id: best_entity_id }
 }
 
-pub fn raycast_complex_collider(ray_origin: DbVector3, ray_direction_unit: DbVector3, max_distance: f32, collider: &ComplexCollider, collider_world_position: DbVector3, collider_yaw_radians: f32, hit_type: RaycastHitType, hit_identity: Identity, hit_entity_id: i64) -> Raycast {
+pub fn raycast_complex_collider(ray_origin: DbVector3, ray_direction_unit: DbVector3, max_distance: f32, collider: &ComplexCollider, collider_world_position: DbVector3, collider_yaw_radians: f32, hit_type: RaycastHitType, hit_identity: Identity, hit_entity_id: u64) -> Raycast {
     let mut has_hit: bool = false;
     let mut best_distance: f32 = max_distance;
     let mut best_point: DbVector3 = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -64,7 +64,7 @@ pub fn raycast_complex_collider(ray_origin: DbVector3, ray_direction_unit: DbVec
     Raycast { hit: has_hit, hit_distance: best_distance, hit_point: best_point, hit_type: if has_hit { hit_type } else { RaycastHitType::None }, hit_identity, hit_entity_id }
 }
 
-pub fn raycast_complex_collider_world_space(ray_origin: DbVector3, ray_direction_unit: DbVector3, max_distance: f32, collider: &ComplexCollider, hit_type: RaycastHitType, hit_identity: Identity, hit_entity_id: i64) -> Raycast {
+pub fn raycast_complex_collider_world_space(ray_origin: DbVector3, ray_direction_unit: DbVector3, max_distance: f32, collider: &ComplexCollider, hit_type: RaycastHitType, hit_identity: Identity, hit_entity_id: u64) -> Raycast {
     let mut has_hit: bool = false;
     let mut best_distance: f32 = max_distance;
     let mut best_point: DbVector3 = DbVector3 { x: 0.0, y: 0.0, z: 0.0 };
