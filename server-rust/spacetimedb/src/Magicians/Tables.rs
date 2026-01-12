@@ -20,6 +20,7 @@ pub struct Magician {
     pub timers: Vec<Timer>,
     pub bullets: Vec<ThrowingCard>,
     pub bullet_capacity: i32,
+    pub effects: Vec<Effect>,
 }
 
 #[table(name = move_all_magicians, scheduled(move_magicians))]
@@ -41,6 +42,14 @@ pub struct GravityTimerMagician {
 
 #[table(name = handle_magician_timers_timer, scheduled(handle_magician_timers))]
 pub struct HandleMagicianTimersTimer {
+    #[primary_key] #[auto_inc] pub scheduled_id: u64,
+    pub scheduled_at: ScheduleAt,
+    pub tick_rate: f32,
+    pub game_id: u32,
+}
+
+#[table(name = magician_effects, scheduled(handle_magician_effects))]
+pub struct HandleMagicianEffectsTimer {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,
     pub tick_rate: f32,

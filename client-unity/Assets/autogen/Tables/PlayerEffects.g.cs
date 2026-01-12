@@ -13,13 +13,13 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteTables
     {
-        public sealed class PlayerEffectsHandle : RemoteTableHandle<EventContext, PlayerEffects>
+        public sealed class PlayerEffectsHandle : RemoteTableHandle<EventContext, PlayerEffect>
         {
             protected override string RemoteTableName => "player_effects";
 
             public sealed class GameIdIndex : BTreeIndexBase<uint>
             {
-                protected override uint GetKey(PlayerEffects row) => row.GameId;
+                protected override uint GetKey(PlayerEffect row) => row.GameId;
 
                 public GameIdIndex(PlayerEffectsHandle table) : base(table) { }
             }
@@ -28,7 +28,7 @@ namespace SpacetimeDB.Types
 
             public sealed class IdUniqueIndex : UniqueIndexBase<ulong>
             {
-                protected override ulong GetKey(PlayerEffects row) => row.Id;
+                protected override ulong GetKey(PlayerEffect row) => row.Id;
 
                 public IdUniqueIndex(PlayerEffectsHandle table) : base(table) { }
             }
@@ -37,7 +37,7 @@ namespace SpacetimeDB.Types
 
             public sealed class TargetIdIndex : BTreeIndexBase<ulong>
             {
-                protected override ulong GetKey(PlayerEffects row) => row.TargetId;
+                protected override ulong GetKey(PlayerEffect row) => row.TargetId;
 
                 public TargetIdIndex(PlayerEffectsHandle table) : base(table) { }
             }
@@ -51,7 +51,7 @@ namespace SpacetimeDB.Types
                 TargetId = new(this);
             }
 
-            protected override object GetPrimaryKey(PlayerEffects row) => row.Id;
+            protected override object GetPrimaryKey(PlayerEffect row) => row.Id;
         }
 
         public readonly PlayerEffectsHandle PlayerEffects;

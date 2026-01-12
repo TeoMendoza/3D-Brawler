@@ -47,6 +47,8 @@ namespace SpacetimeDB.Types
         public System.Collections.Generic.List<ThrowingCard> Bullets;
         [DataMember(Name = "bullet_capacity")]
         public int BulletCapacity;
+        [DataMember(Name = "effects")]
+        public System.Collections.Generic.List<Effect> Effects;
 
         public Magician(
             SpacetimeDB.Identity Identity,
@@ -65,7 +67,8 @@ namespace SpacetimeDB.Types
             System.Collections.Generic.List<PermissionEntry> PlayerPermissionConfig,
             System.Collections.Generic.List<Timer> Timers,
             System.Collections.Generic.List<ThrowingCard> Bullets,
-            int BulletCapacity
+            int BulletCapacity,
+            System.Collections.Generic.List<Effect> Effects
         )
         {
             this.Identity = Identity;
@@ -85,6 +88,7 @@ namespace SpacetimeDB.Types
             this.Timers = Timers;
             this.Bullets = Bullets;
             this.BulletCapacity = BulletCapacity;
+            this.Effects = Effects;
         }
 
         public Magician()
@@ -100,6 +104,7 @@ namespace SpacetimeDB.Types
             this.PlayerPermissionConfig = new();
             this.Timers = new();
             this.Bullets = new();
+            this.Effects = new();
         }
     }
 }

@@ -1,4 +1,4 @@
-use spacetimedb::{reducer, Identity, ReducerContext};
+use spacetimedb::{reducer, Identity, ReducerContext, Table};
 use crate::*;
 
 #[reducer]
@@ -251,6 +251,28 @@ pub fn move_magicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer)
 
         adjust_grounded(ctx, was_grounded, &final_step_velocity, &mut magician);
         ctx.db.magician().identity().update(magician);
+    }
+}
+
+#[reducer]
+pub fn add_effects_to_magician(ctx: &ReducerContext, effects: Vec<Effect>, target_magician_id: u64)
+{
+    let mut target = ctx.db.magician().id().find(target_magician_id).expect("Magician Not Found");
+    target.effects.extend(effects);
+    ctx.db.magician().id().update(target);
+}
+
+#[reducer]
+pub fn handle_magician_effects(ctx: &ReducerContext, timer: HandleMagicianEffectsTimer)
+{
+    for mut magician in ctx.db.magician().game_id().filter(timer.game_id) {
+        for effect in magician.effects.drain(..) {
+            let effect_to_add = PlayerEffect { id: 0, target_id: magician.id, game_id: magician.game_id, effect_type: effect.effect_type, application_information: effect.application_information, damage_information: effect.damage_information };
+            ctx.db.player_effects().insert(effect_to_add);
+            log::info!("Effect Added To Table For Magician With Id {}", magician.id);
+        }
+        
+        ctx.db.magician().id().update(magician);
     }
 }
 

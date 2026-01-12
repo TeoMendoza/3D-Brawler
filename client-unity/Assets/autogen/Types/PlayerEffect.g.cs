@@ -11,7 +11,7 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class PlayerEffects
+    public sealed partial class PlayerEffect
     {
         [DataMember(Name = "id")]
         public ulong Id;
@@ -26,7 +26,7 @@ namespace SpacetimeDB.Types
         [DataMember(Name = "damage_information")]
         public DamageInformation? DamageInformation;
 
-        public PlayerEffects(
+        public PlayerEffect(
             ulong Id,
             ulong TargetId,
             uint GameId,
@@ -43,7 +43,7 @@ namespace SpacetimeDB.Types
             this.DamageInformation = DamageInformation;
         }
 
-        public PlayerEffects()
+        public PlayerEffect()
         {
             this.ApplicationInformation = new();
         }

@@ -2,7 +2,7 @@ use spacetimedb::{table};
 use crate::*;
 
 #[table(name = player_effects)]
-pub struct PlayerEffects 
+pub struct PlayerEffect
 {
     #[primary_key] #[unique] #[auto_inc] pub id: u64,
     #[index(btree)] pub target_id: u64,

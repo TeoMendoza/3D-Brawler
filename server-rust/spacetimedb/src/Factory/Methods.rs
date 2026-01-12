@@ -1,6 +1,7 @@
 use crate::*;
 
-pub fn create_magician(config: MagicianConfig) -> Magician {
+pub fn create_magician(config: MagicianConfig) -> Magician 
+{
     let player = config.player;
     let game_id = config.game_id;
     let position = config.position;
@@ -40,15 +41,16 @@ pub fn create_magician(config: MagicianConfig) -> Magician {
         ],
         bullets: bullets,
         bullet_capacity: bullet_capacity,
+        effects: Vec::new()
     };
 
     magician
 }
 
-pub fn create_throwing_card() -> ThrowingCard {
-
+pub fn create_throwing_card() -> ThrowingCard 
+{
     let application_information = ApplicationInformation { application_type: ApplicationType::Single, current_time: None, end_time: None, reapply_time: None, current_reapply_time: None };
     let damage_information = DamageInformation { base_damage: 25.0, damage_multiplier: 1.0 };
     let effects: Vec<Effect> = vec![Effect { effect_type: EffectType::Damage, application_information: application_information, damage_information: Some(damage_information)}];
-    ThrowingCard { effects }
+    ThrowingCard { effects: effects }
 }

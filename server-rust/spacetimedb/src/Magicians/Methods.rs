@@ -236,12 +236,10 @@ pub fn try_reload(_ctx: &ReducerContext, magician: &mut Magician)
 
     magician.bullets.splice(0..0, new_bullets);
 }
+
 pub fn try_perform_attack(ctx: &ReducerContext, magician: &mut Magician, attack_information: AttackInformation) 
 {
-    let _bullet: ThrowingCard = magician.bullets.pop().expect("No bullets"); // Will Be Used Later To Process Effects
-
     let magician_position = magician.position;
-
     let magician_yaw_radians: f32 = to_radians(magician.rotation.yaw);
     let magician_yaw_only = Quat::from_rotation_y(magician_yaw_radians);
 
@@ -262,15 +260,13 @@ pub fn try_perform_attack(ctx: &ReducerContext, magician: &mut Magician, attack_
     let shot_hit = raycast_match(ctx, spawn_point, shot_direction, attack_information.max_distance);
 
     if shot_hit.hit {
-        log::info!("Hitscan Hit Type={:?} Distance={} EntityId={}", shot_hit.hit_type, shot_hit.hit_distance, shot_hit.hit_entity_id);
+        log::info!("Hitscan Hit Type={:?} EntityId={}", shot_hit.hit_type, shot_hit.hit_entity_id);
         if shot_hit.hit_type == RaycastHitType::Magician {
-            let mut _target = ctx.db.magician().id().find(shot_hit.hit_entity_id);
+            let effects: Vec<Effect> = magician.bullets.pop().expect("No bullets").effects;
+            add_effects_to_magician(ctx, effects, shot_hit.hit_entity_id);
         }
-    } 
-    
-
-    
-}
+    }
+} 
 
 pub fn reset_timer_by_key(magician: &mut Magician, key: &str)
 {
