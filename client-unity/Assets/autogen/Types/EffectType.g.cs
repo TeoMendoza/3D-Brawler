@@ -11,5 +11,6 @@ namespace SpacetimeDB.Types
     public enum EffectType
     {
         Damage,
+        Blind,
     }
 }

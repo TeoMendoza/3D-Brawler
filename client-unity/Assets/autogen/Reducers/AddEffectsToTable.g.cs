@@ -12,17 +12,17 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void AddEffectsToMagicianHandler(ReducerEventContext ctx, System.Collections.Generic.List<SpacetimeDB.Types.Effect> effects, ulong targetMagicianId);
-        public event AddEffectsToMagicianHandler? OnAddEffectsToMagician;
+        public delegate void AddEffectsToTableHandler(ReducerEventContext ctx, System.Collections.Generic.List<SpacetimeDB.Types.Effect> effects, ulong magicianId, uint gameId);
+        public event AddEffectsToTableHandler? OnAddEffectsToTable;
 
-        public void AddEffectsToMagician(System.Collections.Generic.List<SpacetimeDB.Types.Effect> effects, ulong targetMagicianId)
+        public void AddEffectsToTable(System.Collections.Generic.List<SpacetimeDB.Types.Effect> effects, ulong magicianId, uint gameId)
         {
-            conn.InternalCallReducer(new Reducer.AddEffectsToMagician(effects, targetMagicianId), this.SetCallReducerFlags.AddEffectsToMagicianFlags);
+            conn.InternalCallReducer(new Reducer.AddEffectsToTable(effects, magicianId, gameId), this.SetCallReducerFlags.AddEffectsToTableFlags);
         }
 
-        public bool InvokeAddEffectsToMagician(ReducerEventContext ctx, Reducer.AddEffectsToMagician args)
+        public bool InvokeAddEffectsToTable(ReducerEventContext ctx, Reducer.AddEffectsToTable args)
         {
-            if (OnAddEffectsToMagician == null)
+            if (OnAddEffectsToTable == null)
             {
                 if (InternalOnUnhandledReducerError != null)
                 {
@@ -34,10 +34,11 @@ namespace SpacetimeDB.Types
                 }
                 return false;
             }
-            OnAddEffectsToMagician(
+            OnAddEffectsToTable(
                 ctx,
                 args.Effects,
-                args.TargetMagicianId
+                args.MagicianId,
+                args.GameId
             );
             return true;
         }
@@ -47,34 +48,38 @@ namespace SpacetimeDB.Types
     {
         [SpacetimeDB.Type]
         [DataContract]
-        public sealed partial class AddEffectsToMagician : Reducer, IReducerArgs
+        public sealed partial class AddEffectsToTable : Reducer, IReducerArgs
         {
             [DataMember(Name = "effects")]
             public System.Collections.Generic.List<Effect> Effects;
-            [DataMember(Name = "target_magician_id")]
-            public ulong TargetMagicianId;
+            [DataMember(Name = "magician_id")]
+            public ulong MagicianId;
+            [DataMember(Name = "game_id")]
+            public uint GameId;
 
-            public AddEffectsToMagician(
+            public AddEffectsToTable(
                 System.Collections.Generic.List<Effect> Effects,
-                ulong TargetMagicianId
+                ulong MagicianId,
+                uint GameId
             )
             {
                 this.Effects = Effects;
-                this.TargetMagicianId = TargetMagicianId;
+                this.MagicianId = MagicianId;
+                this.GameId = GameId;
             }
 
-            public AddEffectsToMagician()
+            public AddEffectsToTable()
             {
                 this.Effects = new();
             }
 
-            string IReducerArgs.ReducerName => "add_effects_to_magician";
+            string IReducerArgs.ReducerName => "add_effects_to_table";
         }
     }
 
     public sealed partial class SetReducerFlags
     {
-        internal CallReducerFlags AddEffectsToMagicianFlags;
-        public void AddEffectsToMagician(CallReducerFlags flags) => AddEffectsToMagicianFlags = flags;
+        internal CallReducerFlags AddEffectsToTableFlags;
+        public void AddEffectsToTable(CallReducerFlags flags) => AddEffectsToTableFlags = flags;
     }
 }

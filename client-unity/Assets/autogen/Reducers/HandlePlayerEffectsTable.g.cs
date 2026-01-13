@@ -12,17 +12,17 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void HandleMagicianEffectsHandler(ReducerEventContext ctx, SpacetimeDB.Types.HandleMagicianEffectsTimer timer);
-        public event HandleMagicianEffectsHandler? OnHandleMagicianEffects;
+        public delegate void HandlePlayerEffectsTableHandler(ReducerEventContext ctx, SpacetimeDB.Types.PlayerEffectsTableTimer timer);
+        public event HandlePlayerEffectsTableHandler? OnHandlePlayerEffectsTable;
 
-        public void HandleMagicianEffects(SpacetimeDB.Types.HandleMagicianEffectsTimer timer)
+        public void HandlePlayerEffectsTable(SpacetimeDB.Types.PlayerEffectsTableTimer timer)
         {
-            conn.InternalCallReducer(new Reducer.HandleMagicianEffects(timer), this.SetCallReducerFlags.HandleMagicianEffectsFlags);
+            conn.InternalCallReducer(new Reducer.HandlePlayerEffectsTable(timer), this.SetCallReducerFlags.HandlePlayerEffectsTableFlags);
         }
 
-        public bool InvokeHandleMagicianEffects(ReducerEventContext ctx, Reducer.HandleMagicianEffects args)
+        public bool InvokeHandlePlayerEffectsTable(ReducerEventContext ctx, Reducer.HandlePlayerEffectsTable args)
         {
-            if (OnHandleMagicianEffects == null)
+            if (OnHandlePlayerEffectsTable == null)
             {
                 if (InternalOnUnhandledReducerError != null)
                 {
@@ -34,7 +34,7 @@ namespace SpacetimeDB.Types
                 }
                 return false;
             }
-            OnHandleMagicianEffects(
+            OnHandlePlayerEffectsTable(
                 ctx,
                 args.Timer
             );
@@ -46,28 +46,28 @@ namespace SpacetimeDB.Types
     {
         [SpacetimeDB.Type]
         [DataContract]
-        public sealed partial class HandleMagicianEffects : Reducer, IReducerArgs
+        public sealed partial class HandlePlayerEffectsTable : Reducer, IReducerArgs
         {
             [DataMember(Name = "timer")]
-            public HandleMagicianEffectsTimer Timer;
+            public PlayerEffectsTableTimer Timer;
 
-            public HandleMagicianEffects(HandleMagicianEffectsTimer Timer)
+            public HandlePlayerEffectsTable(PlayerEffectsTableTimer Timer)
             {
                 this.Timer = Timer;
             }
 
-            public HandleMagicianEffects()
+            public HandlePlayerEffectsTable()
             {
                 this.Timer = new();
             }
 
-            string IReducerArgs.ReducerName => "handle_magician_effects";
+            string IReducerArgs.ReducerName => "handle_player_effects_table";
         }
     }
 
     public sealed partial class SetReducerFlags
     {
-        internal CallReducerFlags HandleMagicianEffectsFlags;
-        public void HandleMagicianEffects(CallReducerFlags flags) => HandleMagicianEffectsFlags = flags;
+        internal CallReducerFlags HandlePlayerEffectsTableFlags;
+        public void HandlePlayerEffectsTable(CallReducerFlags flags) => HandlePlayerEffectsTableFlags = flags;
     }
 }

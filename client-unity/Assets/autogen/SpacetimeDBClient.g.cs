@@ -34,10 +34,10 @@ namespace SpacetimeDB.Types
             AddTable(LoggedInPlayers = new(conn));
             AddTable(LoggedOutPlayers = new(conn));
             AddTable(Magician = new(conn));
-            AddTable(MagicianEffects = new(conn));
             AddTable(Map = new(conn));
             AddTable(MoveAllMagicians = new(conn));
             AddTable(PlayerEffects = new(conn));
+            AddTable(PlayerEffectsTableTimer = new(conn));
         }
     }
 
@@ -599,14 +599,14 @@ namespace SpacetimeDB.Types
             return update.ReducerCall.ReducerName switch
             {
                 "add_collision_entry_magician" => BSATNHelpers.Decode<Reducer.AddCollisionEntryMagician>(encodedArgs),
-                "add_effects_to_magician" => BSATNHelpers.Decode<Reducer.AddEffectsToMagician>(encodedArgs),
+                "add_effects_to_table" => BSATNHelpers.Decode<Reducer.AddEffectsToTable>(encodedArgs),
                 "apply_gravity_magician" => BSATNHelpers.Decode<Reducer.ApplyGravityMagician>(encodedArgs),
                 "connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
                 "disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
                 "handle_action_change_request_magician" => BSATNHelpers.Decode<Reducer.HandleActionChangeRequestMagician>(encodedArgs),
-                "handle_magician_effects" => BSATNHelpers.Decode<Reducer.HandleMagicianEffects>(encodedArgs),
                 "handle_magician_timers" => BSATNHelpers.Decode<Reducer.HandleMagicianTimers>(encodedArgs),
                 "handle_movement_request_magician" => BSATNHelpers.Decode<Reducer.HandleMovementRequestMagician>(encodedArgs),
+                "handle_player_effects_table" => BSATNHelpers.Decode<Reducer.HandlePlayerEffectsTable>(encodedArgs),
                 "move_magicians" => BSATNHelpers.Decode<Reducer.MoveMagicians>(encodedArgs),
                 "move_magicians_lag_test" => BSATNHelpers.Decode<Reducer.MoveMagiciansLagTest>(encodedArgs),
                 "remove_collision_entry_magician" => BSATNHelpers.Decode<Reducer.RemoveCollisionEntryMagician>(encodedArgs),
@@ -636,14 +636,14 @@ namespace SpacetimeDB.Types
             return reducer switch
             {
                 Reducer.AddCollisionEntryMagician args => Reducers.InvokeAddCollisionEntryMagician(eventContext, args),
-                Reducer.AddEffectsToMagician args => Reducers.InvokeAddEffectsToMagician(eventContext, args),
+                Reducer.AddEffectsToTable args => Reducers.InvokeAddEffectsToTable(eventContext, args),
                 Reducer.ApplyGravityMagician args => Reducers.InvokeApplyGravityMagician(eventContext, args),
                 Reducer.Connect args => Reducers.InvokeConnect(eventContext, args),
                 Reducer.Disconnect args => Reducers.InvokeDisconnect(eventContext, args),
                 Reducer.HandleActionChangeRequestMagician args => Reducers.InvokeHandleActionChangeRequestMagician(eventContext, args),
-                Reducer.HandleMagicianEffects args => Reducers.InvokeHandleMagicianEffects(eventContext, args),
                 Reducer.HandleMagicianTimers args => Reducers.InvokeHandleMagicianTimers(eventContext, args),
                 Reducer.HandleMovementRequestMagician args => Reducers.InvokeHandleMovementRequestMagician(eventContext, args),
+                Reducer.HandlePlayerEffectsTable args => Reducers.InvokeHandlePlayerEffectsTable(eventContext, args),
                 Reducer.MoveMagicians args => Reducers.InvokeMoveMagicians(eventContext, args),
                 Reducer.MoveMagiciansLagTest args => Reducers.InvokeMoveMagiciansLagTest(eventContext, args),
                 Reducer.RemoveCollisionEntryMagician args => Reducers.InvokeRemoveCollisionEntryMagician(eventContext, args),

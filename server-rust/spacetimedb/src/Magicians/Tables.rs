@@ -47,11 +47,3 @@ pub struct HandleMagicianTimersTimer {
     pub tick_rate: f32,
     pub game_id: u32,
 }
-
-#[table(name = magician_effects, scheduled(handle_magician_effects))]
-pub struct HandleMagicianEffectsTimer {
-    #[primary_key] #[auto_inc] pub scheduled_id: u64,
-    pub scheduled_at: ScheduleAt,
-    pub tick_rate: f32,
-    pub game_id: u32,
-}

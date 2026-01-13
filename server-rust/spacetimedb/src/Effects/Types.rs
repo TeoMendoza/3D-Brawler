@@ -16,18 +16,19 @@ pub struct ApplicationInformation {
     pub current_reapply_time: Option<f32>
 }
 
-#[derive(SpacetimeType, Clone, Copy)]
+#[derive(SpacetimeType, Clone)]
 pub struct DamageInformation {
     pub base_damage: f32,
     pub damage_multiplier: f32, // For Headshot, Legshot, Bodyshot
 }
 
-#[derive(SpacetimeType, PartialEq, Eq, Clone)]
+#[derive(SpacetimeType, PartialEq, Eq, Clone, Copy)]
 pub enum EffectType {
     Damage,
+    Blind
 }
 
-#[derive(SpacetimeType, Clone, Copy)]
+#[derive(SpacetimeType, Clone)]
 pub enum ApplicationType {
     Single,
     Duration,

@@ -11,7 +11,7 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class HandleMagicianEffectsTimer
+    public sealed partial class PlayerEffectsTableTimer
     {
         [DataMember(Name = "scheduled_id")]
         public ulong ScheduledId;
@@ -22,7 +22,7 @@ namespace SpacetimeDB.Types
         [DataMember(Name = "game_id")]
         public uint GameId;
 
-        public HandleMagicianEffectsTimer(
+        public PlayerEffectsTableTimer(
             ulong ScheduledId,
             SpacetimeDB.ScheduleAt ScheduledAt,
             float TickRate,
@@ -35,7 +35,7 @@ namespace SpacetimeDB.Types
             this.GameId = GameId;
         }
 
-        public HandleMagicianEffectsTimer()
+        public PlayerEffectsTableTimer()
         {
             this.ScheduledAt = null!;
         }

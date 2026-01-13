@@ -239,6 +239,9 @@ pub fn try_reload(_ctx: &ReducerContext, magician: &mut Magician)
 
 pub fn try_perform_attack(ctx: &ReducerContext, magician: &mut Magician, attack_information: AttackInformation) 
 {
+    let bullet = magician.bullets.pop().expect("No bullets");
+    let effects = bullet.effects;
+
     let magician_position = magician.position;
     let magician_yaw_radians: f32 = to_radians(magician.rotation.yaw);
     let magician_yaw_only = Quat::from_rotation_y(magician_yaw_radians);
@@ -260,8 +263,7 @@ pub fn try_perform_attack(ctx: &ReducerContext, magician: &mut Magician, attack_
     let shot_hit = raycast_match(ctx, spawn_point, shot_direction, attack_information.max_distance);
 
     if shot_hit.hit && shot_hit.hit_type == RaycastHitType::Magician {
-        let effects: Vec<Effect> = magician.bullets.pop().expect("No bullets").effects;
-        add_effects_to_magician(ctx, effects, shot_hit.hit_entity_id);
+        add_effects_to_table(ctx, effects, shot_hit.hit_entity_id, magician.game_id);
     }
 } 
 
@@ -280,7 +282,6 @@ pub fn reset_timer_for_state(magician: &mut Magician, state: MagicianState)
         MagicianState::Default => {}
     }
 }
-
 
 pub fn tick_active_timer_and_check_expired(magician: &mut Magician, key: &str, delta_time: f32) -> bool {
     let timer = try_find_timer(&mut magician.timers, key);
@@ -313,7 +314,6 @@ pub fn tick_cooldown_timer_and_check_expired(timer: &mut Timer, delta_time: f32)
 
     None
 }
-
 
 pub fn try_find_timer<'a>(timers: &'a mut [Timer], key: &str) -> &'a mut Timer 
 {
