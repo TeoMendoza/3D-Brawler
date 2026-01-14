@@ -34,10 +34,12 @@ pub fn create_magician(config: MagicianConfig) -> Magician
             PermissionEntry { key: "CanCrouch".to_string(), subscribers: Vec::new() },
             PermissionEntry { key: "CanAttack".to_string(), subscribers: Vec::new() },
             PermissionEntry { key: "CanReload".to_string(), subscribers: Vec::new() },
+            PermissionEntry { key: "CanDust".to_string(), subscribers: Vec::new() },
         ],
         timers: vec![
             Timer { name: "Attack".to_string(), state: TimerState::Inactive, cooldown_time: 0.7, use_finished_time: 0.7, current_time: 0.0 },
             Timer { name: "Reload".to_string(), state: TimerState::Inactive, cooldown_time: 2.2, use_finished_time: 2.2, current_time: 0.0 },
+            Timer { name: "Dust".to_string(), state: TimerState::Inactive, cooldown_time: 10.0, use_finished_time: 2.4, current_time: 0.0 },
         ],
         bullets: bullets,
         bullet_capacity: bullet_capacity,

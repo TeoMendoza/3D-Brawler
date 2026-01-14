@@ -42,6 +42,39 @@ pub fn raycast_match(ctx: &ReducerContext, ray_origin: DbVector3, ray_direction:
     Raycast { hit: has_hit, hit_distance: best_distance, hit_point: best_point, hit_type: best_type, hit_identity: best_identity, hit_entity_id: best_entity_id }
 }
 
+pub fn raycast_cone_match(ctx: &ReducerContext, ray_origin: DbVector3, ray_forward: DbVector3, max_distance: f32, cone_half_angle_degrees: f32) -> Vec<Raycast> {
+    let forward_unit: DbVector3 = normalize_small_vector(ray_forward, DbVector3 { x: 0.0, y: 0.0, z: 1.0 });
+    let cone_half_angle_radians: f32 = to_radians(cone_half_angle_degrees);
+    let min_dot: f32 = cone_half_angle_radians.cos();
+
+    let magician: Magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician not found");
+
+    let mut hits: Vec<Raycast> = Vec::new();
+
+    for other in ctx.db.magician().game_id().filter(magician.game_id) {
+        if other.identity == ctx.sender { continue; }
+
+        let to_other: DbVector3 = sub(other.position, ray_origin);
+        let distance_to_other: f32 = magnitude(to_other);
+
+        if distance_to_other > max_distance { continue; }
+
+        let direction_to_other_unit: DbVector3 = normalize_small_vector(to_other, forward_unit);
+        let alignment: f32 = dot(forward_unit, direction_to_other_unit);
+
+        if alignment < min_dot { continue; }
+
+        let first_hit: Raycast = raycast_match(ctx, ray_origin, direction_to_other_unit, distance_to_other);
+
+        if first_hit.hit && first_hit.hit_type == RaycastHitType::Magician && first_hit.hit_entity_id == other.id as u64 {
+            hits.push(first_hit);
+        }
+    }
+
+    hits
+}
+
+
 pub fn raycast_complex_collider(ray_origin: DbVector3, ray_direction_unit: DbVector3, max_distance: f32, collider: &ComplexCollider, collider_world_position: DbVector3, collider_yaw_radians: f32, hit_type: RaycastHitType, hit_identity: Identity, hit_entity_id: u64) -> Raycast {
     let mut has_hit: bool = false;
     let mut best_distance: f32 = max_distance;

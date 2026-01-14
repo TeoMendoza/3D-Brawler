@@ -13,5 +13,6 @@ namespace SpacetimeDB.Types
         Default,
         Attack,
         Reload,
+        Dust,
     }
 }

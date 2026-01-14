@@ -96,7 +96,7 @@ public class MagicianController : MonoBehaviour
                 NextSendTime += SendIntervalSeconds;
         }
 
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0) || Input.GetKey(KeyCode.E))
         {
             Vector2 reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
             Ray aimRay = mainCamera.ScreenPointToRay(reticle);
@@ -118,11 +118,15 @@ public class MagicianController : MonoBehaviour
 
             Vector3 cameraOffsetLocal = Quaternion.Inverse(cameraRotation) * cameraWorldDelta;
 
-            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack, new AttackInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.15f, 0.45f), MaxDistance: 100f), new ReloadInformation()));
+            if (Input.GetMouseButton(0))
+                GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack, new AttackInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.15f, 0.45f), MaxDistance: 100f), new ReloadInformation(), new DustInformation ()));
+
+            if (Input.GetKey(KeyCode.E))
+                GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Dust, new AttackInformation(), new ReloadInformation(), new DustInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.15f, 0.45f), MaxDistance: 10f, ConeHalfAngleDegrees: 90f)));
         }
 
         if (Input.GetKey(KeyCode.R))     
-            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Reload, new AttackInformation(), new ReloadInformation()));
+            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Reload, new AttackInformation(), new ReloadInformation(), new DustInformation()));
     }
 
     public MovementRequest BuildMovementRequest()
@@ -205,6 +209,9 @@ public class MagicianController : MonoBehaviour
         bool Reload = oldChar.State is not MagicianState.Reload && newChar.State is MagicianState.Reload;
         bool ReloadDone = oldChar.State is MagicianState.Reload && newChar.State is not MagicianState.Reload;
 
+        bool Dust = oldChar.State is not MagicianState.Dust && newChar.State is MagicianState.Dust;
+        bool DustDone = oldChar.State is MagicianState.Dust && newChar.State is not MagicianState.Dust;
+
         bool Grounded = newChar.KinematicInformation.Grounded;
         bool Crouching = newChar.KinematicInformation.Crouched;
         bool Falling = newChar.KinematicInformation.Falling;
@@ -218,6 +225,9 @@ public class MagicianController : MonoBehaviour
 
             if (Reload) Animator.SetTrigger("Reload");
             if (ReloadDone) Animator.SetTrigger("ReloadDone");
+
+            if (Dust) Animator.SetTrigger("Dust");
+            if (DustDone) Animator.SetTrigger("DustDone");
 
             Animator.SetBool("Crouching", Crouching);
             Animator.SetBool("Falling", Falling);
