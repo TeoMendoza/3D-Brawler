@@ -256,8 +256,11 @@ pub fn try_perform_attack(ctx: &ReducerContext, magician: &mut Magician, attack_
     let camera_position = add(magician_position, rotate(attack_information.camera_position_offset, camera_rotation));
     let camera_forward = normalize_small_vector(rotate(DbVector3 { x: 0.0, y: 0.0, z: 1.0 }, camera_rotation), DbVector3 { x: 0.0, y: 0.0, z: 1.0 });
 
-    let camera_hit = raycast_match(ctx, camera_position, camera_forward, attack_information.max_distance);
-    let aim_point = if camera_hit.hit { camera_hit.hit_point } else { add(camera_position, mul(camera_forward, attack_information.max_distance)) };
+    let camera_to_spawn_distance = magnitude(sub(spawn_point, camera_position));
+    let camera_max_distance = attack_information.max_distance + camera_to_spawn_distance;
+
+    let camera_hit = raycast_match(ctx, camera_position, camera_forward, camera_max_distance);
+    let aim_point = if camera_hit.hit { camera_hit.hit_point } else { add(camera_position, mul(camera_forward, camera_max_distance)) };
 
     let shot_delta = sub(aim_point, spawn_point);
     let shot_direction = normalize_small_vector(shot_delta, camera_forward);
@@ -270,7 +273,6 @@ pub fn try_perform_attack(ctx: &ReducerContext, magician: &mut Magician, attack_
 
 pub fn try_perform_dust(ctx: &ReducerContext, magician: &mut Magician, dust_information: DustInformation)
 {
-    log::info!("Dusting");
     let magician_position = magician.position;
     let magician_yaw_radians: f32 = to_radians(magician.rotation.yaw);
     let magician_yaw_only = Quat::from_rotation_y(magician_yaw_radians);
@@ -284,13 +286,16 @@ pub fn try_perform_dust(ctx: &ReducerContext, magician: &mut Magician, dust_info
     let camera_position = add(magician_position, rotate(dust_information.camera_position_offset, camera_rotation));
     let camera_forward = normalize_small_vector(rotate(DbVector3 { x: 0.0, y: 0.0, z: 1.0 }, camera_rotation), DbVector3 { x: 0.0, y: 0.0, z: 1.0 });
 
-    let camera_hit: Raycast = raycast_match(ctx, camera_position, camera_forward, dust_information.max_distance); // I think we need to add length of cam pos to spawn point so our desired max distance is the same
-    let aim_point: DbVector3 = if camera_hit.hit { camera_hit.hit_point } else { add(camera_position, mul(camera_forward, dust_information.max_distance)) };
+    let camera_to_spawn_distance = magnitude(sub(spawn_point, camera_position));
+    let camera_max_distance = dust_information.max_distance + camera_to_spawn_distance;
+
+    let camera_hit: Raycast = raycast_match(ctx, camera_position, camera_forward, camera_max_distance);
+    let aim_point: DbVector3 = if camera_hit.hit { camera_hit.hit_point } else { add(camera_position, mul(camera_forward, camera_max_distance)) };
 
     let cone_delta: DbVector3 = sub(aim_point, spawn_point);
     let cone_direction: DbVector3 = normalize_small_vector(cone_delta, camera_forward);
 
-    let hits: Vec<Raycast> = raycast_cone_match(ctx, spawn_point,cone_direction, dust_information.max_distance, dust_information.cone_half_angle_degrees as f32);
+    let hits: Vec<Raycast> = raycast_cone_match(ctx, spawn_point, cone_direction, dust_information.max_distance, dust_information.cone_half_angle_degrees);
     if hits.len() > 0 {
         log::info!("Dust Hit Something");
     }
