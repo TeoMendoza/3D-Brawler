@@ -61,7 +61,7 @@ pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTab
                     ctx.db.player_effects().id().update(player_effect);
                 }
                 
-            }    
+            }
         }
 
         ctx.db.magician().id().update(magician);
@@ -69,10 +69,10 @@ pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTab
 }
 
 #[reducer]
-pub fn add_effects_to_table(ctx: &ReducerContext, effects: Vec<Effect>, magician_id: u64, game_id: u32) 
+pub fn add_effects_to_table(ctx: &ReducerContext, effects: Vec<Effect>, target_id: u64, sender_id: u64, game_id: u32) 
 {
     for effect in effects {
-        let effect_to_add = PlayerEffect { id: 0, target_id: magician_id, game_id: game_id, effect_type: effect.effect_type, application_information: effect.application_information, damage_information: effect.damage_information };
+        let effect_to_add = PlayerEffect { id: 0, target_id: target_id, sender_id: sender_id, game_id: game_id, effect_type: effect.effect_type, application_information: effect.application_information, damage_information: effect.damage_information, cloak_information: effect.cloak_information, dust_information: effect.dust_information, speed_information: effect.speed_information};
         ctx.db.player_effects().insert(effect_to_add);
     }
 } 

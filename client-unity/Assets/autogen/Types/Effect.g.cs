@@ -18,17 +18,29 @@ namespace SpacetimeDB.Types
         [DataMember(Name = "application_information")]
         public ApplicationInformation ApplicationInformation;
         [DataMember(Name = "damage_information")]
-        public DamageInformation? DamageInformation;
+        public DamageEffectInformation? DamageInformation;
+        [DataMember(Name = "cloak_information")]
+        public CloakEffectInformation? CloakInformation;
+        [DataMember(Name = "dust_information")]
+        public DustEffectInformation? DustInformation;
+        [DataMember(Name = "speed_information")]
+        public SpeedEffectInformation? SpeedInformation;
 
         public Effect(
             EffectType EffectType,
             ApplicationInformation ApplicationInformation,
-            DamageInformation? DamageInformation
+            DamageEffectInformation? DamageInformation,
+            CloakEffectInformation? CloakInformation,
+            DustEffectInformation? DustInformation,
+            SpeedEffectInformation? SpeedInformation
         )
         {
             this.EffectType = EffectType;
             this.ApplicationInformation = ApplicationInformation;
             this.DamageInformation = DamageInformation;
+            this.CloakInformation = CloakInformation;
+            this.DustInformation = DustInformation;
+            this.SpeedInformation = SpeedInformation;
         }
 
         public Effect()

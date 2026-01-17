@@ -15,13 +15,13 @@ pub fn adjust_grounded(_ctx: &ReducerContext, was_grounded: bool, move_velocity:
 
     if was_grounded == grounded_now { return; }
     if grounded_now {
-        remove_subscriber_from_permission(&mut magician.player_permission_config, "CanJump", "Jump");
-        remove_subscriber_from_permission(&mut magician.player_permission_config, "CanCrouch", "Jump");
+        remove_subscriber_from_permission(&mut magician.permissions, "CanJump", "Jump");
+        remove_subscriber_from_permission(&mut magician.permissions, "CanCrouch", "Jump");
     } 
     
     else {
-        add_subscriber_to_permission(&mut magician.player_permission_config, "CanJump", "Jump");
-        add_subscriber_to_permission(&mut magician.player_permission_config, "CanCrouch", "Jump");
+        add_subscriber_to_permission(&mut magician.permissions, "CanJump", "Jump");
+        add_subscriber_to_permission(&mut magician.permissions, "CanCrouch", "Jump");
     }
 }
 
@@ -267,7 +267,7 @@ pub fn try_perform_attack(ctx: &ReducerContext, magician: &mut Magician, attack_
 
     let shot_hit = raycast_match(ctx, spawn_point, shot_direction, attack_information.max_distance);
     if shot_hit.hit && shot_hit.hit_type == RaycastHitType::Magician {
-        add_effects_to_table(ctx, effects, shot_hit.hit_entity_id, magician.game_id);
+        add_effects_to_table(ctx, effects, shot_hit.hit_entity_id, magician.id, magician.game_id);
     }
 } 
 
@@ -296,26 +296,45 @@ pub fn try_perform_dust(ctx: &ReducerContext, magician: &mut Magician, dust_info
     let cone_direction: DbVector3 = normalize_small_vector(cone_delta, camera_forward);
 
     let hits: Vec<Raycast> = raycast_cone_match(ctx, spawn_point, cone_direction, dust_information.max_distance, dust_information.cone_half_angle_degrees);
-    if hits.len() > 0 {
-        log::info!("Dust Hit Something");
+    for hit in hits {
+        let dust_effect = create_dust_effect(2.0);
+        let effects: Vec<Effect> = vec![dust_effect];
+
+        add_effects_to_table(ctx, effects, hit.hit_entity_id, magician.id, magician.game_id);
     }
+        
+    
 }
 
+pub fn try_cloak(ctx: &ReducerContext, magician: &mut Magician)
+{
+    let cloak_effect = create_cloak_effect(10.0);
+    let speed_effect = create_speed_multiplier_effect(1.25, 10.0);
+    let effects: Vec<Effect> = vec![cloak_effect, speed_effect];
 
-pub fn reset_timer_by_key(magician: &mut Magician, key: &str)
+    add_effects_to_table(ctx, effects, magician.id, magician.id, magician.game_id);
+}
+
+pub fn adjust_timer_in_use(magician: &mut Magician, key: &str)
 {
     let timer: &mut Timer = try_find_timer(&mut magician.timers, key);
-    timer.current_time = 0.0;
-    timer.state = TimerState::Inactive;
+
+    if key == "Reload" {
+        timer.current_time = 0.0;
+        timer.state = TimerState::Inactive;
+    }
+
+    else if key == "Cloak" {
+        timer.state = TimerState::InCooldown;
+    }  
 }
 
-pub fn reset_timer_for_state(magician: &mut Magician, state: MagicianState)
+pub fn adjust_timer_for_interruptable_state(magician: &mut Magician, state: MagicianState)
 {
     match state {
-        MagicianState::Attack => reset_timer_by_key(magician, "Attack"),
-        MagicianState::Reload => reset_timer_by_key(magician, "Reload"),
-        MagicianState::Dust => reset_timer_by_key(magician, "Dust"),
-        MagicianState::Default => {}
+        MagicianState::Reload => adjust_timer_in_use(magician, "Reload"),
+        MagicianState::Cloak => adjust_timer_in_use(magician, "Cloak"),
+        _ => {}
     }
 }
 

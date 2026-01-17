@@ -11,14 +11,14 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class DamageInformation
+    public sealed partial class DamageEffectInformation
     {
         [DataMember(Name = "base_damage")]
         public float BaseDamage;
         [DataMember(Name = "damage_multiplier")]
         public float DamageMultiplier;
 
-        public DamageInformation(
+        public DamageEffectInformation(
             float BaseDamage,
             float DamageMultiplier
         )
@@ -27,7 +27,7 @@ namespace SpacetimeDB.Types
             this.DamageMultiplier = DamageMultiplier;
         }
 
-        public DamageInformation()
+        public DamageEffectInformation()
         {
         }
     }

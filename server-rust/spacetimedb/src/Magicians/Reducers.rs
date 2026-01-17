@@ -10,7 +10,7 @@ pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementR
     character.velocity = DbVector3 { x: 0.0, y: character.velocity.y, z: 0.0 };
     character.kinematic_information.jump = false;
 
-    if is_permission_unblocked(&character.player_permission_config, "CanWalk") {
+    if is_permission_unblocked(&character.permissions, "CanWalk") {
         let mut local_x: f32 = 0.0;
         let mut local_z: f32 = 0.0;
 
@@ -30,11 +30,11 @@ pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementR
             local_x = -2.0;
         }
 
-        if is_permission_unblocked(&character.player_permission_config, "CanRun") && request.sprint && request.move_forward&& !request.move_backward{
+        if is_permission_unblocked(&character.permissions, "CanRun") && request.sprint && request.move_forward&& !request.move_backward{
             local_z *= 2.5;
         }
 
-        if is_permission_unblocked(&character.player_permission_config, "CanRun") && request.sprint {
+        if is_permission_unblocked(&character.permissions, "CanRun") && request.sprint {
             local_x *= 1.5;
         }
 
@@ -48,20 +48,20 @@ pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementR
         character.velocity = DbVector3 { x: world_x, y: character.velocity.y, z: world_z };
     }
 
-    if is_permission_unblocked(&character.player_permission_config, "CanJump") && request.jump {
+    if is_permission_unblocked(&character.permissions, "CanJump") && request.jump {
         character.kinematic_information.jump = true;
         character.velocity.y = 7.5;
     }
 
-    if is_permission_unblocked(&character.player_permission_config, "CanCrouch") && request.crouch {
+    if is_permission_unblocked(&character.permissions, "CanCrouch") && request.crouch {
         character.velocity = DbVector3 { x: character.velocity.x * 0.5, y: character.velocity.y, z: character.velocity.z * 0.5 };
         character.kinematic_information.crouched = true;
-        add_subscriber_to_permission(&mut character.player_permission_config, "CanRun", "Crouch");
+        add_subscriber_to_permission(&mut character.permissions, "CanRun", "Crouch");
     }
 
     if !request.crouch {
         character.kinematic_information.crouched = false;
-        remove_subscriber_from_permission(&mut character.player_permission_config, "CanRun", "Crouch");
+        remove_subscriber_from_permission(&mut character.permissions, "CanRun", "Crouch");
     }
 
     ctx.db.magician().identity().update(character);
@@ -70,42 +70,51 @@ pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementR
 #[reducer]
 pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: ActionRequestMagician) 
 {
-    let mut character = ctx.db.magician().identity().find(ctx.sender).expect("Magician Not Found");
-    let old_state: MagicianState = character.state;
+    let mut magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician Not Found");
+    let old_state: MagicianState = magician.state;
 
-    if request.state == MagicianState::Attack && is_permission_unblocked(&character.player_permission_config, "CanAttack") && character.bullets.len() > 0 {
-        character.state = MagicianState::Attack;
-        add_subscriber_to_permission(&mut character.player_permission_config, "CanAttack", "Attack");
-        add_subscriber_to_permission(&mut character.player_permission_config, "CanReload", "Attack");
-        add_subscriber_to_permission(&mut character.player_permission_config, "CanDust", "Attack");
-        try_perform_attack(ctx, &mut character, request.attack_information);
+    if request.state == MagicianState::Attack && is_permission_unblocked(&magician.permissions, "CanAttack") && magician.bullets.len() > 0 {
+        magician.state = MagicianState::Attack;
+        add_subscriber_to_permission(&mut magician.permissions, "CanAttack", "Attack");
+        add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Attack");
+        add_subscriber_to_permission(&mut magician.permissions, "CanDust", "Attack");
+        add_subscriber_to_permission(&mut magician.permissions, "CanCloak", "Attack");
+        try_perform_attack(ctx, &mut magician, request.attack_information);
     } 
     
-    else if request.state == MagicianState::Reload && is_permission_unblocked(&character.player_permission_config, "CanReload") && (character.bullets.len() as i32) < character.bullet_capacity {
-        character.state = MagicianState::Reload;
-        add_subscriber_to_permission(&mut character.player_permission_config, "CanReload", "Reload");
+    else if request.state == MagicianState::Reload && is_permission_unblocked(&magician.permissions, "CanReload") && (magician.bullets.len() as i32) < magician.bullet_capacity {
+        magician.state = MagicianState::Reload;
+        add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Reload");
     }
 
-    else if request.state == MagicianState::Dust && is_permission_unblocked(&character.player_permission_config, "CanDust") {
-        character.state = MagicianState::Dust;
-        add_subscriber_to_permission(&mut character.player_permission_config, "CanDust", "Dust");
-        add_subscriber_to_permission(&mut character.player_permission_config, "CanAttack", "Dust");
-        add_subscriber_to_permission(&mut character.player_permission_config, "CanReload", "Dust");
-        try_perform_dust(ctx, &mut character, request.dust_information)
+    else if request.state == MagicianState::Dust && is_permission_unblocked(&magician.permissions, "CanDust") {
+        magician.state = MagicianState::Dust;
+        add_subscriber_to_permission(&mut magician.permissions, "CanDust", "Dust");
+        add_subscriber_to_permission(&mut magician.permissions, "CanAttack", "Dust");
+        add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Dust");
+        add_subscriber_to_permission(&mut magician.permissions, "CanCloak", "Dust");
+        try_perform_dust(ctx, &mut magician, request.dust_information)
+    }
+    
+    else if request.state == MagicianState::Cloak && is_permission_unblocked(&magician.permissions, "CanCloak") {
+        magician.state = MagicianState::Cloak;
+        add_subscriber_to_permission(&mut magician.permissions, "CanCloak", "Cloak");
     }
 
-    if old_state != character.state {
-        reset_timer_for_state(&mut character, old_state);
+    if old_state != magician.state {
+        adjust_timer_for_interruptable_state(&mut magician, old_state);
         match old_state {
             MagicianState::Reload => {
-                remove_subscriber_from_permission(&mut character.player_permission_config, "CanReload", "Reload");
+                remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Reload");
             }
+
+            MagicianState::Cloak => { }
 
             _ => {}
         }
     }
 
-    ctx.db.magician().identity().update(character);
+    ctx.db.magician().identity().update(magician);
 }
 
 #[reducer]
@@ -121,11 +130,12 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
                     
                     else {
                         magician.state = MagicianState::Reload;
-                        add_subscriber_to_permission(&mut magician.player_permission_config, "CanReload", "Reload");
+                        add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Reload");
                     }
 
-                    remove_subscriber_from_permission(&mut magician.player_permission_config, "CanReload", "Attack");
-                    remove_subscriber_from_permission(&mut magician.player_permission_config, "CanDust", "Attack");
+                    remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Attack");
+                    remove_subscriber_from_permission(&mut magician.permissions, "CanDust", "Attack");
+                    remove_subscriber_from_permission(&mut magician.permissions, "CanCloak", "Attack");
                 }
             }
 
@@ -139,8 +149,16 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
             MagicianState::Dust => {
                 if tick_active_timer_and_check_expired(&mut magician, "Dust", time) {
                     magician.state = MagicianState::Default;
-                    remove_subscriber_from_permission(&mut magician.player_permission_config, "CanReload", "Dust");
-                    remove_subscriber_from_permission(&mut magician.player_permission_config, "CanAttack", "Dust");
+                    remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Dust");
+                    remove_subscriber_from_permission(&mut magician.permissions, "CanAttack", "Dust");
+                    remove_subscriber_from_permission(&mut magician.permissions, "CanCloak", "Dust");
+                }
+            }
+
+            MagicianState::Cloak => {
+                if tick_active_timer_and_check_expired(&mut magician, "Cloak", time) {
+                    magician.state = MagicianState::Default;
+                    try_cloak(ctx, &mut magician);
                 }
             }
 
@@ -150,9 +168,10 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
         for i in 0..magician.timers.len() {
             if let Some(expired_timer_name) = tick_cooldown_timer_and_check_expired(&mut magician.timers[i], time) {
                 match expired_timer_name.as_str() {
-                    "Attack" => remove_subscriber_from_permission(&mut magician.player_permission_config, "CanAttack", "Attack"),
-                    "Reload" => remove_subscriber_from_permission(&mut magician.player_permission_config, "CanReload", "Reload"),
-                    "Dust" => remove_subscriber_from_permission(&mut magician.player_permission_config, "CanDust", "Dust"),
+                    "Attack" => remove_subscriber_from_permission(&mut magician.permissions, "CanAttack", "Attack"),
+                    "Reload" => remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Reload"),
+                    "Dust" => remove_subscriber_from_permission(&mut magician.permissions, "CanDust", "Dust"),
+                    "Cloak" => remove_subscriber_from_permission(&mut magician.permissions, "CanCloak", "Cloak"),
                     _ => {}
                 }
             }

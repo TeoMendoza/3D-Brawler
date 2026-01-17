@@ -16,7 +16,7 @@ pub struct Magician {
     pub is_colliding: bool,
     pub state: MagicianState,
     pub kinematic_information: KinematicInformation,
-    pub player_permission_config: Vec<PermissionEntry>,
+    pub permissions: Vec<PermissionEntry>,
     pub timers: Vec<Timer>,
     pub bullets: Vec<ThrowingCard>,
     pub bullet_capacity: i32,

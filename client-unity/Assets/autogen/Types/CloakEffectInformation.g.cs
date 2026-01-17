@@ -4,15 +4,14 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
-    public enum EffectType
+    [DataContract]
+    public sealed partial class CloakEffectInformation
     {
-        Damage,
-        Dust,
-        Cloak,
-        Speed,
     }
 }

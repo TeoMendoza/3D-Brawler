@@ -35,6 +35,15 @@ namespace SpacetimeDB.Types
 
             public readonly IdUniqueIndex Id;
 
+            public sealed class SenderIdIndex : BTreeIndexBase<ulong>
+            {
+                protected override ulong GetKey(PlayerEffect row) => row.SenderId;
+
+                public SenderIdIndex(PlayerEffectsHandle table) : base(table) { }
+            }
+
+            public readonly SenderIdIndex SenderId;
+
             public sealed class TargetIdIndex : BTreeIndexBase<ulong>
             {
                 protected override ulong GetKey(PlayerEffect row) => row.TargetId;
@@ -48,6 +57,7 @@ namespace SpacetimeDB.Types
             {
                 GameId = new(this);
                 Id = new(this);
+                SenderId = new(this);
                 TargetId = new(this);
             }
 

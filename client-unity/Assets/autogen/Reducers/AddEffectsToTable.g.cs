@@ -12,12 +12,12 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteReducers : RemoteBase
     {
-        public delegate void AddEffectsToTableHandler(ReducerEventContext ctx, System.Collections.Generic.List<SpacetimeDB.Types.Effect> effects, ulong magicianId, uint gameId);
+        public delegate void AddEffectsToTableHandler(ReducerEventContext ctx, System.Collections.Generic.List<SpacetimeDB.Types.Effect> effects, ulong targetId, ulong senderId, uint gameId);
         public event AddEffectsToTableHandler? OnAddEffectsToTable;
 
-        public void AddEffectsToTable(System.Collections.Generic.List<SpacetimeDB.Types.Effect> effects, ulong magicianId, uint gameId)
+        public void AddEffectsToTable(System.Collections.Generic.List<SpacetimeDB.Types.Effect> effects, ulong targetId, ulong senderId, uint gameId)
         {
-            conn.InternalCallReducer(new Reducer.AddEffectsToTable(effects, magicianId, gameId), this.SetCallReducerFlags.AddEffectsToTableFlags);
+            conn.InternalCallReducer(new Reducer.AddEffectsToTable(effects, targetId, senderId, gameId), this.SetCallReducerFlags.AddEffectsToTableFlags);
         }
 
         public bool InvokeAddEffectsToTable(ReducerEventContext ctx, Reducer.AddEffectsToTable args)
@@ -37,7 +37,8 @@ namespace SpacetimeDB.Types
             OnAddEffectsToTable(
                 ctx,
                 args.Effects,
-                args.MagicianId,
+                args.TargetId,
+                args.SenderId,
                 args.GameId
             );
             return true;
@@ -52,19 +53,23 @@ namespace SpacetimeDB.Types
         {
             [DataMember(Name = "effects")]
             public System.Collections.Generic.List<Effect> Effects;
-            [DataMember(Name = "magician_id")]
-            public ulong MagicianId;
+            [DataMember(Name = "target_id")]
+            public ulong TargetId;
+            [DataMember(Name = "sender_id")]
+            public ulong SenderId;
             [DataMember(Name = "game_id")]
             public uint GameId;
 
             public AddEffectsToTable(
                 System.Collections.Generic.List<Effect> Effects,
-                ulong MagicianId,
+                ulong TargetId,
+                ulong SenderId,
                 uint GameId
             )
             {
                 this.Effects = Effects;
-                this.MagicianId = MagicianId;
+                this.TargetId = TargetId;
+                this.SenderId = SenderId;
                 this.GameId = GameId;
             }
 

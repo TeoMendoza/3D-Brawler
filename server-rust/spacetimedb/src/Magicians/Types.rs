@@ -16,6 +16,7 @@ pub struct ActionRequestMagician {
     pub attack_information: AttackInformation,
     pub reload_information: ReloadInformation,
     pub dust_information: DustInformation,
+    pub cloak_information: CloakInformation
 }
 
 #[derive(SpacetimeType)]
@@ -29,6 +30,9 @@ pub struct AttackInformation {
 
 #[derive(SpacetimeType)]
 pub struct ReloadInformation {}
+
+#[derive(SpacetimeType)]
+pub struct CloakInformation {}
 
 #[derive(SpacetimeType)]
 pub struct DustInformation {
@@ -46,6 +50,7 @@ pub enum MagicianState {
     Attack,
     Reload,
     Dust, // Blind Ability
+    Cloak,
 }
 
 #[derive(SpacetimeType, Clone)]

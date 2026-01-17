@@ -14,5 +14,6 @@ namespace SpacetimeDB.Types
         Attack,
         Reload,
         Dust,
+        Cloak,
     }
 }

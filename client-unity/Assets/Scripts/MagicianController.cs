@@ -119,14 +119,17 @@ public class MagicianController : MonoBehaviour
             Vector3 cameraOffsetLocal = Quaternion.Inverse(cameraRotation) * cameraWorldDelta;
 
             if (Input.GetMouseButton(0))
-                GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack, new AttackInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.3f, 0.4f), MaxDistance: 100f), new ReloadInformation(), new DustInformation ()));
+                GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack, new AttackInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.3f, 0.4f), MaxDistance: 100f), new ReloadInformation(), new DustInformation (), new CloakInformation()));
 
             if (Input.GetKey(KeyCode.E))
-                GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Dust, new AttackInformation(), new ReloadInformation(), new DustInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.3f, 0.4f), MaxDistance: 2.5f, ConeHalfAngleDegrees: 20f)));
+                GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Dust, new AttackInformation(), new ReloadInformation(), new DustInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.3f, 0.4f), MaxDistance: 2.5f, ConeHalfAngleDegrees: 20f), new CloakInformation()));
         }
 
         if (Input.GetKey(KeyCode.R))     
-            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Reload, new AttackInformation(), new ReloadInformation(), new DustInformation()));
+            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Reload, new AttackInformation(), new ReloadInformation(), new DustInformation(), new CloakInformation()));
+
+        if (Input.GetKey(KeyCode.F))
+            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Cloak, new AttackInformation(), new ReloadInformation(), new DustInformation(), new CloakInformation()));
     }
 
     public MovementRequest BuildMovementRequest()
@@ -212,6 +215,9 @@ public class MagicianController : MonoBehaviour
         bool Dust = oldChar.State is not MagicianState.Dust && newChar.State is MagicianState.Dust;
         bool DustDone = oldChar.State is MagicianState.Dust && newChar.State is not MagicianState.Dust;
 
+        bool Cloak = oldChar.State is not MagicianState.Cloak && newChar.State is MagicianState.Cloak;
+        bool CloakDone = oldChar.State is MagicianState.Cloak && newChar.State is not MagicianState.Cloak;
+
         bool Grounded = newChar.KinematicInformation.Grounded;
         bool Crouching = newChar.KinematicInformation.Crouched;
         bool Falling = newChar.KinematicInformation.Falling;
@@ -228,6 +234,9 @@ public class MagicianController : MonoBehaviour
 
             if (Dust) Animator.SetTrigger("Dust");
             if (DustDone) Animator.SetTrigger("DustDone");
+
+            if (Cloak) Animator.SetTrigger("Cloak");
+            if (CloakDone) Animator.SetTrigger("CloakDone");
 
             Animator.SetBool("Crouching", Crouching);
             Animator.SetBool("Falling", Falling);
