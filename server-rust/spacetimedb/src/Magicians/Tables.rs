@@ -16,11 +16,12 @@ pub struct Magician {
     pub is_colliding: bool,
     pub state: MagicianState,
     pub kinematic_information: KinematicInformation,
+    pub combat_information: CombatInformation,
     pub permissions: Vec<PermissionEntry>,
     pub timers: Vec<Timer>,
     pub bullets: Vec<ThrowingCard>,
     pub bullet_capacity: i32,
-    pub effects: Vec<Effect>,
+    pub effects: Vec<Effect>,   
 }
 
 #[table(name = move_all_magicians, scheduled(move_magicians))]

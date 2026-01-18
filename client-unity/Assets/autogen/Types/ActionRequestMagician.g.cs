@@ -23,13 +23,16 @@ namespace SpacetimeDB.Types
         public DustInformation DustInformation;
         [DataMember(Name = "cloak_information")]
         public CloakInformation CloakInformation;
+        [DataMember(Name = "hypnosis_information")]
+        public HypnosisInformation HypnosisInformation;
 
         public ActionRequestMagician(
             MagicianState State,
             AttackInformation AttackInformation,
             ReloadInformation ReloadInformation,
             DustInformation DustInformation,
-            CloakInformation CloakInformation
+            CloakInformation CloakInformation,
+            HypnosisInformation HypnosisInformation
         )
         {
             this.State = State;
@@ -37,6 +40,7 @@ namespace SpacetimeDB.Types
             this.ReloadInformation = ReloadInformation;
             this.DustInformation = DustInformation;
             this.CloakInformation = CloakInformation;
+            this.HypnosisInformation = HypnosisInformation;
         }
 
         public ActionRequestMagician()
@@ -45,6 +49,7 @@ namespace SpacetimeDB.Types
             this.ReloadInformation = new();
             this.DustInformation = new();
             this.CloakInformation = new();
+            this.HypnosisInformation = new();
         }
     }
 }

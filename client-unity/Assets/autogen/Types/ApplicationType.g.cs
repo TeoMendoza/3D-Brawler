@@ -13,5 +13,6 @@ namespace SpacetimeDB.Types
         Single,
         Duration,
         Reapply,
+        Indefinite,
     }
 }

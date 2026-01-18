@@ -25,6 +25,10 @@ namespace SpacetimeDB.Types
         public DustEffectInformation? DustInformation;
         [DataMember(Name = "speed_information")]
         public SpeedEffectInformation? SpeedInformation;
+        [DataMember(Name = "hypnosis_information")]
+        public HypnosisEffectInformation? HypnosisInformation;
+        [DataMember(Name = "stunned_information")]
+        public StunnedEffectInformation? StunnedInformation;
 
         public Effect(
             EffectType EffectType,
@@ -32,7 +36,9 @@ namespace SpacetimeDB.Types
             DamageEffectInformation? DamageInformation,
             CloakEffectInformation? CloakInformation,
             DustEffectInformation? DustInformation,
-            SpeedEffectInformation? SpeedInformation
+            SpeedEffectInformation? SpeedInformation,
+            HypnosisEffectInformation? HypnosisInformation,
+            StunnedEffectInformation? StunnedInformation
         )
         {
             this.EffectType = EffectType;
@@ -41,6 +47,8 @@ namespace SpacetimeDB.Types
             this.CloakInformation = CloakInformation;
             this.DustInformation = DustInformation;
             this.SpeedInformation = SpeedInformation;
+            this.HypnosisInformation = HypnosisInformation;
+            this.StunnedInformation = StunnedInformation;
         }
 
         public Effect()

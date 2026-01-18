@@ -39,6 +39,8 @@ namespace SpacetimeDB.Types
         public MagicianState State;
         [DataMember(Name = "kinematic_information")]
         public KinematicInformation KinematicInformation;
+        [DataMember(Name = "combat_information")]
+        public CombatInformation CombatInformation;
         [DataMember(Name = "permissions")]
         public System.Collections.Generic.List<PermissionEntry> Permissions;
         [DataMember(Name = "timers")]
@@ -64,6 +66,7 @@ namespace SpacetimeDB.Types
             bool IsColliding,
             MagicianState State,
             KinematicInformation KinematicInformation,
+            CombatInformation CombatInformation,
             System.Collections.Generic.List<PermissionEntry> Permissions,
             System.Collections.Generic.List<Timer> Timers,
             System.Collections.Generic.List<ThrowingCard> Bullets,
@@ -84,6 +87,7 @@ namespace SpacetimeDB.Types
             this.IsColliding = IsColliding;
             this.State = State;
             this.KinematicInformation = KinematicInformation;
+            this.CombatInformation = CombatInformation;
             this.Permissions = Permissions;
             this.Timers = Timers;
             this.Bullets = Bullets;
@@ -101,6 +105,7 @@ namespace SpacetimeDB.Types
             this.Collider = new();
             this.CollisionEntries = new();
             this.KinematicInformation = new();
+            this.CombatInformation = new();
             this.Permissions = new();
             this.Timers = new();
             this.Bullets = new();

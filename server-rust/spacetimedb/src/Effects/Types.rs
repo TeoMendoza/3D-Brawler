@@ -7,7 +7,9 @@ pub struct Effect {
     pub damage_information: Option<DamageEffectInformation>,
     pub cloak_information: Option<CloakEffectInformation>,
     pub dust_information: Option<DustEffectInformation>,
-    pub speed_information: Option<SpeedEffectInformation>
+    pub speed_information: Option<SpeedEffectInformation>,
+    pub hypnosis_information: Option<HypnosisEffectInformation>,
+    pub stunned_information: Option<StunnedEffectInformation>
 }
 
 #[derive(SpacetimeType, Clone)]
@@ -17,6 +19,7 @@ pub struct ApplicationInformation {
     pub end_time: Option<f32>, // When The Effect Should End & Be Removed From Table (Duration & Reapply)
     pub reapply_time: Option<f32>, // How Often Should Effect Be Reapplied (Reapply)
     pub current_reapply_time: Option<f32>,
+    pub applied: Option<bool>
 }
 
 #[derive(SpacetimeType, Clone)]
@@ -34,19 +37,30 @@ pub struct CloakEffectInformation { } // Maybe Visiblity Param Later
 #[derive(SpacetimeType, Clone)]
 pub struct SpeedEffectInformation {
     pub speed_multiplier: f32 // Can Be Increase / Decrease
- }
+}
 
-#[derive(SpacetimeType, PartialEq, Eq, Clone, Copy)]
+#[derive(SpacetimeType, Clone)]
+pub struct HypnosisEffectInformation { 
+    pub last_target_id: Option<u64>, // Used To Determine Previous Target To Undo Effects When Target Changes
+}
+
+#[derive(SpacetimeType, Clone)]
+pub struct StunnedEffectInformation { }
+
+#[derive(SpacetimeType, PartialEq, Eq, Clone, Copy, Debug)]
 pub enum EffectType {
     Damage,
     Dust,
     Cloak,
-    Speed
+    Speed,
+    Stunned,
+    Hypnosis
 }
 
 #[derive(SpacetimeType, Clone)]
 pub enum ApplicationType {
     Single,
     Duration,
-    Reapply
+    Reapply,
+    Indefinite
 }

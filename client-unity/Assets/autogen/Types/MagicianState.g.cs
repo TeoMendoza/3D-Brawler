@@ -15,5 +15,6 @@ namespace SpacetimeDB.Types
         Reload,
         Dust,
         Cloak,
+        Hypnosis,
     }
 }

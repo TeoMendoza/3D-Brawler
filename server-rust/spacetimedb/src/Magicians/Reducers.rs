@@ -79,6 +79,7 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
         add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Attack");
         add_subscriber_to_permission(&mut magician.permissions, "CanDust", "Attack");
         add_subscriber_to_permission(&mut magician.permissions, "CanCloak", "Attack");
+        add_subscriber_to_permission(&mut magician.permissions, "CanHypnosis", "Attack");
         try_perform_attack(ctx, &mut magician, request.attack_information);
     } 
     
@@ -93,12 +94,22 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
         add_subscriber_to_permission(&mut magician.permissions, "CanAttack", "Dust");
         add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Dust");
         add_subscriber_to_permission(&mut magician.permissions, "CanCloak", "Dust");
+        add_subscriber_to_permission(&mut magician.permissions, "CanHypnosis", "Dust");
         try_perform_dust(ctx, &mut magician, request.dust_information)
     }
     
     else if request.state == MagicianState::Cloak && is_permission_unblocked(&magician.permissions, "CanCloak") {
         magician.state = MagicianState::Cloak;
         add_subscriber_to_permission(&mut magician.permissions, "CanCloak", "Cloak");
+    }
+
+    else if request.state == MagicianState::Hypnosis && is_permission_unblocked(&magician.permissions, "CanHypnosis") {
+        magician.state = MagicianState::Hypnosis;
+        add_subscriber_to_permission(&mut magician.permissions, "CanHypnosis", "Hypnosis");
+        add_subscriber_to_permission(&mut magician.permissions, "CanDust", "Hypnosis");
+        add_subscriber_to_permission(&mut magician.permissions, "CanAttack", "Hypnosis");
+        add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Hypnosis");
+        add_subscriber_to_permission(&mut magician.permissions, "CanCloak", "Hypnosis");
     }
 
     if old_state != magician.state {
@@ -130,12 +141,13 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
                     
                     else {
                         magician.state = MagicianState::Reload;
-                        add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Reload");
+                        add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Reload"); // Add To Every Other State To Ensure Transition Back To Reload If Necessary
                     }
 
                     remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Attack");
                     remove_subscriber_from_permission(&mut magician.permissions, "CanDust", "Attack");
                     remove_subscriber_from_permission(&mut magician.permissions, "CanCloak", "Attack");
+                    remove_subscriber_from_permission(&mut magician.permissions, "CanHypnosis", "Attack");
                 }
             }
 
@@ -152,6 +164,7 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
                     remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Dust");
                     remove_subscriber_from_permission(&mut magician.permissions, "CanAttack", "Dust");
                     remove_subscriber_from_permission(&mut magician.permissions, "CanCloak", "Dust");
+                    remove_subscriber_from_permission(&mut magician.permissions, "CanHypnosis", "Dust");
                 }
             }
 
@@ -159,6 +172,17 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
                 if tick_active_timer_and_check_expired(&mut magician, "Cloak", time) {
                     magician.state = MagicianState::Default;
                     try_cloak(ctx, &mut magician);
+                }
+            }
+
+            MagicianState::Hypnosis => {
+                if tick_active_timer_and_check_expired(&mut magician, "Hypnosis", time) {
+                    magician.state = MagicianState::Default;
+                    remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Hypnosis");
+                    remove_subscriber_from_permission(&mut magician.permissions, "CanAttack", "Hypnosis");
+                    remove_subscriber_from_permission(&mut magician.permissions, "CanCloak", "Hypnosis");
+                    remove_subscriber_from_permission(&mut magician.permissions, "CanDust", "Hypnosis");
+                    try_hypnosis(ctx, &mut magician);
                 }
             }
 
@@ -172,6 +196,7 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
                     "Reload" => remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Reload"),
                     "Dust" => remove_subscriber_from_permission(&mut magician.permissions, "CanDust", "Dust"),
                     "Cloak" => remove_subscriber_from_permission(&mut magician.permissions, "CanCloak", "Cloak"),
+                    "Hypnosis" => remove_subscriber_from_permission(&mut magician.permissions, "CanHypnosis", "Hypnosis"),
                     _ => {}
                 }
             }
@@ -310,6 +335,37 @@ pub fn move_magicians_lag_test(ctx: &ReducerContext, timer: MoveAllMagiciansTime
 
         ctx.db.magician().identity().update(magician);
     }
+}
+
+#[reducer]
+pub fn hypnotise(ctx: &ReducerContext, camera_info: HypnosisCameraInformation)
+{
+    let magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician Not Found!");
+    let mut hypnosis_effect_id_option: Option<u64> = None;
+    for effect in ctx.db.player_effects().target_id().filter(magician.id) {
+        if effect.effect_type == EffectType::Hypnosis {
+            hypnosis_effect_id_option = Some(effect.id);
+            break;
+        }
+    }
+
+    if let Some(hypnosis_effect_id) = hypnosis_effect_id_option {
+        let mut player_effect = ctx.db.player_effects().id().find(hypnosis_effect_id).expect("Player Effect Not Found");
+        let hypnosis_information = player_effect.hypnosis_informaton.as_mut().expect("Hypnosis Effect Must Have Hypnosis Information");
+
+        
+        if let Some(last_target_id) = hypnosis_information.last_target_id {
+            let mut stunned_player = ctx.db.magician().id().find(last_target_id).expect("Stunned Player Must Exist!"); // Not necessarily true they must exist, just handling it like so for now
+            // Next Steps - Find Stunned Players Player Effect & Extract Stun Information (Also Could Remove From Undo Stun Method Params). Then call try_hypnotise which will return what magician is looking at.
+            // If try hypnotise returns a different player/object to our current stunned player. Undo the stunned players effect and add a stun effect for the new stunned player (or dont add if returned hit is not a player)
+            // If they are the same, do nothing. Remember to also update last_target_id
+        }
+        
+        else {
+            // Next Steps - Call try_hypnotise and if it returns a player, add a stun effect for new stunned player, also update last_target_id. Otherwise do nothing
+        }
+    }
+    
 }
 
 

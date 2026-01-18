@@ -302,8 +302,6 @@ pub fn try_perform_dust(ctx: &ReducerContext, magician: &mut Magician, dust_info
 
         add_effects_to_table(ctx, effects, hit.hit_entity_id, magician.id, magician.game_id);
     }
-        
-    
 }
 
 pub fn try_cloak(ctx: &ReducerContext, magician: &mut Magician)
@@ -313,6 +311,19 @@ pub fn try_cloak(ctx: &ReducerContext, magician: &mut Magician)
     let effects: Vec<Effect> = vec![cloak_effect, speed_effect];
 
     add_effects_to_table(ctx, effects, magician.id, magician.id, magician.game_id);
+}
+
+pub fn try_hypnosis(ctx: &ReducerContext, magician: &mut Magician)
+{
+    let hypnosis_effect = create_hypnosis_effect(10.0);
+    let effects: Vec<Effect> = vec![hypnosis_effect];
+
+    add_effects_to_table(ctx, effects, magician.id, magician.id, magician.game_id);
+}
+
+pub fn try_hypnotise(ctx: &ReducerContext, magician: &mut Magician, camera_informaton: HypnosisCameraInformation)
+{
+    
 }
 
 pub fn adjust_timer_in_use(magician: &mut Magician, key: &str)

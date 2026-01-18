@@ -33,6 +33,10 @@ namespace SpacetimeDB.Types
         public DustEffectInformation? DustInformation;
         [DataMember(Name = "speed_information")]
         public SpeedEffectInformation? SpeedInformation;
+        [DataMember(Name = "hypnosis_informaton")]
+        public HypnosisEffectInformation? HypnosisInformaton;
+        [DataMember(Name = "stunned_information")]
+        public StunnedEffectInformation? StunnedInformation;
 
         public PlayerEffect(
             ulong Id,
@@ -44,7 +48,9 @@ namespace SpacetimeDB.Types
             DamageEffectInformation? DamageInformation,
             CloakEffectInformation? CloakInformation,
             DustEffectInformation? DustInformation,
-            SpeedEffectInformation? SpeedInformation
+            SpeedEffectInformation? SpeedInformation,
+            HypnosisEffectInformation? HypnosisInformaton,
+            StunnedEffectInformation? StunnedInformation
         )
         {
             this.Id = Id;
@@ -57,6 +63,8 @@ namespace SpacetimeDB.Types
             this.CloakInformation = CloakInformation;
             this.DustInformation = DustInformation;
             this.SpeedInformation = SpeedInformation;
+            this.HypnosisInformaton = HypnosisInformaton;
+            this.StunnedInformation = StunnedInformation;
         }
 
         public PlayerEffect()

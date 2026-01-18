@@ -23,13 +23,16 @@ namespace SpacetimeDB.Types
         public float? ReapplyTime;
         [DataMember(Name = "current_reapply_time")]
         public float? CurrentReapplyTime;
+        [DataMember(Name = "applied")]
+        public bool? Applied;
 
         public ApplicationInformation(
             ApplicationType ApplicationType,
             float? CurrentTime,
             float? EndTime,
             float? ReapplyTime,
-            float? CurrentReapplyTime
+            float? CurrentReapplyTime,
+            bool? Applied
         )
         {
             this.ApplicationType = ApplicationType;
@@ -37,6 +40,7 @@ namespace SpacetimeDB.Types
             this.EndTime = EndTime;
             this.ReapplyTime = ReapplyTime;
             this.CurrentReapplyTime = CurrentReapplyTime;
+            this.Applied = Applied;
         }
 
         public ApplicationInformation()

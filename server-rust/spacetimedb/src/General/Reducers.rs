@@ -34,6 +34,7 @@ pub fn init(ctx: &ReducerContext) {
         collision_entries: vec![CollisionEntry { entry_type: CollisionEntryType::Map, id: 1 }],
         is_colliding: false,
         kinematic_information: KinematicInformation { jump: false, falling: false, crouched: false, grounded: false, sprinting: false },
+        combat_information: CombatInformation { health: 200.0, max_health: 200.0, speed_multiplier: 1.0, game_score: 0, blind: false, reversed: false, stunned: false, cloaked: false, hypnosis: false },
         state: MagicianState::Default,
         permissions: vec![PermissionEntry { key: "CanWalk".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanRun".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanJump".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanCrouch".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanAttack".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanReload".to_string(), subscribers: vec![] }, PermissionEntry { key: "CanDust".to_string(), subscribers: Vec::new() },],
         timers: vec![Timer { name: "Attack".to_string(), state: TimerState::Inactive, cooldown_time: 0.7, use_finished_time: 0.7, current_time: 0.0 }, Timer { name: "Reload".to_string(), state: TimerState::Inactive, cooldown_time: 2.2, use_finished_time: 2.2, current_time: 0.0 }, Timer { name: "Dust".to_string(), state: TimerState::Inactive, cooldown_time: 10.0, use_finished_time: 1.0, current_time: 0.0 },],
@@ -110,6 +111,10 @@ pub fn disconnect(ctx: &ReducerContext) {
             other.collision_entries.swap_remove(index);
             ctx.db.magician().id().update(other);
         }
+    }
+
+    for player_effect in ctx.db.player_effects().target_id().filter(magician.id) {
+        ctx.db.player_effects().id().delete(player_effect.id);
     }
 
     ctx.db.logged_in_players().identity().delete(player.identity);

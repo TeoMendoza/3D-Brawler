@@ -9,6 +9,7 @@ public class MagicianController : MonoBehaviour
     [SerializeField] private CinemachineCamera thirdPersonCam;
     [SerializeField] private GameObject thirdPersonCamPivot;
 
+    Magician Magician;
     bool IsOwner;
     public Identity Identity;
     public uint Id;
@@ -46,6 +47,7 @@ public class MagicianController : MonoBehaviour
 
     public void Initalize(Magician Character)
     {
+        Magician = Character;
         Identity = Character.Identity;
         Id = (uint)Character.Id;
         Name = Character.Name;
@@ -96,7 +98,7 @@ public class MagicianController : MonoBehaviour
                 NextSendTime += SendIntervalSeconds;
         }
 
-        if (Input.GetMouseButton(0) || Input.GetKey(KeyCode.E))
+        if (Input.GetMouseButton(0) || Input.GetKey(KeyCode.E) || Magician.CombatInformation.Hypnosis is true)
         {
             Vector2 reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
             Ray aimRay = mainCamera.ScreenPointToRay(reticle);
@@ -119,17 +121,25 @@ public class MagicianController : MonoBehaviour
             Vector3 cameraOffsetLocal = Quaternion.Inverse(cameraRotation) * cameraWorldDelta;
 
             if (Input.GetMouseButton(0))
-                GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack, new AttackInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.3f, 0.4f), MaxDistance: 100f), new ReloadInformation(), new DustInformation (), new CloakInformation()));
+                GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack, new AttackInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.3f, 0.4f), MaxDistance: 100f), new ReloadInformation(), new DustInformation (), new CloakInformation(), new HypnosisInformation()));
 
             if (Input.GetKey(KeyCode.E))
-                GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Dust, new AttackInformation(), new ReloadInformation(), new DustInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.3f, 0.4f), MaxDistance: 2.5f, ConeHalfAngleDegrees: 20f), new CloakInformation()));
+                GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Dust, new AttackInformation(), new ReloadInformation(), new DustInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.3f, 0.4f), MaxDistance: 2.5f, ConeHalfAngleDegrees: 20f), new CloakInformation(), new HypnosisInformation()));
+
+            if (Magician.CombatInformation.Hypnosis is true) { }
+                
         }
 
         if (Input.GetKey(KeyCode.R))     
-            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Reload, new AttackInformation(), new ReloadInformation(), new DustInformation(), new CloakInformation()));
+            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Reload, new AttackInformation(), new ReloadInformation(), new DustInformation(), new CloakInformation(), new HypnosisInformation()));
 
         if (Input.GetKey(KeyCode.F))
-            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Cloak, new AttackInformation(), new ReloadInformation(), new DustInformation(), new CloakInformation()));
+            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Cloak, new AttackInformation(), new ReloadInformation(), new DustInformation(), new CloakInformation(), new HypnosisInformation()));
+
+        if (Input.GetKey(KeyCode.C))
+            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Hypnosis, new AttackInformation(), new ReloadInformation(), new DustInformation(), new CloakInformation(), new HypnosisInformation()));
+
+        
     }
 
     public MovementRequest BuildMovementRequest()
@@ -201,6 +211,7 @@ public class MagicianController : MonoBehaviour
     {
         if (Identity != newChar.Identity) return;
 
+        Magician = newChar;
         TargetPosition = newChar.Position;
         TargetRotation = newChar.Rotation;
         
@@ -217,6 +228,9 @@ public class MagicianController : MonoBehaviour
 
         bool Cloak = oldChar.State is not MagicianState.Cloak && newChar.State is MagicianState.Cloak;
         bool CloakDone = oldChar.State is MagicianState.Cloak && newChar.State is not MagicianState.Cloak;
+
+        bool Hypnosis = oldChar.State is not MagicianState.Hypnosis && newChar.State is MagicianState.Hypnosis;
+        bool HypnosisDone = oldChar.State is MagicianState.Hypnosis && newChar.State is not MagicianState.Hypnosis;
 
         bool Grounded = newChar.KinematicInformation.Grounded;
         bool Crouching = newChar.KinematicInformation.Crouched;
@@ -237,6 +251,9 @@ public class MagicianController : MonoBehaviour
 
             if (Cloak) Animator.SetTrigger("Cloak");
             if (CloakDone) Animator.SetTrigger("CloakDone");
+
+            if (Hypnosis) Animator.SetTrigger("Hypnosis");
+            if (HypnosisDone) Animator.SetTrigger("HypnosisDone");
 
             Animator.SetBool("Crouching", Crouching);
             Animator.SetBool("Falling", Falling);
