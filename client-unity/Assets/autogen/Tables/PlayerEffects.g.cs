@@ -35,6 +35,15 @@ namespace SpacetimeDB.Types
 
             public readonly IdUniqueIndex Id;
 
+            public sealed class SenderAndTypeIndex : BTreeIndexBase<(ulong SenderId, EffectType EffectType)>
+            {
+                protected override (ulong SenderId, EffectType EffectType) GetKey(PlayerEffect row) => (row.SenderId, row.EffectType);
+
+                public SenderAndTypeIndex(PlayerEffectsHandle table) : base(table) { }
+            }
+
+            public readonly SenderAndTypeIndex SenderAndType;
+
             public sealed class SenderIdIndex : BTreeIndexBase<ulong>
             {
                 protected override ulong GetKey(PlayerEffect row) => row.SenderId;
@@ -43,6 +52,15 @@ namespace SpacetimeDB.Types
             }
 
             public readonly SenderIdIndex SenderId;
+
+            public sealed class TargetAndTypeIndex : BTreeIndexBase<(ulong TargetId, EffectType EffectType)>
+            {
+                protected override (ulong TargetId, EffectType EffectType) GetKey(PlayerEffect row) => (row.TargetId, row.EffectType);
+
+                public TargetAndTypeIndex(PlayerEffectsHandle table) : base(table) { }
+            }
+
+            public readonly TargetAndTypeIndex TargetAndType;
 
             public sealed class TargetIdIndex : BTreeIndexBase<ulong>
             {
@@ -53,12 +71,24 @@ namespace SpacetimeDB.Types
 
             public readonly TargetIdIndex TargetId;
 
+            public sealed class TargetSenderAndTypeIndex : BTreeIndexBase<(ulong TargetId, ulong SenderId, EffectType EffectType)>
+            {
+                protected override (ulong TargetId, ulong SenderId, EffectType EffectType) GetKey(PlayerEffect row) => (row.TargetId, row.SenderId, row.EffectType);
+
+                public TargetSenderAndTypeIndex(PlayerEffectsHandle table) : base(table) { }
+            }
+
+            public readonly TargetSenderAndTypeIndex TargetSenderAndType;
+
             internal PlayerEffectsHandle(DbConnection conn) : base(conn)
             {
                 GameId = new(this);
                 Id = new(this);
+                SenderAndType = new(this);
                 SenderId = new(this);
+                TargetAndType = new(this);
                 TargetId = new(this);
+                TargetSenderAndType = new(this);
             }
 
             protected override object GetPrimaryKey(PlayerEffect row) => row.Id;

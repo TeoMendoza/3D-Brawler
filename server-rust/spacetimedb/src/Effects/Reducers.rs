@@ -68,6 +68,7 @@ pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTab
                 if *applied == false {
                     match_and_apply_indefinite_effect(ctx, &mut target, &player_effect_clone);
                     *applied = true;
+                    ctx.db.player_effects().id().update(player_effect);
                 }
             }
         }
@@ -76,7 +77,6 @@ pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTab
     }
 }
 
-#[reducer]
 pub fn add_effects_to_table(ctx: &ReducerContext, effects: Vec<Effect>, target_id: u64, sender_id: u64, game_id: u32) 
 {
     for effect in effects {

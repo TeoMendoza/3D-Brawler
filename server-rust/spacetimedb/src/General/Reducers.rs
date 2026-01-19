@@ -92,7 +92,7 @@ pub fn connect(ctx: &ReducerContext) {
 #[reducer(client_disconnected)]
 pub fn disconnect(ctx: &ReducerContext) {
     let player = ctx.db.logged_in_players().identity().find(ctx.sender).expect("Player not found");
-    let magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician not found");
+    let mut magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician not found");
 
     let game_option = ctx.db.game().id().find(magician.game_id);
     if game_option.is_some() {
@@ -103,8 +103,6 @@ pub fn disconnect(ctx: &ReducerContext) {
         }
     }
 
-    ctx.db.magician().id().delete(magician.id);
-
     let collision_entry = CollisionEntry { entry_type: CollisionEntryType::Magician, id: magician.id };
     for mut other in ctx.db.magician().game_id().filter(magician.game_id) {
         if let Some(index) = other.collision_entries.iter().position(|entry| *entry == collision_entry) {
@@ -114,9 +112,14 @@ pub fn disconnect(ctx: &ReducerContext) {
     }
 
     for player_effect in ctx.db.player_effects().target_id().filter(magician.id) {
+        match player_effect.effect_type {
+            EffectType::Hypnosis => undo_hypnosis_effect_magician(ctx, &mut magician, &player_effect.hypnosis_informaton), 
+            _ => { }
+        }
         ctx.db.player_effects().id().delete(player_effect.id);
     }
 
+    ctx.db.magician().identity().delete(player.identity);
     ctx.db.logged_in_players().identity().delete(player.identity);
     ctx.db.logged_out_players().insert(player);
     

@@ -321,9 +321,33 @@ pub fn try_hypnosis(ctx: &ReducerContext, magician: &mut Magician)
     add_effects_to_table(ctx, effects, magician.id, magician.id, magician.game_id);
 }
 
-pub fn try_hypnotise(ctx: &ReducerContext, magician: &mut Magician, camera_informaton: HypnosisCameraInformation)
+pub fn try_hypnotise(ctx: &ReducerContext, magician: &mut Magician, camera_information: HypnosisCameraInformation) -> Raycast
 {
-    
+    let magician_position = magician.position;
+    let magician_yaw_radians: f32 = to_radians(magician.rotation.yaw);
+    let magician_yaw_only = Quat::from_rotation_y(magician_yaw_radians);
+
+    let spawn_point = add(magician_position, rotate(camera_information.spawn_point_offset, magician_yaw_only));
+
+    let camera_yaw_radians: f32 = to_radians(magician.rotation.yaw + camera_information.camera_yaw_offset);
+    let camera_pitch_radians: f32 = to_radians(magician.rotation.pitch + camera_information.camera_pitch_offset);
+    let camera_rotation = Quat::from_euler(glam::EulerRot::YXZ, camera_yaw_radians, camera_pitch_radians, 0.0);
+
+    let camera_position = add(magician_position, rotate(camera_information.camera_position_offset, camera_rotation));
+    let camera_forward = normalize_small_vector(rotate(DbVector3 { x: 0.0, y: 0.0, z: 1.0 }, camera_rotation), DbVector3 { x: 0.0, y: 0.0, z: 1.0 });
+
+    let camera_to_spawn_distance = magnitude(sub(spawn_point, camera_position));
+    let camera_max_distance = camera_information.max_distance + camera_to_spawn_distance;
+
+    let camera_hit = raycast_match(ctx, camera_position, camera_forward, camera_max_distance);
+    let aim_point = if camera_hit.hit { camera_hit.hit_point } else { add(camera_position, mul(camera_forward, camera_max_distance)) };
+
+    let shot_delta = sub(aim_point, spawn_point);
+    let shot_direction = normalize_small_vector(shot_delta, camera_forward);
+
+    let raycast = raycast_match(ctx, spawn_point, shot_direction, camera_information.max_distance);
+
+    raycast
 }
 
 pub fn adjust_timer_in_use(magician: &mut Magician, key: &str)

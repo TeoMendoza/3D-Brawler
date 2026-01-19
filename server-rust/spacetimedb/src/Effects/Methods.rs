@@ -1,4 +1,4 @@
-use spacetimedb::{ReducerContext};
+use spacetimedb::{ReducerContext, Table, reducer};
 use crate::*;
 
 pub fn apply_damage_effect_magician(ctx: &ReducerContext, magician: &mut Magician, damage_effect: &Option<DamageEffectInformation>) 
@@ -77,21 +77,32 @@ pub fn undo_speed_effect_magician(ctx: &ReducerContext, magician: &mut Magician,
 pub fn undo_hypnosis_effect_magician(ctx: &ReducerContext, magician: &mut Magician, hypnosis_effect: &Option<HypnosisEffectInformation>) 
 {
     log::info!("Undo Hypnosis Effect Called");
-    let _hypnosis = hypnosis_effect.as_ref().expect("Hypnosis Effect Must Have Information!");
+    let hypnosis = hypnosis_effect.as_ref().expect("Hypnosis Effect Must Have Information!");
     let combat_info = &mut magician.combat_information;
     combat_info.hypnosis = false;
 
-    for effect in ctx.db.player_effects().sender_id().filter(magician.id) {
-        // Find The Stun Effect And Call Undo Function For Target Player + Remove From DB. Also change it to use hypnosis effect last stunned player data. Itll be easier to know if a stun currently exists when hypnosis ultimate ends
+    if let Some(last_target_id) = hypnosis.last_target_id {
+        let mut stunned_magician = ctx.db.magician().id().find(last_target_id).expect("Hypnosis Last Target Magician Must Exist!"); // Not Necessarily True - Player Could Have Left - Unlikely But Handle That Case Later
+        let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, magician.id, EffectType::Stunned));
+
+        let stunned_effect = match (stunned_iterator.next(), stunned_iterator.next()) {
+            (None, _) => panic!("Stunned Iterator Should Have First Element!"),
+            (Some(effect), None) => effect,
+            (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
+        };
+
+        undo_and_delete_stunned_effect_magician(ctx, &mut stunned_magician, stunned_effect.id);
+        ctx.db.magician().id().update(stunned_magician);
     }
 }
 
-pub fn undo_stunned_effect_magician(ctx: &ReducerContext, magician: &mut Magician, stunned_effect: &Option<StunnedEffectInformation>) 
+pub fn undo_and_delete_stunned_effect_magician(ctx: &ReducerContext, magician: &mut Magician, stunned_effect_id: u64)
 {
     log::info!("Undo Stunned Effect Called");
-    let _stunned = stunned_effect.as_ref().expect("Stunned Effect Must Have Information!");
     let combat_info = &mut magician.combat_information;
-    combat_info.stunned = false;
+    combat_info.stunned = false; // NEEDS TO BE A PERMISSION ENTRY TO HANDLE MULTIPLE STUNS - Check whole combat information for similar situations
+    
+    ctx.db.player_effects().id().delete(stunned_effect_id);
 }
 
 pub fn match_and_apply_single_effect(ctx: &ReducerContext, magician: &mut Magician, effect: &PlayerEffect) 
@@ -157,13 +168,12 @@ pub fn match_and_undo_reapply_effect(ctx: &ReducerContext, magician: &mut Magici
     }
 }
 
-pub fn match_and_undo_indefinite_effect(ctx: &ReducerContext, magician: &mut Magician, effect: &PlayerEffect) 
+pub fn match_and_undo_indefinite_effect(ctx: &ReducerContext) 
 {
-    match effect.effect_type {
-
-        EffectType::Stunned => { undo_stunned_effect_magician(ctx, magician, &effect.stunned_information);}
-
-        _ => {}
-    }
+    // Match And Undo Indefinite Effects Is Empty 
+    // Indefinite Effects Must Be Manually Undone & Removed From Database From An Outward Source That Is Not The Scheduled Effect Reducer
+    // This Is Because They Have No Defined Time To Be Undone / Removed, It Is Dynamic And Depends On The Situation (Example: Stun Effect)
+    // Application Follows Normally, When Added To Table, Apply And Mark As Applied
+    // Removal / Undoing Is More Complicated - Depends On The Sender Themselves (Magician Ultimate) Because The Magician Looking At The Target Stuns Them, But It's Variable How Long The Magician Is Looking
 }
 

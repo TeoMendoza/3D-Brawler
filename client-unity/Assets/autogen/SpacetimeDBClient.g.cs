@@ -599,7 +599,6 @@ namespace SpacetimeDB.Types
             return update.ReducerCall.ReducerName switch
             {
                 "add_collision_entry_magician" => BSATNHelpers.Decode<Reducer.AddCollisionEntryMagician>(encodedArgs),
-                "add_effects_to_table" => BSATNHelpers.Decode<Reducer.AddEffectsToTable>(encodedArgs),
                 "apply_gravity_magician" => BSATNHelpers.Decode<Reducer.ApplyGravityMagician>(encodedArgs),
                 "connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
                 "disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
@@ -607,6 +606,7 @@ namespace SpacetimeDB.Types
                 "handle_magician_timers" => BSATNHelpers.Decode<Reducer.HandleMagicianTimers>(encodedArgs),
                 "handle_movement_request_magician" => BSATNHelpers.Decode<Reducer.HandleMovementRequestMagician>(encodedArgs),
                 "handle_player_effects_table" => BSATNHelpers.Decode<Reducer.HandlePlayerEffectsTable>(encodedArgs),
+                "hypnotise" => BSATNHelpers.Decode<Reducer.Hypnotise>(encodedArgs),
                 "move_magicians" => BSATNHelpers.Decode<Reducer.MoveMagicians>(encodedArgs),
                 "move_magicians_lag_test" => BSATNHelpers.Decode<Reducer.MoveMagiciansLagTest>(encodedArgs),
                 "remove_collision_entry_magician" => BSATNHelpers.Decode<Reducer.RemoveCollisionEntryMagician>(encodedArgs),
@@ -636,7 +636,6 @@ namespace SpacetimeDB.Types
             return reducer switch
             {
                 Reducer.AddCollisionEntryMagician args => Reducers.InvokeAddCollisionEntryMagician(eventContext, args),
-                Reducer.AddEffectsToTable args => Reducers.InvokeAddEffectsToTable(eventContext, args),
                 Reducer.ApplyGravityMagician args => Reducers.InvokeApplyGravityMagician(eventContext, args),
                 Reducer.Connect args => Reducers.InvokeConnect(eventContext, args),
                 Reducer.Disconnect args => Reducers.InvokeDisconnect(eventContext, args),
@@ -644,6 +643,7 @@ namespace SpacetimeDB.Types
                 Reducer.HandleMagicianTimers args => Reducers.InvokeHandleMagicianTimers(eventContext, args),
                 Reducer.HandleMovementRequestMagician args => Reducers.InvokeHandleMovementRequestMagician(eventContext, args),
                 Reducer.HandlePlayerEffectsTable args => Reducers.InvokeHandlePlayerEffectsTable(eventContext, args),
+                Reducer.Hypnotise args => Reducers.InvokeHypnotise(eventContext, args),
                 Reducer.MoveMagicians args => Reducers.InvokeMoveMagicians(eventContext, args),
                 Reducer.MoveMagiciansLagTest args => Reducers.InvokeMoveMagiciansLagTest(eventContext, args),
                 Reducer.RemoveCollisionEntryMagician args => Reducers.InvokeRemoveCollisionEntryMagician(eventContext, args),

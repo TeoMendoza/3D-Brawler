@@ -340,33 +340,69 @@ pub fn move_magicians_lag_test(ctx: &ReducerContext, timer: MoveAllMagiciansTime
 #[reducer]
 pub fn hypnotise(ctx: &ReducerContext, camera_info: HypnosisCameraInformation)
 {
-    let magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician Not Found!");
-    let mut hypnosis_effect_id_option: Option<u64> = None;
-    for effect in ctx.db.player_effects().target_id().filter(magician.id) {
-        if effect.effect_type == EffectType::Hypnosis {
-            hypnosis_effect_id_option = Some(effect.id);
-            break;
+    let mut magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician Not Found!");
+
+    let mut hypnosis_iterator = ctx.db.player_effects().target_and_type().filter((magician.id, EffectType::Hypnosis));
+    let mut hypnosis_effect = match (hypnosis_iterator.next(), hypnosis_iterator.next()) {
+        (None, _) => { return; },
+        (Some(effect), None) => effect,
+        (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Hypnosis Effect At Most!"),
+    };
+
+    let raycast = try_hypnotise(ctx, &mut magician, camera_info);
+    let raycast_target_id_option: Option<u64> = match raycast.hit_type {
+        RaycastHitType::Magician => Some(raycast.hit_entity_id),
+        _ => None,
+    };
+
+    let hypnosis_information = hypnosis_effect.hypnosis_informaton.as_mut().expect("Hypnosis Effect Must Have Hypnosis Information");
+    let last_target_id_option: Option<u64> = hypnosis_information.last_target_id;
+
+    match (last_target_id_option, raycast_target_id_option) {
+        (Some(last_target_id), Some(raycast_target_id)) if last_target_id == raycast_target_id => { } // Last Target Id And Raycast Target Id Are Both Not None And Are The Same Id Value
+
+        (Some(last_target_id), Some(raycast_target_id)) => { // Last Target Id And Raycast Target Id Are Both Not None But Are Different Id Values
+            let mut stunned_magician = ctx.db.magician().id().find(last_target_id).expect("Stunned Magician Must Exist!");
+            let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, magician.id, EffectType::Stunned));
+
+            let stunned_effect = match (stunned_iterator.next(), stunned_iterator.next()) {
+                (None, _) => panic!("Stunned Iterator Should Have First Element!"),
+                (Some(effect), None) => effect,
+                (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
+            };
+
+            undo_and_delete_stunned_effect_magician(ctx, &mut stunned_magician, stunned_effect.id);
+            ctx.db.magician().id().update(stunned_magician);
+
+            add_effects_to_table(ctx, vec![create_stunned_effect()], raycast_target_id, magician.id, magician.game_id);
+            hypnosis_information.last_target_id = Some(raycast_target_id);
         }
+
+        (None, Some(raycast_target_id)) => { // Last Target Id Is None But Raycast Target Has Id Value
+            add_effects_to_table(ctx, vec![create_stunned_effect()], raycast_target_id, magician.id, magician.game_id);
+            hypnosis_information.last_target_id = Some(raycast_target_id);
+        }
+
+        (Some(last_target_id), None) => { // Last Target Id Has Id Value But Raycast Target Is None
+            let mut stunned_magician = ctx.db.magician().id().find(last_target_id).expect("Stunned Magician Must Exist!");
+            let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, magician.id, EffectType::Stunned));
+
+            let stunned_effect = match (stunned_iterator.next(), stunned_iterator.next()) {
+                (None, _) => panic!("Stunned Iterator Should Have First Element!"),
+                (Some(effect), None) => effect,
+                (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
+            };
+
+            undo_and_delete_stunned_effect_magician(ctx, &mut stunned_magician, stunned_effect.id);
+            ctx.db.magician().id().update(stunned_magician);
+
+            hypnosis_information.last_target_id = None;
+        }
+
+        (None, None) => { } // Both Are None
     }
 
-    if let Some(hypnosis_effect_id) = hypnosis_effect_id_option {
-        let mut player_effect = ctx.db.player_effects().id().find(hypnosis_effect_id).expect("Player Effect Not Found");
-        let hypnosis_information = player_effect.hypnosis_informaton.as_mut().expect("Hypnosis Effect Must Have Hypnosis Information");
-
-        
-        if let Some(last_target_id) = hypnosis_information.last_target_id {
-            let mut stunned_player = ctx.db.magician().id().find(last_target_id).expect("Stunned Player Must Exist!"); // Not necessarily true they must exist, just handling it like so for now
-            // Next Steps - Find Stunned Players Player Effect & Extract Stun Information (Also Could Remove From Undo Stun Method Params). Then call try_hypnotise which will return what magician is looking at.
-            // If try hypnotise returns a different player/object to our current stunned player. Undo the stunned players effect and add a stun effect for the new stunned player (or dont add if returned hit is not a player)
-            // If they are the same, do nothing. Remember to also update last_target_id
-        }
-        
-        else {
-            // Next Steps - Call try_hypnotise and if it returns a player, add a stun effect for new stunned player, also update last_target_id. Otherwise do nothing
-        }
-    }
-    
+    ctx.db.player_effects().id().update(hypnosis_effect);
 }
-
 
 

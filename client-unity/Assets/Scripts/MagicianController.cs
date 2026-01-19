@@ -126,8 +126,8 @@ public class MagicianController : MonoBehaviour
             if (Input.GetKey(KeyCode.E))
                 GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Dust, new AttackInformation(), new ReloadInformation(), new DustInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.3f, 0.4f), MaxDistance: 2.5f, ConeHalfAngleDegrees: 20f), new CloakInformation(), new HypnosisInformation()));
 
-            if (Magician.CombatInformation.Hypnosis is true) { }
-                
+            if (Magician.CombatInformation.Hypnosis is true) 
+                GameManager.Conn.Reducers.Hypnotise(new HypnosisCameraInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new DbVector3(0f, 1.65f, 0.15f), MaxDistance: 12f));
         }
 
         if (Input.GetKey(KeyCode.R))     
