@@ -30,6 +30,7 @@ namespace SpacetimeDB.Types
         {
             AddTable(Game = new(conn));
             AddTable(GravityMagician = new(conn));
+            AddTable(HandleMagicianStatelessTimersTimer = new(conn));
             AddTable(HandleMagicianTimersTimer = new(conn));
             AddTable(LoggedInPlayers = new(conn));
             AddTable(LoggedOutPlayers = new(conn));
@@ -603,9 +604,11 @@ namespace SpacetimeDB.Types
                 "connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
                 "disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
                 "handle_action_change_request_magician" => BSATNHelpers.Decode<Reducer.HandleActionChangeRequestMagician>(encodedArgs),
+                "handle_magician_stateless_timers" => BSATNHelpers.Decode<Reducer.HandleMagicianStatelessTimers>(encodedArgs),
                 "handle_magician_timers" => BSATNHelpers.Decode<Reducer.HandleMagicianTimers>(encodedArgs),
                 "handle_movement_request_magician" => BSATNHelpers.Decode<Reducer.HandleMovementRequestMagician>(encodedArgs),
                 "handle_player_effects_table" => BSATNHelpers.Decode<Reducer.HandlePlayerEffectsTable>(encodedArgs),
+                "handle_stateless_action_request_magician" => BSATNHelpers.Decode<Reducer.HandleStatelessActionRequestMagician>(encodedArgs),
                 "hypnotise" => BSATNHelpers.Decode<Reducer.Hypnotise>(encodedArgs),
                 "move_magicians" => BSATNHelpers.Decode<Reducer.MoveMagicians>(encodedArgs),
                 "move_magicians_lag_test" => BSATNHelpers.Decode<Reducer.MoveMagiciansLagTest>(encodedArgs),
@@ -640,9 +643,11 @@ namespace SpacetimeDB.Types
                 Reducer.Connect args => Reducers.InvokeConnect(eventContext, args),
                 Reducer.Disconnect args => Reducers.InvokeDisconnect(eventContext, args),
                 Reducer.HandleActionChangeRequestMagician args => Reducers.InvokeHandleActionChangeRequestMagician(eventContext, args),
+                Reducer.HandleMagicianStatelessTimers args => Reducers.InvokeHandleMagicianStatelessTimers(eventContext, args),
                 Reducer.HandleMagicianTimers args => Reducers.InvokeHandleMagicianTimers(eventContext, args),
                 Reducer.HandleMovementRequestMagician args => Reducers.InvokeHandleMovementRequestMagician(eventContext, args),
                 Reducer.HandlePlayerEffectsTable args => Reducers.InvokeHandlePlayerEffectsTable(eventContext, args),
+                Reducer.HandleStatelessActionRequestMagician args => Reducers.InvokeHandleStatelessActionRequestMagician(eventContext, args),
                 Reducer.Hypnotise args => Reducers.InvokeHypnotise(eventContext, args),
                 Reducer.MoveMagicians args => Reducers.InvokeMoveMagicians(eventContext, args),
                 Reducer.MoveMagiciansLagTest args => Reducers.InvokeMoveMagiciansLagTest(eventContext, args),

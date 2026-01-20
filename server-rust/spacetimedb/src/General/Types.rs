@@ -51,3 +51,18 @@ pub enum TimerState {
     InUse,
     InCooldown
 }
+
+#[derive(SpacetimeType, Clone, Debug)]
+pub struct StatelessTimer {
+    pub name: String,
+    pub state: StatelessTimerState,
+    pub cooldown_time: f32, // Seconds
+    pub application_time: f32, // Seconds - Find Way To Integrate If Desired, Probably Store The Neccesary Information For The Application And Trigger At App Time. Same Thing For Stateful Timer
+    pub current_time: f32, // Seconds
+}
+
+#[derive(SpacetimeType, Clone, Debug, Eq, PartialEq)]
+pub enum StatelessTimerState {
+    Inactive,
+    InCooldown
+}

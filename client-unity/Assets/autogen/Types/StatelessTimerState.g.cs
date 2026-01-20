@@ -8,14 +8,9 @@ using System;
 namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
-    public enum EffectType
+    public enum StatelessTimerState
     {
-        Damage,
-        Dust,
-        Cloak,
-        Speed,
-        Stunned,
-        Hypnosis,
-        Tarot,
+        Inactive,
+        InCooldown,
     }
 }

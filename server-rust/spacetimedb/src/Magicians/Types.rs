@@ -21,6 +21,11 @@ pub struct ActionRequestMagician {
 }
 
 #[derive(SpacetimeType)]
+pub struct StatelessActionRequestMagician {
+    pub action: MagicianStatelessAction
+}
+
+#[derive(SpacetimeType)]
 pub struct AttackInformation {
     pub camera_position_offset: DbVector3,
     pub camera_yaw_offset: f32,
@@ -67,6 +72,11 @@ pub enum MagicianState {
     Hypnosis
 }
 
+#[derive(SpacetimeType, PartialEq, Eq, Clone, Copy)]
+pub enum MagicianStatelessAction {
+    Tarot
+}
+
 #[derive(SpacetimeType, Clone)]
 pub struct ThrowingCard {
     pub effects: Vec<Effect>,
@@ -78,9 +88,4 @@ pub struct CombatInformation {
     pub max_health: f32,
     pub speed_multiplier: f32,
     pub game_score: u32,
-    pub blind: bool,
-    pub reversed: bool,
-    pub stunned: bool,
-    pub cloaked: bool,
-    pub hypnosis: bool
 }

@@ -21,7 +21,7 @@ pub fn add_subscriber_to_permission(entries: &mut [PermissionEntry], key: &str, 
 {
     for entry in entries.iter_mut() {
         if entry.key == key {
-            add_subscriber_unique(&mut entry.subscribers, subscriber);
+            add_subscriber(&mut entry.subscribers, subscriber);
             return;
         }
     }
@@ -39,9 +39,8 @@ pub fn remove_subscriber_from_permission(entries: &mut [PermissionEntry], key: &
     panic!("Permission entry not found: {}", key);
 }
 
-pub fn add_subscriber_unique(subscribers: &mut Vec<String>, reason: &str)
+pub fn add_subscriber(subscribers: &mut Vec<String>, reason: &str)
 {
-    if subscribers.iter().any(|existing: &String| existing == reason) { return; }
     subscribers.push(reason.to_string());
 }
 

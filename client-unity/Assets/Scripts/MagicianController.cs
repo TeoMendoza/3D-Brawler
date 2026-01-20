@@ -98,7 +98,8 @@ public class MagicianController : MonoBehaviour
                 NextSendTime += SendIntervalSeconds;
         }
 
-        if (Input.GetMouseButton(0) || Input.GetKey(KeyCode.E) || Magician.CombatInformation.Hypnosis is true)
+        bool Hypnosised = IsPermissionOccupied(Magician, "Hypnosised");
+        if (Input.GetMouseButton(0) || Input.GetKey(KeyCode.E) || Hypnosised is true)
         {
             Vector2 reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
             Ray aimRay = mainCamera.ScreenPointToRay(reticle);
@@ -126,7 +127,7 @@ public class MagicianController : MonoBehaviour
             if (Input.GetKey(KeyCode.E))
                 GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Dust, new AttackInformation(), new ReloadInformation(), new DustInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.3f, 0.4f), MaxDistance: 2.5f, ConeHalfAngleDegrees: 20f), new CloakInformation(), new HypnosisInformation()));
 
-            if (Magician.CombatInformation.Hypnosis is true) 
+            if (Hypnosised is true) 
                 GameManager.Conn.Reducers.Hypnotise(new HypnosisCameraInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new DbVector3(0f, 1.65f, 0.15f), MaxDistance: 12f));
         }
 
@@ -138,6 +139,9 @@ public class MagicianController : MonoBehaviour
 
         if (Input.GetKey(KeyCode.C))
             GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Hypnosis, new AttackInformation(), new ReloadInformation(), new DustInformation(), new CloakInformation(), new HypnosisInformation()));
+
+        if (Input.GetMouseButton(1))
+            GameManager.Conn.Reducers.HandleStatelessActionRequestMagician(new StatelessActionRequestMagician(Action: MagicianStatelessAction.Tarot));
 
         
     }
@@ -183,6 +187,17 @@ public class MagicianController : MonoBehaviour
         if (PitchDelta >= AimPitchThresholdDegrees) return true;
 
         return false;
+    }
+
+    public bool IsPermissionOccupied(Magician Magician, string Key)
+    {
+        foreach (PermissionEntry Entry in Magician.Permissions)
+        {
+            if (Entry.Key == Key)
+                return Entry.Subscribers.Count != 0;
+        }
+
+        throw new System.Exception($"Permission Entry With Key {Key} Not Found");
     }
 
     void LateUpdate()

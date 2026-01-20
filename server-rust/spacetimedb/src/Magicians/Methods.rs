@@ -350,6 +350,40 @@ pub fn try_hypnotise(ctx: &ReducerContext, magician: &mut Magician, camera_infor
     raycast
 }
 
+pub fn try_tarot(ctx: &ReducerContext, magician: &mut Magician)
+{
+    let throwing_cards = &mut magician.bullets;
+    let throwing_cards_count = throwing_cards.len();
+
+    let (top_card_option, second_top_card_option): (Option<&mut ThrowingCard>, Option<&mut ThrowingCard>) = 
+        match throwing_cards_count {
+            0 => (None, None),
+
+            1 => (Some(&mut throwing_cards[throwing_cards_count - 1]), None),
+
+            _ => {
+                let (before_last_slice, last_slice) = throwing_cards.split_at_mut(throwing_cards_count - 1);
+                let top_card = &mut last_slice[0];
+                let second_top_card = &mut before_last_slice[throwing_cards_count - 2];
+                (Some(top_card), Some(second_top_card))
+            }
+        };
+    
+    if let Some(top_card) = top_card_option {
+        let tarot_effect = create_tarot_effect(5.0);
+        top_card.effects.push(tarot_effect);
+    }
+
+    if let Some(second_top_card) = second_top_card_option {
+        let tarot_effect = create_tarot_effect(5.0);
+        second_top_card.effects.push(tarot_effect);
+    }
+
+    let mut timers = &mut magician.stateless_timers;
+    let tarot_timer = try_find_stateless_timer(&mut timers, "Tarot");
+    tarot_timer.state = StatelessTimerState::InCooldown;
+}
+
 pub fn adjust_timer_in_use(magician: &mut Magician, key: &str)
 {
     let timer: &mut Timer = try_find_timer(&mut magician.timers, key);
@@ -406,6 +440,31 @@ pub fn tick_cooldown_timer_and_check_expired(timer: &mut Timer, delta_time: f32)
 }
 
 pub fn try_find_timer<'a>(timers: &'a mut [Timer], key: &str) -> &'a mut Timer 
+{
+    for timer in timers.iter_mut() {
+        if timer.name == key {
+            return timer;
+        }
+    }
+    panic!("Timer not found: {}", key);
+}
+
+pub fn tick_stateless_cooldown_timer_and_check_expired(timer: &mut StatelessTimer, delta_time: f32) -> Option<String> {
+    if timer.state != StatelessTimerState::InCooldown {
+        return None;
+    }
+
+    timer.current_time += delta_time;
+    if timer.current_time >= timer.cooldown_time {
+        timer.current_time = 0.0;
+        timer.state = StatelessTimerState::Inactive;
+        return Some(timer.name.clone());
+    }
+
+    None
+}
+
+pub fn try_find_stateless_timer<'a>(timers: &'a mut [StatelessTimer], key: &str) -> &'a mut StatelessTimer 
 {
     for timer in timers.iter_mut() {
         if timer.name == key {

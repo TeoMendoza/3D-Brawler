@@ -9,7 +9,8 @@ pub struct Effect {
     pub dust_information: Option<DustEffectInformation>,
     pub speed_information: Option<SpeedEffectInformation>,
     pub hypnosis_information: Option<HypnosisEffectInformation>,
-    pub stunned_information: Option<StunnedEffectInformation>
+    pub stunned_information: Option<StunnedEffectInformation>,
+    pub tarot_information: Option<TarotEffectInformation>
 }
 
 #[derive(SpacetimeType, Clone)]
@@ -47,6 +48,9 @@ pub struct HypnosisEffectInformation {
 #[derive(SpacetimeType, Clone)]
 pub struct StunnedEffectInformation { }
 
+#[derive(SpacetimeType, Clone)]
+pub struct TarotEffectInformation { }
+
 #[derive(SpacetimeType, PartialEq, Eq, Clone, Copy, Debug)]
 pub enum EffectType {
     Damage,
@@ -54,7 +58,8 @@ pub enum EffectType {
     Cloak,
     Speed,
     Stunned,
-    Hypnosis
+    Hypnosis,
+    Tarot
 }
 
 #[derive(SpacetimeType, Clone)]

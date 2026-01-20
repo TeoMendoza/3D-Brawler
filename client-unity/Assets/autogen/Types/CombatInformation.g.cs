@@ -21,38 +21,18 @@ namespace SpacetimeDB.Types
         public float SpeedMultiplier;
         [DataMember(Name = "game_score")]
         public uint GameScore;
-        [DataMember(Name = "blind")]
-        public bool Blind;
-        [DataMember(Name = "reversed")]
-        public bool Reversed;
-        [DataMember(Name = "stunned")]
-        public bool Stunned;
-        [DataMember(Name = "cloaked")]
-        public bool Cloaked;
-        [DataMember(Name = "hypnosis")]
-        public bool Hypnosis;
 
         public CombatInformation(
             float Health,
             float MaxHealth,
             float SpeedMultiplier,
-            uint GameScore,
-            bool Blind,
-            bool Reversed,
-            bool Stunned,
-            bool Cloaked,
-            bool Hypnosis
+            uint GameScore
         )
         {
             this.Health = Health;
             this.MaxHealth = MaxHealth;
             this.SpeedMultiplier = SpeedMultiplier;
             this.GameScore = GameScore;
-            this.Blind = Blind;
-            this.Reversed = Reversed;
-            this.Stunned = Stunned;
-            this.Cloaked = Cloaked;
-            this.Hypnosis = Hypnosis;
         }
 
         public CombatInformation()

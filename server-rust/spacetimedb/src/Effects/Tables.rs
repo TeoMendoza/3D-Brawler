@@ -18,7 +18,8 @@ pub struct PlayerEffect
     pub dust_information: Option<DustEffectInformation>,
     pub speed_information: Option<SpeedEffectInformation>,
     pub hypnosis_informaton: Option<HypnosisEffectInformation>,
-    pub stunned_information: Option<StunnedEffectInformation>
+    pub stunned_information: Option<StunnedEffectInformation>,
+    pub tarot_information: Option<TarotEffectInformation>
 }
 
 #[table(name = player_effects_table_timer, scheduled(handle_player_effects_table))]

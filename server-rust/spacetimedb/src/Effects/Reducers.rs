@@ -54,6 +54,8 @@ pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTab
                 
                 let end_time = app_info.end_time.as_ref().expect("Reapply effect must have an end time");
                 if *current_time >= *end_time {
+                    match_and_apply_reapply_effect(ctx, &mut target, &player_effect_clone);
+                    match_and_apply_reapply_effect(ctx, &mut target, &player_effect_clone);
                     match_and_undo_reapply_effect(ctx, &mut target, &player_effect_clone);
                     ctx.db.player_effects().id().delete(player_effect.id);
                 }
@@ -80,7 +82,7 @@ pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTab
 pub fn add_effects_to_table(ctx: &ReducerContext, effects: Vec<Effect>, target_id: u64, sender_id: u64, game_id: u32) 
 {
     for effect in effects {
-        let effect_to_add = PlayerEffect { id: 0, target_id: target_id, sender_id: sender_id, game_id: game_id, effect_type: effect.effect_type, application_information: effect.application_information, damage_information: effect.damage_information, cloak_information: effect.cloak_information, dust_information: effect.dust_information, speed_information: effect.speed_information, hypnosis_informaton: effect.hypnosis_information, stunned_information: effect.stunned_information};
+        let effect_to_add = PlayerEffect { id: 0, target_id: target_id, sender_id: sender_id, game_id: game_id, effect_type: effect.effect_type, application_information: effect.application_information, damage_information: effect.damage_information, cloak_information: effect.cloak_information, dust_information: effect.dust_information, speed_information: effect.speed_information, hypnosis_informaton: effect.hypnosis_information, stunned_information: effect.stunned_information, tarot_information: effect.tarot_information};
         ctx.db.player_effects().insert(effect_to_add);
     }
 } 

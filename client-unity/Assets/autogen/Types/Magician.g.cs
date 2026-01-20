@@ -43,6 +43,8 @@ namespace SpacetimeDB.Types
         public CombatInformation CombatInformation;
         [DataMember(Name = "permissions")]
         public System.Collections.Generic.List<PermissionEntry> Permissions;
+        [DataMember(Name = "stateless_timers")]
+        public System.Collections.Generic.List<StatelessTimer> StatelessTimers;
         [DataMember(Name = "timers")]
         public System.Collections.Generic.List<Timer> Timers;
         [DataMember(Name = "bullets")]
@@ -68,6 +70,7 @@ namespace SpacetimeDB.Types
             KinematicInformation KinematicInformation,
             CombatInformation CombatInformation,
             System.Collections.Generic.List<PermissionEntry> Permissions,
+            System.Collections.Generic.List<StatelessTimer> StatelessTimers,
             System.Collections.Generic.List<Timer> Timers,
             System.Collections.Generic.List<ThrowingCard> Bullets,
             int BulletCapacity,
@@ -89,6 +92,7 @@ namespace SpacetimeDB.Types
             this.KinematicInformation = KinematicInformation;
             this.CombatInformation = CombatInformation;
             this.Permissions = Permissions;
+            this.StatelessTimers = StatelessTimers;
             this.Timers = Timers;
             this.Bullets = Bullets;
             this.BulletCapacity = BulletCapacity;
@@ -107,6 +111,7 @@ namespace SpacetimeDB.Types
             this.KinematicInformation = new();
             this.CombatInformation = new();
             this.Permissions = new();
+            this.StatelessTimers = new();
             this.Timers = new();
             this.Bullets = new();
             this.Effects = new();

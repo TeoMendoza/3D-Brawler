@@ -9,8 +9,10 @@ pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementR
     character.rotation = request.aim;
     character.velocity = DbVector3 { x: 0.0, y: character.velocity.y, z: 0.0 };
     character.kinematic_information.jump = false;
+    let speed_mutiplier = character.combat_information.speed_multiplier;
+    let stunned = is_permission_unblocked(&character.permissions, "Stunned") == false;
 
-    if is_permission_unblocked(&character.permissions, "CanWalk") {
+    if is_permission_unblocked(&character.permissions, "CanWalk") && stunned == false {
         let mut local_x: f32 = 0.0;
         let mut local_z: f32 = 0.0;
 
@@ -30,7 +32,7 @@ pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementR
             local_x = -2.0;
         }
 
-        if is_permission_unblocked(&character.permissions, "CanRun") && request.sprint && request.move_forward&& !request.move_backward{
+        if is_permission_unblocked(&character.permissions, "CanRun") && request.sprint && request.move_forward && !request.move_backward{
             local_z *= 2.5;
         }
 
@@ -48,22 +50,23 @@ pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementR
         character.velocity = DbVector3 { x: world_x, y: character.velocity.y, z: world_z };
     }
 
-    if is_permission_unblocked(&character.permissions, "CanJump") && request.jump {
+    if is_permission_unblocked(&character.permissions, "CanJump") && request.jump && stunned == false {
         character.kinematic_information.jump = true;
         character.velocity.y = 7.5;
     }
 
-    if is_permission_unblocked(&character.permissions, "CanCrouch") && request.crouch {
+    if is_permission_unblocked(&character.permissions, "CanCrouch") && request.crouch && stunned == false {
         character.velocity = DbVector3 { x: character.velocity.x * 0.5, y: character.velocity.y, z: character.velocity.z * 0.5 };
         character.kinematic_information.crouched = true;
         add_subscriber_to_permission(&mut character.permissions, "CanRun", "Crouch");
     }
 
-    if !request.crouch {
+    if !request.crouch || stunned == true {
         character.kinematic_information.crouched = false;
         remove_subscriber_from_permission(&mut character.permissions, "CanRun", "Crouch");
     }
 
+    character.velocity = DbVector3 { x: character.velocity.x * speed_mutiplier, y: character.velocity.y, z: character.velocity.z * speed_mutiplier };
     ctx.db.magician().identity().update(character);
 }
 
@@ -123,6 +126,19 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
 
             _ => {}
         }
+    }
+
+    ctx.db.magician().identity().update(magician);
+}
+
+#[reducer]
+pub fn handle_stateless_action_request_magician(ctx: &ReducerContext, request: StatelessActionRequestMagician) 
+{
+    let mut magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician Not Found");
+
+    if request.action == MagicianStatelessAction::Tarot && is_permission_unblocked(&magician.permissions, "CanTarot") {
+        try_tarot(ctx, &mut magician);
+        add_subscriber_to_permission(&mut magician.permissions, "CanTarot", "Tarot");
     }
 
     ctx.db.magician().identity().update(magician);
@@ -202,6 +218,25 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
             }
         }
 
+        ctx.db.magician().identity().update(magician);
+    }
+}
+
+#[reducer]
+pub fn handle_magician_stateless_timers(ctx: &ReducerContext, timer: HandleMagicianStatelessTimersTimer) 
+{ 
+    let time: f32 = timer.tick_rate;
+    for mut magician in ctx.db.magician().game_id().filter(timer.game_id) { 
+        for i in 0..magician.stateless_timers.len() {
+            if let Some(expired_timer_name) = tick_stateless_cooldown_timer_and_check_expired(&mut magician.stateless_timers[i], time) { 
+                match expired_timer_name.as_str() {
+                    "Tarot" => remove_subscriber_from_permission(&mut magician.permissions, "CanTarot", "Tarot"),
+                    _ => {}
+
+                }
+            }
+        }
+        
         ctx.db.magician().identity().update(magician);
     }
 }

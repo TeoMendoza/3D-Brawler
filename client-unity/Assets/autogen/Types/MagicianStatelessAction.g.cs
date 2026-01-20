@@ -8,14 +8,8 @@ using System;
 namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
-    public enum EffectType
+    public enum MagicianStatelessAction
     {
-        Damage,
-        Dust,
-        Cloak,
-        Speed,
-        Stunned,
-        Hypnosis,
         Tarot,
     }
 }
