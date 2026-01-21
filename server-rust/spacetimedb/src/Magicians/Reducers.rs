@@ -139,8 +139,9 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
 pub fn handle_stateless_action_request_magician(ctx: &ReducerContext, request: StatelessActionRequestMagician) 
 {
     let mut magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician Not Found");
+    let stunned = is_permission_unblocked(&magician.permissions, "Stunned") == false;
 
-    if request.action == MagicianStatelessAction::Tarot && is_permission_unblocked(&magician.permissions, "CanTarot") {
+    if request.action == MagicianStatelessAction::Tarot && is_permission_unblocked(&magician.permissions, "CanTarot") && stunned == false {
         try_tarot(ctx, &mut magician);
         add_subscriber_to_permission(&mut magician.permissions, "CanTarot", "Tarot");
     }
