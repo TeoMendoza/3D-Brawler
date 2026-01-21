@@ -62,14 +62,15 @@ pub struct HypnosisCameraInformation {
     pub max_distance: f32,
 }
 
-#[derive(SpacetimeType, PartialEq, Eq, Clone, Copy)]
+#[derive(SpacetimeType, PartialEq, Eq, Clone, Copy, Debug)]
 pub enum MagicianState {
     Default,
     Attack,
     Reload,
     Dust, // Blind Ability
     Cloak,
-    Hypnosis
+    Hypnosis,
+    Stunned
 }
 
 #[derive(SpacetimeType, PartialEq, Eq, Clone, Copy)]

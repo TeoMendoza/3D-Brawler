@@ -247,6 +247,9 @@ public class MagicianController : MonoBehaviour
         bool Hypnosis = oldChar.State is not MagicianState.Hypnosis && newChar.State is MagicianState.Hypnosis;
         bool HypnosisDone = oldChar.State is MagicianState.Hypnosis && newChar.State is not MagicianState.Hypnosis;
 
+        bool Stunned = oldChar.State is not MagicianState.Stunned && newChar.State is MagicianState.Stunned;
+        bool StunnedDone = oldChar.State is MagicianState.Stunned && newChar.State is not MagicianState.Stunned;
+
         bool Grounded = newChar.KinematicInformation.Grounded;
         bool Crouching = newChar.KinematicInformation.Crouched;
         bool Falling = newChar.KinematicInformation.Falling;
@@ -268,7 +271,10 @@ public class MagicianController : MonoBehaviour
             if (CloakDone) Animator.SetTrigger("CloakDone");
 
             if (Hypnosis) Animator.SetTrigger("Hypnosis");
-            if (HypnosisDone) Animator.SetTrigger("HypnosisDone");
+            if (HypnosisDone) Animator.SetTrigger("HypnosisDone");      
+
+            if (Stunned) Animator.SetTrigger("Stunned");
+            if (StunnedDone) Animator.SetTrigger("StunnedDone");
 
             Animator.SetBool("Crouching", Crouching);
             Animator.SetBool("Falling", Falling);

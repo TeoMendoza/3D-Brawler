@@ -120,9 +120,7 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
     if old_state != magician.state {
         adjust_timer_for_interruptable_state(&mut magician, old_state);
         match old_state {
-            MagicianState::Reload => {
-                remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Reload");
-            }
+            MagicianState::Reload => { remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Reload"); }
 
             MagicianState::Cloak => { }
 
@@ -130,7 +128,7 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
         }
     }
 
-    if magician.state != MagicianState::Default && magician.state != MagicianState::Reload && magician.state != MagicianState::Cloak {
+    if magician.state != MagicianState::Default && magician.state != MagicianState::Reload && magician.state != MagicianState::Cloak && magician.state != MagicianState::Stunned {
         try_interrupt_cloak_and_speed_effects_magician(ctx, &mut magician);
     }
 
@@ -207,6 +205,8 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
                     try_hypnosis(ctx, &mut magician);
                 }
             }
+
+            MagicianState::Stunned => {},
 
             MagicianState::Default => {}
         }

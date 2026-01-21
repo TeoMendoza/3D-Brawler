@@ -393,7 +393,20 @@ pub fn adjust_timer_in_use(magician: &mut Magician, key: &str)
         timer.state = TimerState::Inactive;
     }
 
+    else if key == "Attack" {
+        timer.current_time = 0.0;
+        timer.state = TimerState::Inactive;
+    }  
+
     else if key == "Cloak" {
+        timer.state = TimerState::InCooldown;
+    }
+
+    else if key == "Dust" {
+        timer.state = TimerState::InCooldown;
+    }  
+
+    else if key == "Hypnosis" {
         timer.state = TimerState::InCooldown;
     }  
 }
@@ -403,6 +416,45 @@ pub fn adjust_timer_for_interruptable_state(magician: &mut Magician, state: Magi
     match state {
         MagicianState::Reload => adjust_timer_in_use(magician, "Reload"),
         MagicianState::Cloak => adjust_timer_in_use(magician, "Cloak"),
+        _ => {}
+    }
+}
+
+pub fn adjust_timer_for_stunnable_state(magician: &mut Magician, state: MagicianState)
+{
+    match state {
+        MagicianState::Reload =>  { 
+            adjust_timer_in_use(magician, "Reload");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Reload");
+        }
+
+        MagicianState::Attack => { 
+            adjust_timer_in_use(magician, "Attack");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanAttack", "Attack");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Attack");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanDust", "Attack");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanCloak", "Attack");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanHypnosis", "Attack");
+        }
+
+        MagicianState::Dust => {
+            adjust_timer_in_use(magician, "Dust");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Dust");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanAttack", "Dust");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanCloak", "Dust");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanHypnosis", "Dust");
+        }
+
+        MagicianState::Hypnosis =>{
+            adjust_timer_in_use(magician, "Hypnosis");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Hypnosis");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanAttack", "Hypnosis");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanCloak", "Hypnosis");
+            remove_subscriber_from_permission(&mut magician.permissions, "CanDust", "Hypnosis");
+        },
+
+        MagicianState::Cloak => { adjust_timer_in_use(magician, "Cloak"); }
+
         _ => {}
     }
 }

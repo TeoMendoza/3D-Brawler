@@ -34,7 +34,7 @@ pub fn apply_speed_effect_magician(ctx: &ReducerContext, target: &mut Magician, 
 
 pub fn apply_hypnosis_effect_magician(ctx: &ReducerContext, target: &mut Magician, hypnosis_effect: &Option<HypnosisEffectInformation>) 
 {
-    log::info!("Apply Hypnosis Effect Called");
+    log::info!("Apply Hypnosis Effect Called On Magician With Id {}", target.id);
     let _hypnosis = hypnosis_effect.as_ref().expect("Hypnosis Effect Must Have Information!");
     add_subscriber_to_permission(&mut target.permissions, "Hypnosised", "HypnosisEffect");
 }
@@ -45,6 +45,8 @@ pub fn apply_stunned_effect_magician(ctx: &ReducerContext, target: &mut Magician
     let _stunned = stunned_effect.as_ref().expect("Stunned Effect Must Have Information!");
     add_subscriber_to_permission(&mut target.permissions, "Stunned", "StunEffect");
     try_interrupt_cloak_and_speed_effects_magician(ctx, target);
+    adjust_timer_for_stunnable_state(target, target.state);
+    target.state = MagicianState::Stunned;
 }
 
 pub fn apply_tarot_effect_magician(ctx: &ReducerContext, target: &mut Magician, tarot_effect: &Option<TarotEffectInformation>) 
@@ -101,6 +103,7 @@ pub fn undo_and_delete_stunned_effect_magician(ctx: &ReducerContext, target: &mu
 {
     log::info!("Undo & Delete Stunned Effect Called");
     remove_subscriber_from_permission(&mut target.permissions, "Stunned", "StunEffect");
+    target.state = MagicianState::Default;
     ctx.db.player_effects().id().delete(stunned_effect_id);
 }
 

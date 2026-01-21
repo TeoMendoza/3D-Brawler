@@ -16,5 +16,6 @@ namespace SpacetimeDB.Types
         Dust,
         Cloak,
         Hypnosis,
+        Stunned,
     }
 }
