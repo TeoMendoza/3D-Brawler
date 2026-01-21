@@ -54,8 +54,6 @@ pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTab
                 
                 let end_time = app_info.end_time.as_ref().expect("Reapply effect must have an end time");
                 if *current_time >= *end_time {
-                    match_and_apply_reapply_effect(ctx, &mut target, &player_effect_clone);
-                    match_and_apply_reapply_effect(ctx, &mut target, &player_effect_clone);
                     match_and_undo_reapply_effect(ctx, &mut target, &player_effect_clone);
                     ctx.db.player_effects().id().delete(player_effect.id);
                 }

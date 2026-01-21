@@ -1,12 +1,13 @@
-use spacetimedb::{ReducerContext, Table, reducer};
+use spacetimedb::{ReducerContext};
 use crate::*;
 
-pub fn apply_damage_effect_magician(ctx: &ReducerContext, target: &mut Magician, damage_effect: &Option<DamageEffectInformation>) 
+pub fn apply_damage_effect_magician(ctx: &ReducerContext, magician: &mut Magician, damage_effect: &Option<DamageEffectInformation>) 
 {
     log::info!("Apply Damage Effect Called");
     let damage = damage_effect.as_ref().expect("Damage Effect Must Have Information!");
-    let combat_info = &mut target.combat_information;
+    let combat_info = &mut magician.combat_information;
     combat_info.health -= damage.base_damage;
+    try_interrupt_cloak_and_speed_effects_magician(ctx, magician);
 }
 
 pub fn apply_dust_effect_magician(ctx: &ReducerContext, target: &mut Magician, dust_effect: &Option<DustEffectInformation>) 
@@ -43,13 +44,15 @@ pub fn apply_stunned_effect_magician(ctx: &ReducerContext, target: &mut Magician
     log::info!("Apply Stunned Effect Called");
     let _stunned = stunned_effect.as_ref().expect("Stunned Effect Must Have Information!");
     add_subscriber_to_permission(&mut target.permissions, "Stunned", "StunEffect");
+    try_interrupt_cloak_and_speed_effects_magician(ctx, target);
 }
 
 pub fn apply_tarot_effect_magician(ctx: &ReducerContext, target: &mut Magician, tarot_effect: &Option<TarotEffectInformation>) 
 {
     log::info!("Apply Tarot Effect Called");
+    let _tarot = tarot_effect.as_ref().expect("Tarot Effect Must Have Information!");
+    add_subscriber_to_permission(&mut target.permissions, "Taroted", "TarotEffect");
 }
-
 
 pub fn undo_dust_effect_magician(ctx: &ReducerContext, target: &mut Magician, dust_effect: &Option<DustEffectInformation>) 
 {
@@ -96,14 +99,31 @@ pub fn undo_hypnosis_effect_magician(ctx: &ReducerContext, target: &mut Magician
 
 pub fn undo_and_delete_stunned_effect_magician(ctx: &ReducerContext, target: &mut Magician, stunned_effect_id: u64)
 {
-    log::info!("Undo Stunned Effect Called");
+    log::info!("Undo & Delete Stunned Effect Called");
     remove_subscriber_from_permission(&mut target.permissions, "Stunned", "StunEffect");
     ctx.db.player_effects().id().delete(stunned_effect_id);
+}
+
+pub fn undo_and_delete_cloak_effect_magician(ctx: &ReducerContext, target: &mut Magician, cloak_effect_id: u64)
+{
+    log::info!("Undo & Delete Cloak Effect Called");
+    remove_subscriber_from_permission(&mut target.permissions, "Cloaked", "CloakEffect");
+    ctx.db.player_effects().id().delete(cloak_effect_id);
+}
+
+pub fn undo_and_delete_speed_effect_magician(ctx: &ReducerContext, target: &mut Magician, speed_effect_id: u64)
+{
+    log::info!("Undo & Delete Speed Effect Called");
+    let combat_info = &mut target.combat_information;
+    combat_info.speed_multiplier = 1.0;
+    ctx.db.player_effects().id().delete(speed_effect_id);
 }
 
 pub fn undo_tarot_effect_magician(ctx: &ReducerContext, target: &mut Magician, tarot_effect: &Option<TarotEffectInformation>) 
 {
     log::info!("Undo Tarot Effect Called");
+    let _tarot = tarot_effect.as_ref().expect("Tarot Effect Must Have Information!");
+    remove_subscriber_from_permission(&mut target.permissions, "Taroted", "TarotEffect");
 }
 
 pub fn match_and_apply_single_effect(ctx: &ReducerContext, target: &mut Magician, effect: &PlayerEffect) 
@@ -182,4 +202,31 @@ pub fn match_and_undo_indefinite_effect(ctx: &ReducerContext)
     // Application Follows Normally, When Added To Table, Apply And Mark As Applied
     // Removal / Undoing Is More Complicated - Depends On The Sender Themselves (Magician Ultimate) Because The Magician Looking At The Target Stuns Them, But It's Variable How Long The Magician Is Looking
 }
+
+pub fn try_interrupt_cloak_and_speed_effects_magician(ctx: &ReducerContext, magician: &mut Magician)
+{
+    let mut cloak_iterator = ctx.db.player_effects().target_sender_and_type().filter((magician.id, magician.id, EffectType::Cloak));
+    let mut speed_iterator = ctx.db.player_effects().target_sender_and_type().filter((magician.id, magician.id, EffectType::Speed));
+
+    let cloak_effect_option = match (cloak_iterator.next(), cloak_iterator.next()) {
+        (None, _) => None,
+        (Some(effect), None) => Some(effect),
+        (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Cloak Effect At Most!"),
+    };
+
+    let speed_effect_option = match (speed_iterator.next(), speed_iterator.next()) {
+        (None, _) => None,
+        (Some(effect), None) => Some(effect),
+        (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Self Applied Speed Effect At Most!"),
+    };
+
+    if let Some(cloak_effect) = cloak_effect_option {
+        undo_and_delete_cloak_effect_magician(ctx, magician, cloak_effect.id);
+    }
+
+    if let Some(speed_effect) = speed_effect_option {
+        undo_and_delete_speed_effect_magician(ctx, magician, speed_effect.id);
+    }
+}
+
 

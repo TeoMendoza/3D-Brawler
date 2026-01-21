@@ -11,6 +11,7 @@ pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementR
     character.kinematic_information.jump = false;
     let speed_mutiplier = character.combat_information.speed_multiplier;
     let stunned = is_permission_unblocked(&character.permissions, "Stunned") == false;
+    let taroted = is_permission_unblocked(&character.permissions, "Taroted") == false;
 
     if is_permission_unblocked(&character.permissions, "CanWalk") && stunned == false {
         let mut local_x: f32 = 0.0;
@@ -66,7 +67,7 @@ pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementR
         remove_subscriber_from_permission(&mut character.permissions, "CanRun", "Crouch");
     }
 
-    character.velocity = DbVector3 { x: character.velocity.x * speed_mutiplier, y: character.velocity.y, z: character.velocity.z * speed_mutiplier };
+    character.velocity = if taroted { DbVector3 { x: character.velocity.x * speed_mutiplier * -1.0, y: character.velocity.y, z: character.velocity.z * speed_mutiplier -1.0 } } else { DbVector3 { x: character.velocity.x * speed_mutiplier, y: character.velocity.y, z: character.velocity.z * speed_mutiplier } };
     ctx.db.magician().identity().update(character);
 }
 
@@ -74,9 +75,10 @@ pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementR
 pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: ActionRequestMagician) 
 {
     let mut magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician Not Found");
+    let stunned = is_permission_unblocked(&magician.permissions, "Stunned") == false;
     let old_state: MagicianState = magician.state;
 
-    if request.state == MagicianState::Attack && is_permission_unblocked(&magician.permissions, "CanAttack") && magician.bullets.len() > 0 {
+    if request.state == MagicianState::Attack && is_permission_unblocked(&magician.permissions, "CanAttack") && magician.bullets.len() > 0 && stunned == false {
         magician.state = MagicianState::Attack;
         add_subscriber_to_permission(&mut magician.permissions, "CanAttack", "Attack");
         add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Attack");
@@ -86,12 +88,12 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
         try_perform_attack(ctx, &mut magician, request.attack_information);
     } 
     
-    else if request.state == MagicianState::Reload && is_permission_unblocked(&magician.permissions, "CanReload") && (magician.bullets.len() as i32) < magician.bullet_capacity {
+    else if request.state == MagicianState::Reload && is_permission_unblocked(&magician.permissions, "CanReload") && (magician.bullets.len() as i32) < magician.bullet_capacity && stunned == false {
         magician.state = MagicianState::Reload;
         add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Reload");
     }
 
-    else if request.state == MagicianState::Dust && is_permission_unblocked(&magician.permissions, "CanDust") {
+    else if request.state == MagicianState::Dust && is_permission_unblocked(&magician.permissions, "CanDust") && stunned == false {
         magician.state = MagicianState::Dust;
         add_subscriber_to_permission(&mut magician.permissions, "CanDust", "Dust");
         add_subscriber_to_permission(&mut magician.permissions, "CanAttack", "Dust");
@@ -101,12 +103,12 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
         try_perform_dust(ctx, &mut magician, request.dust_information)
     }
     
-    else if request.state == MagicianState::Cloak && is_permission_unblocked(&magician.permissions, "CanCloak") {
+    else if request.state == MagicianState::Cloak && is_permission_unblocked(&magician.permissions, "CanCloak") && stunned == false {
         magician.state = MagicianState::Cloak;
         add_subscriber_to_permission(&mut magician.permissions, "CanCloak", "Cloak");
     }
 
-    else if request.state == MagicianState::Hypnosis && is_permission_unblocked(&magician.permissions, "CanHypnosis") {
+    else if request.state == MagicianState::Hypnosis && is_permission_unblocked(&magician.permissions, "CanHypnosis") && stunned == false {
         magician.state = MagicianState::Hypnosis;
         add_subscriber_to_permission(&mut magician.permissions, "CanHypnosis", "Hypnosis");
         add_subscriber_to_permission(&mut magician.permissions, "CanDust", "Hypnosis");
@@ -126,6 +128,10 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
 
             _ => {}
         }
+    }
+
+    if magician.state != MagicianState::Default && magician.state != MagicianState::Reload && magician.state != MagicianState::Cloak {
+        try_interrupt_cloak_and_speed_effects_magician(ctx, &mut magician);
     }
 
     ctx.db.magician().identity().update(magician);
