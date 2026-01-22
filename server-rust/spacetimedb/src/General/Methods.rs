@@ -1,3 +1,4 @@
+use spacetimedb::{ReducerContext};
 use crate::*;
 
 pub fn is_permission_unblocked(entries: &[PermissionEntry], key: &str) -> bool
@@ -51,6 +52,29 @@ pub fn remove_subscriber(subscribers: &mut Vec<String>, reason: &str)
     }
 }
 
+pub fn cleanup_on_disconnect_or_death(ctx: &ReducerContext, magician: &mut Magician)
+{
+    let collision_entry = CollisionEntry { entry_type: CollisionEntryType::Magician, id: magician.id };
+    for mut other in ctx.db.magician().game_id().filter(magician.game_id) {
+        if let Some(index) = other.collision_entries.iter().position(|entry| *entry == collision_entry) {
+            other.collision_entries.swap_remove(index);
+            ctx.db.magician().id().update(other);
+        }
+    }
+
+    for player_effect in ctx.db.player_effects().target_id().filter(magician.id) {
+        match player_effect.effect_type {
+            EffectType::Hypnosis => undo_hypnosis_effect_magician(ctx, magician, &player_effect.hypnosis_informaton),
+            _ => { }
+        }
+        ctx.db.player_effects().id().delete(player_effect.id);
+    }
+}
+
+pub fn cleanup_on_match_end(ctx: &ReducerContext, match_id: u64)
+{
+    // Delete All Players, Effects, Etc
+}
 
 
 

@@ -6,7 +6,13 @@ pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTab
 {
     let time = timer.tick_rate;
     for mut player_effect in ctx.db.player_effects().game_id().filter(timer.game_id) {
-        let mut target = ctx.db.magician().id().find(player_effect.target_id).expect("Target Magician Not Found!");
+        let target_option = ctx.db.magician().id().find(player_effect.target_id);
+        if target_option.is_none() {
+            ctx.db.player_effects().id().delete(player_effect.id);
+            continue;
+        }
+
+        let mut target = target_option.expect("Target Magician Existence Already Confirmed!");
         let mut _sender_option = ctx.db.magician().id().find(player_effect.sender_id); // Will Be Used To Apply Points For Scoring Based On The Effect
         let player_effect_clone = player_effect.clone();
         let app_info = &mut player_effect.application_information;
@@ -72,8 +78,9 @@ pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTab
                 }
             }
         }
-
-        ctx.db.magician().id().update(target);
+        if ctx.db.magician().id().find(target.id).is_some() {
+            ctx.db.magician().id().update(target); // Ensures We Update Unless They Have Been Killed By Effect
+        } 
     }
 }
 

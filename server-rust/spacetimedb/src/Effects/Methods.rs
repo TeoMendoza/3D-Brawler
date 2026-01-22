@@ -7,7 +7,14 @@ pub fn apply_damage_effect_magician(ctx: &ReducerContext, magician: &mut Magicia
     let damage = damage_effect.as_ref().expect("Damage Effect Must Have Information!");
     let combat_info = &mut magician.combat_information;
     combat_info.health -= damage.base_damage;
-    try_interrupt_cloak_and_speed_effects_magician(ctx, magician);
+
+    if combat_info.health <= 0.0 {
+        handle_magician_death(ctx, magician);
+    }
+
+    else {
+        try_interrupt_cloak_and_speed_effects_magician(ctx, magician);
+    }
 }
 
 pub fn apply_dust_effect_magician(ctx: &ReducerContext, target: &mut Magician, dust_effect: &Option<DustEffectInformation>) 

@@ -1,5 +1,5 @@
 use std::time::Duration;
-use spacetimedb::{reducer, ReducerContext, ScheduleAt, Table, Identity};
+use spacetimedb::{reducer, ReducerContext, ScheduleAt, Table, Identity, Timestamp, TimeDuration};
 use crate::*;
 
 #[reducer(init)]
@@ -115,36 +115,60 @@ pub fn connect(ctx: &ReducerContext) {
 #[reducer(client_disconnected)]
 pub fn disconnect(ctx: &ReducerContext) {
     let player = ctx.db.logged_in_players().identity().find(ctx.sender).expect("Player not found");
-    let mut magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician not found");
+    let magician_option = ctx.db.magician().identity().find(ctx.sender);
 
-    let game_option = ctx.db.game().id().find(magician.game_id);
-    if game_option.is_some() {
-        let mut game = game_option.unwrap();
-        if game.current_players > 0 {
-            game.current_players -= 1;
-            ctx.db.game().id().update(game);
+    if let Some(mut magician) = magician_option {
+        cleanup_on_disconnect_or_death(ctx, &mut magician);
+
+        let game_option = ctx.db.game().id().find(magician.game_id);
+        if game_option.is_some() {
+            let mut game = game_option.unwrap();
+            if game.current_players > 0 {
+                game.current_players -= 1;
+                ctx.db.game().id().update(game);
+            }
         }
-    }
 
-    let collision_entry = CollisionEntry { entry_type: CollisionEntryType::Magician, id: magician.id };
-    for mut other in ctx.db.magician().game_id().filter(magician.game_id) {
-        if let Some(index) = other.collision_entries.iter().position(|entry| *entry == collision_entry) {
-            other.collision_entries.swap_remove(index);
-            ctx.db.magician().id().update(other);
-        }
+        ctx.db.magician().identity().delete(player.identity);
     }
-
-    for player_effect in ctx.db.player_effects().target_id().filter(magician.id) {
-        match player_effect.effect_type {
-            EffectType::Hypnosis => undo_hypnosis_effect_magician(ctx, &mut magician, &player_effect.hypnosis_informaton), 
-            _ => { }
-        }
-        ctx.db.player_effects().id().delete(player_effect.id);
-    }
-
-    ctx.db.magician().identity().delete(player.identity);
+    
     ctx.db.logged_in_players().identity().delete(player.identity);
     ctx.db.logged_out_players().insert(player);
     
     log::info!("{} just disconnected.", ctx.sender);
+}
+
+
+#[reducer]
+pub fn handle_respawn(ctx: &ReducerContext, timer: RespawnTimersTimer) 
+{ 
+    let player_option = ctx.db.logged_in_players().identity().find(timer.player.identity);
+    if player_option.is_none() {
+        ctx.db.respawn_timers().scheduled_id().delete(timer.scheduled_id);
+        return;
+    }
+
+    let player = player_option.expect("Player Existence Already Confirmed!");
+    let game_option = ctx.db.game().id().find(timer.game_id);
+    if game_option.is_some() {
+        let magician_config = MagicianConfig {player, game_id: timer.game_id, position: DbVector3 { x: 0.0, y: 0.0, z: 0.0 }};
+        let magician = create_magician(magician_config);
+        ctx.db.magician().insert(magician);
+    }
+        
+    ctx.db.respawn_timers().scheduled_id().delete(timer.scheduled_id);
+}
+
+pub fn handle_magician_death(ctx: &ReducerContext, magician: &mut Magician) 
+{
+    let player_option = ctx.db.logged_in_players().identity().find(magician.identity);
+    cleanup_on_disconnect_or_death(ctx, magician);
+    
+    if let Some(player) = player_option {
+        let respawn_time = ctx.timestamp.checked_add(TimeDuration::from_micros(5_000_000)).expect("Respawn timestamp overflow");
+        let respawn_timer = RespawnTimersTimer { scheduled_id: 0, scheduled_at: ScheduleAt::Time(respawn_time), game_id: magician.game_id, player };
+        ctx.db.respawn_timers().insert(respawn_timer);
+    }
+
+    ctx.db.magician().id().delete(magician.id);
 }
