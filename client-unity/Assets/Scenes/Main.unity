@@ -149,7 +149,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MagicianPrefab: {fileID: 3838300054775145683, guid: 9cac75c6e83db44a488f7f31d8e9a9b3, type: 3}
-  ThrowingCardPrefab: {fileID: 4753613909389792992, guid: 45a99bf801c8a486aa152076d1859586, type: 3}
   MapPrefabs:
   - {fileID: 4101123262796976276, guid: a24d05f48d0724df69c860b4a3e8fd8e, type: 3}
   - {fileID: 6537649743902597972, guid: b3d0590656a04451da247dcf2541587e, type: 3}
@@ -231,7 +230,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 500
-  field of view: 60
+  field of view: 75
   orthographic: 0
   orthographic size: 10
   m_Depth: -1
@@ -258,7 +257,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.08685689, y: -0.021732317, z: 0.0018952164, w: 0.99598193}
-  m_LocalPosition: {x: 0.636291, y: 2.1632564, z: -3.1047032}
+  m_LocalPosition: {x: 0.39352065, y: 1.890158, z: -2.1294599}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -520,8 +519,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1218510311}
   - component: {fileID: 1218510310}
-  - component: {fileID: 1218510309}
   - component: {fileID: 1218510312}
+  - component: {fileID: 1218510313}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -529,18 +528,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1218510309
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1218510308}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e016ef92e52934343857fd26e55140c1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1218510310
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -581,6 +568,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lockOnStart: 1
+--- !u!114 &1218510313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1218510308}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e016ef92e52934343857fd26e55140c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2128267509
 PrefabInstance:
   m_ObjectHideFlags: 0

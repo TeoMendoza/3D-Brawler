@@ -9,6 +9,7 @@ public class MagicianController : MonoBehaviour
     [SerializeField] private CinemachineCamera thirdPersonCam;
     [SerializeField] private GameObject thirdPersonCamPivot;
 
+    Magician Magician;
     bool IsOwner;
     public Identity Identity;
     public uint Id;
@@ -22,21 +23,23 @@ public class MagicianController : MonoBehaviour
     public Animator Animator;
     private Camera mainCamera;
 
-    float yaw = 0f;
-    float pitch = 0f;
+    public float SendRateHz = 20f;
+    float NextSendTime;
+    MovementRequest PreviousSentRequest;
+    bool HasPreviousSentRequest;
+    public float AimYawThresholdDegrees = 0.75f;
+    public float AimPitchThresholdDegrees = 0.75f;
 
-    private readonly float sensX = 200f;
-    private readonly float sensY = 100f;
-    private readonly float minPitch = -50f;
-    private readonly float maxPitch = 75f;
+    float Yaw;
+    float Pitch;
+    private readonly float SensX = 200f;
+    private readonly float SensY = 100f;
+    private readonly float MinPitch = -50f;
+    private readonly float MaxPitch = 75f;
 
     readonly float pitchSmooth = 0.08f;
     float pitchCurrent;
     float pitchVel;
-
-    Vector3 CameraPositionOffset;
-    float CameraYawOffset;
-    float CameraPitchOffset;
 
     float TargetForwardSpeed;
     float TargetHorizontalSpeed;
@@ -44,10 +47,11 @@ public class MagicianController : MonoBehaviour
 
     public void Initalize(Magician Character)
     {
+        Magician = Character;
         Identity = Character.Identity;
-        Id = Character.Id;
+        Id = (uint)Character.Id;
         Name = Character.Name;
-        MatchId = Character.MatchId;
+        MatchId = Character.GameId;
 
         transform.position = Character.Position;
         TargetPosition = Character.Position;
@@ -57,26 +61,11 @@ public class MagicianController : MonoBehaviour
 
         IsOwner = Identity.Equals(GameManager.LocalIdentity);
 
-        if (thirdPersonCam != null && IsOwner) thirdPersonCam.gameObject.SetActive(true);
+        if (thirdPersonCam != null)
+            thirdPersonCam.gameObject.SetActive(IsOwner);
 
-        mainCamera = FindFirstObjectByType<CinemachineBrain>().OutputCamera != null ? FindFirstObjectByType<CinemachineBrain>().OutputCamera: throw new System.Exception("No Main Camera Brain");
-
-        Vector3 CameraWorldPosition = mainCamera.transform.position;
-        Vector3 CharacterWorldPosition = transform.position;
-        CameraPositionOffset = CameraWorldPosition - CharacterWorldPosition;
-
-        CameraYawOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.y);
-        CameraPitchOffset = Mathf.DeltaAngle(0f, mainCamera.transform.localEulerAngles.x);
-
-        Vector2 Reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
-        Ray AimRay = mainCamera.ScreenPointToRay(Reticle);
-        Vector3 D = AimRay.direction.normalized;
-
-        Quaternion MagicianRotation = Quaternion.Euler(TargetRotation.Pitch, TargetRotation.Yaw, 0f);
-        Vector3 LocalDir = Quaternion.Inverse(MagicianRotation) * D;
-
-        CameraYawOffset = Mathf.Atan2(LocalDir.x, LocalDir.z);
-        CameraPitchOffset = Mathf.Asin(Mathf.Clamp(LocalDir.y, -1f, 1f));
+        if (IsOwner)
+            mainCamera = FindFirstObjectByType<CinemachineBrain>()?.OutputCamera ?? throw new System.Exception("No Main Camera Brain OutputCamera");
     }
 
     void Start()
@@ -88,32 +77,127 @@ public class MagicianController : MonoBehaviour
     {
         if (!IsOwner) return;
 
-        MovementRequest req = new(MoveForward: false, MoveBackward: false, MoveLeft: false, MoveRight: false, Sprint: false, Jump: false, Crouch: false, Aim: new DbRotation2(0, 0) );
+        MovementRequest CurrentRequest = BuildMovementRequest();
+        bool ForceSendThisFrame = CurrentRequest.Jump;
 
-        if (Input.GetKey(KeyCode.W)) req.MoveForward = true;
-        if (Input.GetKey(KeyCode.S)) req.MoveBackward = true;
-        if (Input.GetKey(KeyCode.A)) req.MoveLeft = true;
-        if (Input.GetKey(KeyCode.D)) req.MoveRight = true;
+        float SendIntervalSeconds = 1f / Mathf.Max(1f, SendRateHz);
+        bool PassedSendInterval = Time.time >= NextSendTime;
+        bool RequestMeaningfullyChanged = !HasPreviousSentRequest || HasMeaningfulChange(PreviousSentRequest, CurrentRequest);
 
-        if (Input.GetKey(KeyCode.LeftShift)) req.Sprint = true;
-        if (Input.GetKeyDown(KeyCode.Space)) req.Jump = true;
-        if (Input.GetKey(KeyCode.LeftControl)) req.Crouch = true;
+        if ((PassedSendInterval && RequestMeaningfullyChanged) || ForceSendThisFrame)
+        {
+            GameManager.Conn.Reducers.HandleMovementRequestMagician(CurrentRequest);
 
-        float mx = Input.GetAxis("Mouse X");
-        float my = Input.GetAxis("Mouse Y");
+            PreviousSentRequest = CurrentRequest;
+            HasPreviousSentRequest = true;
 
-        yaw = Mathf.Repeat(yaw + mx * sensX * Time.deltaTime, 360f);
-        pitch = Mathf.Clamp(pitch - my * sensY * Time.deltaTime, minPitch, maxPitch);
-        req.Aim = new DbRotation2(yaw, pitch);
+            if (!PassedSendInterval)
+                NextSendTime = Time.time + SendIntervalSeconds;
+                
+            else
+                NextSendTime += SendIntervalSeconds;
+        }
 
-        GameManager.Conn.Reducers.HandleMovementRequestMagician(req);
+        bool Hypnosised = IsPermissionOccupied(Magician, "Hypnosised");
+        if (Input.GetMouseButton(0) || Input.GetKey(KeyCode.E) || Hypnosised is true)
+        {
+            Vector2 reticle = new(Screen.width * 0.5f, Screen.height * 0.5f);
+            Ray aimRay = mainCamera.ScreenPointToRay(reticle);
+            Vector3 clientReticleDirection = aimRay.direction.normalized;
 
-        if (Input.GetMouseButton(0))
-            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack, new AttackInformation(CameraPositionOffset: CameraPositionOffset, CameraYawOffset: CameraYawOffset, CameraPitchOffset: CameraPitchOffset, SpawnPointOffset: new(0f, 1.15f, 0.45f), MaxDistance: 100f), new ReloadInformation()));
-        
+            Vector3 cameraWorldPosition = mainCamera.transform.position;
+            Vector3 characterWorldPosition = transform.position;
+            Vector3 cameraWorldDelta = cameraWorldPosition - characterWorldPosition;
+
+            Quaternion magicianRotation = Quaternion.Euler(Pitch, Yaw, 0f);
+            Vector3 localDir = Quaternion.Inverse(magicianRotation) * clientReticleDirection;
+
+            float cameraYawOffset = Mathf.Atan2(localDir.x, localDir.z);
+            float cameraPitchOffset = Mathf.Asin(Mathf.Clamp(localDir.y, -1f, 1f));
+
+            float cameraYawRadians = (Yaw * Mathf.Deg2Rad) + cameraYawOffset;
+            float cameraPitchRadians = (Pitch * Mathf.Deg2Rad) + cameraPitchOffset;
+            Quaternion cameraRotation = Quaternion.Euler(0f, cameraYawRadians * Mathf.Rad2Deg, 0f) * Quaternion.Euler(cameraPitchRadians * Mathf.Rad2Deg, 0f, 0f);
+
+            Vector3 cameraOffsetLocal = Quaternion.Inverse(cameraRotation) * cameraWorldDelta;
+
+            if (Input.GetMouseButton(0))
+                GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Attack, new AttackInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.3f, 0.4f), MaxDistance: 100f), new ReloadInformation(), new DustInformation (), new CloakInformation(), new HypnosisInformation()));
+
+            if (Input.GetKey(KeyCode.E))
+                GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Dust, new AttackInformation(), new ReloadInformation(), new DustInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new(0f, 1.3f, 0.4f), MaxDistance: 2.5f, ConeHalfAngleDegrees: 20f), new CloakInformation(), new HypnosisInformation()));
+
+            if (Hypnosised is true) 
+                GameManager.Conn.Reducers.Hypnotise(new HypnosisCameraInformation(CameraPositionOffset: new DbVector3(cameraOffsetLocal.x, cameraOffsetLocal.y, cameraOffsetLocal.z), CameraYawOffset: cameraYawOffset, CameraPitchOffset: cameraPitchOffset, SpawnPointOffset: new DbVector3(0f, 1.65f, 0.15f), MaxDistance: 12f));
+        }
+
         if (Input.GetKey(KeyCode.R))     
-            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Reload, new AttackInformation(), new ReloadInformation()));
+            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Reload, new AttackInformation(), new ReloadInformation(), new DustInformation(), new CloakInformation(), new HypnosisInformation()));
+
+        if (Input.GetKey(KeyCode.F))
+            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Cloak, new AttackInformation(), new ReloadInformation(), new DustInformation(), new CloakInformation(), new HypnosisInformation()));
+
+        if (Input.GetKey(KeyCode.C))
+            GameManager.Conn.Reducers.HandleActionChangeRequestMagician(new ActionRequestMagician(State: MagicianState.Hypnosis, new AttackInformation(), new ReloadInformation(), new DustInformation(), new CloakInformation(), new HypnosisInformation()));
+
+        if (Input.GetMouseButton(1))
+            GameManager.Conn.Reducers.HandleStatelessActionRequestMagician(new StatelessActionRequestMagician(Action: MagicianStatelessAction.Tarot));
+
         
+    }
+
+    public MovementRequest BuildMovementRequest()
+    {
+        MovementRequest CurrentRequest = new(MoveForward: false, MoveBackward: false, MoveLeft: false, MoveRight: false, Sprint: false, Jump: false, Crouch: false, Aim: new DbRotation2(0, 0));
+
+        if (Input.GetKey(KeyCode.W)) CurrentRequest.MoveForward = true;
+        if (Input.GetKey(KeyCode.S)) CurrentRequest.MoveBackward = true;
+        if (Input.GetKey(KeyCode.A)) CurrentRequest.MoveLeft = true;
+        if (Input.GetKey(KeyCode.D)) CurrentRequest.MoveRight = true;
+
+        if (Input.GetKey(KeyCode.LeftShift)) CurrentRequest.Sprint = true;
+        if (Input.GetKeyDown(KeyCode.Space)) CurrentRequest.Jump = true;
+        if (Input.GetKey(KeyCode.LeftControl)) CurrentRequest.Crouch = true;
+
+        float MouseX = Input.GetAxis("Mouse X");
+        float MouseY = Input.GetAxis("Mouse Y");
+
+        Yaw = Mathf.Repeat(Yaw + MouseX * SensX * Time.deltaTime, 360f);
+        Pitch = Mathf.Clamp(Pitch - MouseY * SensY * Time.deltaTime, MinPitch, MaxPitch);
+
+        CurrentRequest.Aim = new DbRotation2(Yaw, Pitch);
+
+        return CurrentRequest;
+    }
+
+    public bool HasMeaningfulChange(MovementRequest PreviousRequest, MovementRequest CurrentRequest)
+    {
+        if (PreviousRequest.MoveForward != CurrentRequest.MoveForward) return true;
+        if (PreviousRequest.MoveBackward != CurrentRequest.MoveBackward) return true;
+        if (PreviousRequest.MoveLeft != CurrentRequest.MoveLeft) return true;
+        if (PreviousRequest.MoveRight != CurrentRequest.MoveRight) return true;
+
+        if (PreviousRequest.Sprint != CurrentRequest.Sprint) return true;
+        if (PreviousRequest.Crouch != CurrentRequest.Crouch) return true;
+
+        float YawDelta = Mathf.Abs(Mathf.DeltaAngle(PreviousRequest.Aim.Yaw, CurrentRequest.Aim.Yaw));
+        float PitchDelta = Mathf.Abs(PreviousRequest.Aim.Pitch - CurrentRequest.Aim.Pitch);
+
+        if (YawDelta >= AimYawThresholdDegrees) return true;
+        if (PitchDelta >= AimPitchThresholdDegrees) return true;
+
+        return false;
+    }
+
+    public bool IsPermissionOccupied(Magician Magician, string Key)
+    {
+        foreach (PermissionEntry Entry in Magician.Permissions)
+        {
+            if (Entry.Key == Key)
+                return Entry.Subscribers.Count != 0;
+        }
+
+        throw new System.Exception($"Permission Entry With Key {Key} Not Found");
     }
 
     void LateUpdate()
@@ -142,6 +226,7 @@ public class MagicianController : MonoBehaviour
     {
         if (Identity != newChar.Identity) return;
 
+        Magician = newChar;
         TargetPosition = newChar.Position;
         TargetRotation = newChar.Rotation;
         
@@ -152,6 +237,18 @@ public class MagicianController : MonoBehaviour
 
         bool Reload = oldChar.State is not MagicianState.Reload && newChar.State is MagicianState.Reload;
         bool ReloadDone = oldChar.State is MagicianState.Reload && newChar.State is not MagicianState.Reload;
+
+        bool Dust = oldChar.State is not MagicianState.Dust && newChar.State is MagicianState.Dust;
+        bool DustDone = oldChar.State is MagicianState.Dust && newChar.State is not MagicianState.Dust;
+
+        bool Cloak = oldChar.State is not MagicianState.Cloak && newChar.State is MagicianState.Cloak;
+        bool CloakDone = oldChar.State is MagicianState.Cloak && newChar.State is not MagicianState.Cloak;
+
+        bool Hypnosis = oldChar.State is not MagicianState.Hypnosis && newChar.State is MagicianState.Hypnosis;
+        bool HypnosisDone = oldChar.State is MagicianState.Hypnosis && newChar.State is not MagicianState.Hypnosis;
+
+        bool Stunned = oldChar.State is not MagicianState.Stunned && newChar.State is MagicianState.Stunned;
+        bool StunnedDone = oldChar.State is MagicianState.Stunned && newChar.State is not MagicianState.Stunned;
 
         bool Grounded = newChar.KinematicInformation.Grounded;
         bool Crouching = newChar.KinematicInformation.Crouched;
@@ -166,6 +263,18 @@ public class MagicianController : MonoBehaviour
 
             if (Reload) Animator.SetTrigger("Reload");
             if (ReloadDone) Animator.SetTrigger("ReloadDone");
+
+            if (Dust) Animator.SetTrigger("Dust");
+            if (DustDone) Animator.SetTrigger("DustDone");
+
+            if (Cloak) Animator.SetTrigger("Cloak");
+            if (CloakDone) Animator.SetTrigger("CloakDone");
+
+            if (Hypnosis) Animator.SetTrigger("Hypnosis");
+            if (HypnosisDone) Animator.SetTrigger("HypnosisDone");      
+
+            if (Stunned) Animator.SetTrigger("Stunned");
+            if (StunnedDone) Animator.SetTrigger("StunnedDone");
 
             Animator.SetBool("Crouching", Crouching);
             Animator.SetBool("Falling", Falling);
@@ -188,7 +297,7 @@ public class MagicianController : MonoBehaviour
             MagicianController Player = other.gameObject.GetComponent<MagicianController>();
             if (Player.Id != Id)
             {
-                CollisionEntry Entry = new(Type: CollisionEntryType.Magician, Id: Player.Id);
+                CollisionEntry Entry = new(EntryType: CollisionEntryType.Magician, Id: Player.Id);
                 GameManager.Conn.Reducers.AddCollisionEntryMagician(Entry, Identity);
             }
         }
@@ -196,7 +305,7 @@ public class MagicianController : MonoBehaviour
         else if (other.gameObject.CompareTag("Map"))
         {
             MapPiece Map = other.gameObject.GetComponent<MapPiece>();
-            CollisionEntry Entry = new(Type: CollisionEntryType.Map, Id: Map.Id);
+            CollisionEntry Entry = new(EntryType: CollisionEntryType.Map, Id: Map.Id);
             GameManager.Conn.Reducers.AddCollisionEntryMagician(Entry, Identity);
         }
     }
@@ -208,7 +317,7 @@ public class MagicianController : MonoBehaviour
             MagicianController Player = other.gameObject.GetComponent<MagicianController>();
             if (Player.Id != Id)
             {
-                CollisionEntry Entry = new(Type: CollisionEntryType.Magician, Id: Player.Id);
+                CollisionEntry Entry = new(EntryType: CollisionEntryType.Magician, Id: Player.Id);
                 GameManager.Conn.Reducers.RemoveCollisionEntryMagician(Entry, Identity);
             }
         }
@@ -216,7 +325,7 @@ public class MagicianController : MonoBehaviour
         else if (other.gameObject.CompareTag("Map"))
         {
             MapPiece Map = other.gameObject.GetComponent<MapPiece>();
-            CollisionEntry Entry = new(Type: CollisionEntryType.Map, Id: Map.Id);
+            CollisionEntry Entry = new(EntryType: CollisionEntryType.Map, Id: Map.Id);
             GameManager.Conn.Reducers.RemoveCollisionEntryMagician(Entry, Identity);
         }
     }
