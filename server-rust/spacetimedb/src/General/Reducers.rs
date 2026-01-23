@@ -83,12 +83,14 @@ pub fn handle_respawn(ctx: &ReducerContext, timer: RespawnTimersTimer)
     if game_option.is_some() {
         let magician_config = MagicianConfig {player, game_id: timer.game_id, position: DbVector3 { x: 0.0, y: 0.0, z: 0.0 }};
         let magician = create_magician(magician_config);
-        ctx.db.magician().insert(magician);
+        let inserted_magician = ctx.db.magician().insert(magician);
+
+        let invincible_effect = create_invicible_effect(5.0);
+        let effects = vec![invincible_effect];
+        add_effects_to_table(ctx, effects, inserted_magician.id, inserted_magician.id, timer.game_id);       
     }
         
-    ctx.db.respawn_timers().scheduled_id().delete(timer.scheduled_id);
-
-    // Add Invincibility Effect To Player Later
+    ctx.db.respawn_timers().scheduled_id().delete(timer.scheduled_id);   
 }
 
 #[reducer]
@@ -119,7 +121,11 @@ pub fn try_join_game(ctx: &ReducerContext)
 
         let magician_config = MagicianConfig {player, game_id: game_id, position: DbVector3 { x: 0.0, y: 0.0, z: 0.0 }};
         let magician = create_magician(magician_config);
-        ctx.db.magician().insert(magician);
+        let inserted_magician = ctx.db.magician().insert(magician);
+
+        let invincible_effect = create_invicible_effect(5.0);
+        let effects = vec![invincible_effect];
+        add_effects_to_table(ctx, effects, inserted_magician.id, inserted_magician.id, game_id);   
     } 
 }
 

@@ -1,7 +1,7 @@
 use spacetimedb::{SpacetimeType};
 use crate::*;
 
-#[derive(SpacetimeType)]
+#[derive(SpacetimeType, Clone)]
 pub struct KinematicInformation {
     pub jump: bool,
     pub falling: bool,

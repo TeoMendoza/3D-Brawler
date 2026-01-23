@@ -112,14 +112,16 @@ pub fn undo_hypnosis_effect_magician(ctx: &ReducerContext, target: &mut Magician
         let stunned_magician_option = ctx.db.magician().id().find(last_target_id); 
         if let Some(mut stunned_magician) = stunned_magician_option {
             let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, target.id, EffectType::Stunned));
-            let stunned_effect = match (stunned_iterator.next(), stunned_iterator.next()) {
-                (None, _) => panic!("Stunned Iterator Should Have First Element!"),
-                (Some(effect), None) => effect,
+            let stunned_effect_option = match (stunned_iterator.next(), stunned_iterator.next()) {
+                (None, _) => None,
+                (Some(effect), None) => Some(effect),
                 (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
-        };
+            };
 
-        undo_and_delete_stunned_effect_magician(ctx, &mut stunned_magician, stunned_effect.id);
-        ctx.db.magician().id().update(stunned_magician);
+            if let Some(stunned_effect) = stunned_effect_option {
+                undo_and_delete_stunned_effect_magician(ctx, &mut stunned_magician, stunned_effect.id);
+                ctx.db.magician().id().update(stunned_magician);
+            }
         }    
     }
 }
@@ -254,7 +256,7 @@ pub fn try_interrupt_invincible_effect_magician(ctx: &ReducerContext, magician: 
     let invincible_effect_option = match (invincible_iterator.next(), invincible_iterator.next()) {
         (None, _) => None,
         (Some(effect), None) => Some(effect),
-        (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Cloak Effect At Most!"),
+        (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Invincible Effect At Most!"),
     };
 
     if let Some(invincible_effect) = invincible_effect_option {
