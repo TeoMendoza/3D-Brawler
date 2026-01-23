@@ -11,7 +11,7 @@ namespace SpacetimeDB.Types
 {
     [SpacetimeDB.Type]
     [DataContract]
-    public sealed partial class RespawnTimersTimer
+    public sealed partial class GameTimersTimer
     {
         [DataMember(Name = "scheduled_id")]
         public ulong ScheduledId;
@@ -19,30 +19,21 @@ namespace SpacetimeDB.Types
         public SpacetimeDB.ScheduleAt ScheduledAt;
         [DataMember(Name = "game_id")]
         public uint GameId;
-        [DataMember(Name = "player")]
-        public Player Player;
-        [DataMember(Name = "identity")]
-        public SpacetimeDB.Identity Identity;
 
-        public RespawnTimersTimer(
+        public GameTimersTimer(
             ulong ScheduledId,
             SpacetimeDB.ScheduleAt ScheduledAt,
-            uint GameId,
-            Player Player,
-            SpacetimeDB.Identity Identity
+            uint GameId
         )
         {
             this.ScheduledId = ScheduledId;
             this.ScheduledAt = ScheduledAt;
             this.GameId = GameId;
-            this.Player = Player;
-            this.Identity = Identity;
         }
 
-        public RespawnTimersTimer()
+        public GameTimersTimer()
         {
             this.ScheduledAt = null!;
-            this.Player = new();
         }
     }
 }

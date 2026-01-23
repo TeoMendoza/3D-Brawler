@@ -28,5 +28,5 @@ pub struct PlayerEffectsTableTimer {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,
     pub tick_rate: f32,
-    pub game_id: u32,
+    #[unique] pub game_id: u32,
 }

@@ -1,5 +1,5 @@
 use std::time::Duration;
-use spacetimedb::{reducer, ReducerContext, ScheduleAt, Table};
+use spacetimedb::{reducer, ReducerContext, ScheduleAt, Table, TimeDuration};
 use crate::*;
 
 #[reducer(init)]
@@ -46,7 +46,9 @@ pub fn connect(ctx: &ReducerContext) {
 #[reducer(client_disconnected)]
 pub fn disconnect(ctx: &ReducerContext) {
     let player = ctx.db.logged_in_players().identity().find(ctx.sender).expect("Player not found");
+
     let magician_option = ctx.db.magician().identity().find(ctx.sender);
+    let respawn_timer_option = ctx.db.respawn_timers().identity().find(ctx.sender); 
 
     if let Some(mut magician) = magician_option {
         cleanup_on_disconnect_or_death(ctx, &mut magician);
@@ -62,6 +64,19 @@ pub fn disconnect(ctx: &ReducerContext) {
 
         ctx.db.magician().identity().delete(player.identity);
     }
+
+    else if let Some(respawn_timer) = respawn_timer_option {
+        let game_option = ctx.db.game().id().find(respawn_timer.game_id);
+        if game_option.is_some() {
+            let mut game = game_option.unwrap();
+            if game.current_players > 0 {
+                game.current_players -= 1;
+                ctx.db.game().id().update(game);
+            }
+        }
+
+        ctx.db.respawn_timers().scheduled_id().delete(respawn_timer.scheduled_id); 
+    }
     
     ctx.db.logged_in_players().identity().delete(player.identity);
     ctx.db.logged_out_players().insert(player);
@@ -70,27 +85,13 @@ pub fn disconnect(ctx: &ReducerContext) {
 }
 
 #[reducer]
-pub fn handle_respawn(ctx: &ReducerContext, timer: RespawnTimersTimer) 
+pub fn handle_game_end(ctx: &ReducerContext, timer: GameTimersTimer) 
 { 
-    let player_option = ctx.db.logged_in_players().identity().find(timer.player.identity);
-    if player_option.is_none() {
-        ctx.db.respawn_timers().scheduled_id().delete(timer.scheduled_id);
-        return;
-    }
-
-    let player = player_option.expect("Player Existence Already Confirmed!");
-    let game_option = ctx.db.game().id().find(timer.game_id);
-    if game_option.is_some() {
-        let magician_config = MagicianConfig {player, game_id: timer.game_id, position: DbVector3 { x: 0.0, y: 0.0, z: 0.0 }};
-        let magician = create_magician(magician_config);
-        let inserted_magician = ctx.db.magician().insert(magician);
-
-        let invincible_effect = create_invicible_effect(5.0);
-        let effects = vec![invincible_effect];
-        add_effects_to_table(ctx, effects, inserted_magician.id, inserted_magician.id, timer.game_id);       
-    }
-        
-    ctx.db.respawn_timers().scheduled_id().delete(timer.scheduled_id);   
+    log::info!("Game Ended With Id {}", timer.game_id);
+    let game_id = timer.game_id;
+    cleanup_on_game_end(ctx, game_id);
+    ctx.db.game_timers().scheduled_id().delete(timer.scheduled_id);
+    ctx.db.game().id().delete(game_id);
 }
 
 #[reducer]
@@ -116,6 +117,13 @@ pub fn try_join_game(ctx: &ReducerContext)
         };
 
         game.current_players += 1;
+        if game.current_players >= 2 && game.in_progress != true {
+            game.in_progress = true;
+            let end_time = ctx.timestamp.checked_add(TimeDuration::from_micros(600_000_000)).expect("Match End Time Timestamp Overflow"); // 10 Minutes
+            let game_end_timer = GameTimersTimer {scheduled_id: 0, scheduled_at: ScheduleAt::Time(end_time), game_id: game.id};
+            ctx.db.game_timers().insert(game_end_timer);
+        }
+
         let game_id = game.id;
         ctx.db.game().id().update(game);
 
@@ -129,3 +137,65 @@ pub fn try_join_game(ctx: &ReducerContext)
     } 
 }
 
+
+#[reducer]
+pub fn try_leave_game(ctx: &ReducerContext) 
+{
+    let player_option = ctx.db.logged_in_players().identity().find(ctx.sender);
+    let magician_option = ctx.db.magician().identity().find(ctx.sender);
+    let respawn_timer_option = ctx.db.respawn_timers().identity().find(ctx.sender); 
+
+    if let Some(player) = player_option {
+        if let Some(mut magician) = magician_option {
+            cleanup_on_disconnect_or_death(ctx, &mut magician);
+
+            let game_option = ctx.db.game().id().find(magician.game_id);
+            if game_option.is_some() {
+                let mut game = game_option.unwrap();
+                if game.current_players > 0 {
+                    game.current_players -= 1;
+                    ctx.db.game().id().update(game);
+                }
+            }
+
+            ctx.db.magician().identity().delete(player.identity);
+        }
+
+        else if let Some(respawn_timer) = respawn_timer_option {
+            let game_option = ctx.db.game().id().find(respawn_timer.game_id);
+            if game_option.is_some() {
+                let mut game = game_option.unwrap();
+                if game.current_players > 0 {
+                    game.current_players -= 1;
+                    ctx.db.game().id().update(game);
+                }
+            }
+
+            ctx.db.respawn_timers().scheduled_id().delete(respawn_timer.scheduled_id); 
+        }
+    }
+}
+
+#[reducer]
+pub fn handle_respawn(ctx: &ReducerContext, timer: RespawnTimersTimer) 
+{ 
+    let player_option = ctx.db.logged_in_players().identity().find(timer.player.identity);
+    if player_option.is_none() {
+        ctx.db.respawn_timers().scheduled_id().delete(timer.scheduled_id);
+        return;
+    }
+
+    let player = player_option.expect("Player Existence Already Confirmed!");
+    let game_option = ctx.db.game().id().find(timer.game_id);
+    if game_option.is_some() {
+        let magician_config = MagicianConfig {player, game_id: timer.game_id, position: DbVector3 { x: 0.0, y: 0.0, z: 0.0 }};
+        let magician = create_magician(magician_config);
+        let inserted_magician = ctx.db.magician().insert(magician);
+
+        let invincible_effect = create_invicible_effect(5.0);
+        let effects = vec![invincible_effect];
+        add_effects_to_table(ctx, effects, inserted_magician.id, inserted_magician.id, timer.game_id);       
+    }
+        
+    ctx.db.respawn_timers().scheduled_id().delete(timer.scheduled_id);   
+}

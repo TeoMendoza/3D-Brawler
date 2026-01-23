@@ -17,6 +17,24 @@ namespace SpacetimeDB.Types
         {
             protected override string RemoteTableName => "respawn_timers";
 
+            public sealed class GameIdIndex : BTreeIndexBase<uint>
+            {
+                protected override uint GetKey(RespawnTimersTimer row) => row.GameId;
+
+                public GameIdIndex(RespawnTimersHandle table) : base(table) { }
+            }
+
+            public readonly GameIdIndex GameId;
+
+            public sealed class IdentityUniqueIndex : UniqueIndexBase<SpacetimeDB.Identity>
+            {
+                protected override SpacetimeDB.Identity GetKey(RespawnTimersTimer row) => row.Identity;
+
+                public IdentityUniqueIndex(RespawnTimersHandle table) : base(table) { }
+            }
+
+            public readonly IdentityUniqueIndex Identity;
+
             public sealed class ScheduledIdUniqueIndex : UniqueIndexBase<ulong>
             {
                 protected override ulong GetKey(RespawnTimersTimer row) => row.ScheduledId;
@@ -28,6 +46,8 @@ namespace SpacetimeDB.Types
 
             internal RespawnTimersHandle(DbConnection conn) : base(conn)
             {
+                GameId = new(this);
+                Identity = new(this);
                 ScheduledId = new(this);
             }
 

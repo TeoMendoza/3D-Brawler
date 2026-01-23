@@ -59,7 +59,7 @@ pub fn handle_magician_death(ctx: &ReducerContext, magician: &mut Magician)
     
     if let Some(player) = player_option {
         let respawn_time = ctx.timestamp.checked_add(TimeDuration::from_micros(5_000_000)).expect("Respawn Timestamp Overflow");
-        let respawn_timer = RespawnTimersTimer { scheduled_id: 0, scheduled_at: ScheduleAt::Time(respawn_time), game_id: magician.game_id, player };
+        let respawn_timer = RespawnTimersTimer { scheduled_id: 0, scheduled_at: ScheduleAt::Time(respawn_time), game_id: magician.game_id, player: player, identity: magician.identity};
         ctx.db.respawn_timers().insert(respawn_timer);
     }
 
@@ -85,9 +85,29 @@ pub fn cleanup_on_disconnect_or_death(ctx: &ReducerContext, magician: &mut Magic
     }
 }
 
-pub fn cleanup_on_match_end(ctx: &ReducerContext, match_id: u32)
+pub fn cleanup_on_game_end(ctx: &ReducerContext, match_id: u32)
 {
-    // Delete All Players, Effects, Etc
+    let game_players_iterator = ctx.db.magician().game_id().filter(match_id);
+    let effects_iterator = ctx.db.player_effects().game_id().filter(match_id);
+    let respawns_iterator = ctx.db.respawn_timers().game_id().filter(match_id);
+
+    for magician in game_players_iterator {
+        ctx.db.magician().id().delete(magician.id);
+    }
+
+    for effect in effects_iterator {
+        ctx.db.player_effects().id().delete(effect.id);
+    }
+
+    for respawn in respawns_iterator {
+        ctx.db.respawn_timers().scheduled_id().delete(respawn.scheduled_id);
+    }
+
+    ctx.db.move_all_magicians().game_id().delete(match_id);
+    ctx.db.gravity_magician().game_id().delete(match_id);
+    ctx.db.handle_magician_timers_timer().game_id().delete(match_id);
+    ctx.db.handle_magician_stateless_timers_timer().game_id().delete(match_id);
+    ctx.db.player_effects_table_timer().game_id().delete(match_id);
 }
 
 

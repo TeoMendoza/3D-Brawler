@@ -18,6 +18,7 @@ public class MatchManager : MonoBehaviour
     public Dictionary<uint, MapPiece> MapPieces = new();
     public List<MapPiece> MapPrefabs;
     public bool Initalized = false;
+    public bool Started = false;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -30,6 +31,12 @@ public class MatchManager : MonoBehaviour
     {
         if (Initalized && GameId is null && Input.GetKeyDown(KeyCode.P))
             Conn.Reducers.TryJoinGame();
+        
+        if (Initalized && GameId is not null && Input.GetKeyDown(KeyCode.P)) {
+            Conn.Reducers.TryLeaveGame();
+            CleanupMatchManager();
+        }
+            
     }
 
     public void InitializeMatchManager()
@@ -37,6 +44,8 @@ public class MatchManager : MonoBehaviour
         Conn = GameManager.Conn;
         Conn.Db.Magician.OnInsert += AddNewCharacter;
         Conn.Db.Magician.OnDelete += RemoveCharacter;
+        Conn.Db.Game.OnUpdate += GameStart;
+        Conn.Db.Game.OnDelete += EndGame;
         Initalized = true;
     }
 
@@ -105,7 +114,21 @@ public class MatchManager : MonoBehaviour
         }
     }
 
-    public void EndMatch()
+    public void EndGame(EventContext context, Game EndedGame)
+    {
+        if (EndedGame.Id == GameId) {
+            CleanupMatchManager();
+        }
+    }
+
+    public void GameStart(EventContext context, Game oldGame, Game newGame)
+    {
+        if (newGame.Id == GameId && newGame.InProgress is true && oldGame.InProgress is false) {
+            Started = true;
+        }     
+    }
+
+    public void CleanupMatchManager()
     {
         var PlayerIdentities = Players.Keys.ToList();
         for (int Index = 0; Index < PlayerIdentities.Count; Index++)
@@ -118,6 +141,7 @@ public class MatchManager : MonoBehaviour
             Players.Remove(Identity);
         }
 
+        
         var MapPieceIds = MapPieces.Keys.ToList();
         for (int Index = 0; Index < MapPieceIds.Count; Index++)
         {
@@ -130,8 +154,8 @@ public class MatchManager : MonoBehaviour
         }
 
         GameId = null;
+        Started = false;
+
+        // Send Client To Lobby Screen Once Created
     }
-
-
-
 }

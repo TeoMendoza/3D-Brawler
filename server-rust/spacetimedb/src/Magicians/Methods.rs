@@ -299,7 +299,6 @@ pub fn try_perform_dust(ctx: &ReducerContext, magician: &mut Magician, dust_info
     for hit in hits {
         let dust_effect = create_dust_effect(2.0);
         let effects: Vec<Effect> = vec![dust_effect];
-
         add_effects_to_table(ctx, effects, hit.hit_entity_id, magician.id, magician.game_id);
     }
 }

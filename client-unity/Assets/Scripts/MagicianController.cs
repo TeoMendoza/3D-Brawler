@@ -333,7 +333,7 @@ public class MagicianController : MonoBehaviour
     public void LeaveToLobby()
     {
         if (IsOwner)
-            MatchManager.Instance.EndMatch(); 
+            MatchManager.Instance.CleanupMatchManager(); 
     }
 
     public void Delete()

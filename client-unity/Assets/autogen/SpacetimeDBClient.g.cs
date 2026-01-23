@@ -29,6 +29,7 @@ namespace SpacetimeDB.Types
         public RemoteTables(DbConnection conn)
         {
             AddTable(Game = new(conn));
+            AddTable(GameTimers = new(conn));
             AddTable(GravityMagician = new(conn));
             AddTable(HandleMagicianStatelessTimersTimer = new(conn));
             AddTable(HandleMagicianTimersTimer = new(conn));
@@ -605,6 +606,7 @@ namespace SpacetimeDB.Types
                 "connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
                 "disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
                 "handle_action_change_request_magician" => BSATNHelpers.Decode<Reducer.HandleActionChangeRequestMagician>(encodedArgs),
+                "handle_game_end" => BSATNHelpers.Decode<Reducer.HandleGameEnd>(encodedArgs),
                 "handle_magician_stateless_timers" => BSATNHelpers.Decode<Reducer.HandleMagicianStatelessTimers>(encodedArgs),
                 "handle_magician_timers" => BSATNHelpers.Decode<Reducer.HandleMagicianTimers>(encodedArgs),
                 "handle_movement_request_magician" => BSATNHelpers.Decode<Reducer.HandleMovementRequestMagician>(encodedArgs),
@@ -616,6 +618,7 @@ namespace SpacetimeDB.Types
                 "move_magicians_lag_test" => BSATNHelpers.Decode<Reducer.MoveMagiciansLagTest>(encodedArgs),
                 "remove_collision_entry_magician" => BSATNHelpers.Decode<Reducer.RemoveCollisionEntryMagician>(encodedArgs),
                 "try_join_game" => BSATNHelpers.Decode<Reducer.TryJoinGame>(encodedArgs),
+                "try_leave_game" => BSATNHelpers.Decode<Reducer.TryLeaveGame>(encodedArgs),
                 "" => throw new SpacetimeDBEmptyReducerNameException("Reducer name is empty"),
                 var reducer => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
@@ -646,6 +649,7 @@ namespace SpacetimeDB.Types
                 Reducer.Connect args => Reducers.InvokeConnect(eventContext, args),
                 Reducer.Disconnect args => Reducers.InvokeDisconnect(eventContext, args),
                 Reducer.HandleActionChangeRequestMagician args => Reducers.InvokeHandleActionChangeRequestMagician(eventContext, args),
+                Reducer.HandleGameEnd args => Reducers.InvokeHandleGameEnd(eventContext, args),
                 Reducer.HandleMagicianStatelessTimers args => Reducers.InvokeHandleMagicianStatelessTimers(eventContext, args),
                 Reducer.HandleMagicianTimers args => Reducers.InvokeHandleMagicianTimers(eventContext, args),
                 Reducer.HandleMovementRequestMagician args => Reducers.InvokeHandleMovementRequestMagician(eventContext, args),
@@ -657,6 +661,7 @@ namespace SpacetimeDB.Types
                 Reducer.MoveMagiciansLagTest args => Reducers.InvokeMoveMagiciansLagTest(eventContext, args),
                 Reducer.RemoveCollisionEntryMagician args => Reducers.InvokeRemoveCollisionEntryMagician(eventContext, args),
                 Reducer.TryJoinGame args => Reducers.InvokeTryJoinGame(eventContext, args),
+                Reducer.TryLeaveGame args => Reducers.InvokeTryLeaveGame(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
             };
         }
