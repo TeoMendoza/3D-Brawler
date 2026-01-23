@@ -330,7 +330,13 @@ public class MagicianController : MonoBehaviour
         }
     }
 
-    public void Delete(EventContext context)
+    public void LeaveToLobby()
+    {
+        if (IsOwner)
+            MatchManager.Instance.EndMatch(); 
+    }
+
+    public void Delete()
     {
         Destroy(gameObject);
     }

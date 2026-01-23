@@ -404,18 +404,20 @@ pub fn hypnotise(ctx: &ReducerContext, camera_info: HypnosisCameraInformation)
         (Some(last_target_id), Some(raycast_target_id)) if last_target_id == raycast_target_id => { } // Last Target Id And Raycast Target Id Are Both Not None And Are The Same Id Value
 
         (Some(last_target_id), Some(raycast_target_id)) => { // Last Target Id And Raycast Target Id Are Both Not None But Are Different Id Values
-            let mut stunned_magician = ctx.db.magician().id().find(last_target_id).expect("Stunned Magician Must Exist!");
-            let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, magician.id, EffectType::Stunned));
+            let stunned_magician_option = ctx.db.magician().id().find(last_target_id);
+            if let Some(mut stunned_magician) = stunned_magician_option {
+                let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, magician.id, EffectType::Stunned));
 
-            let stunned_effect = match (stunned_iterator.next(), stunned_iterator.next()) {
-                (None, _) => panic!("Stunned Iterator Should Have First Element!"),
-                (Some(effect), None) => effect,
-                (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
-            };
+                let stunned_effect = match (stunned_iterator.next(), stunned_iterator.next()) {
+                    (None, _) => panic!("Stunned Iterator Should Have First Element!"),
+                    (Some(effect), None) => effect,
+                    (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
+                };
 
-            undo_and_delete_stunned_effect_magician(ctx, &mut stunned_magician, stunned_effect.id);
-            ctx.db.magician().id().update(stunned_magician);
-
+                undo_and_delete_stunned_effect_magician(ctx, &mut stunned_magician, stunned_effect.id);
+                ctx.db.magician().id().update(stunned_magician); 
+            }
+            
             add_effects_to_table(ctx, vec![create_stunned_effect()], raycast_target_id, magician.id, magician.game_id);
             hypnosis_information.last_target_id = Some(raycast_target_id);
         }
@@ -426,18 +428,20 @@ pub fn hypnotise(ctx: &ReducerContext, camera_info: HypnosisCameraInformation)
         }
 
         (Some(last_target_id), None) => { // Last Target Id Has Id Value But Raycast Target Is None
-            let mut stunned_magician = ctx.db.magician().id().find(last_target_id).expect("Stunned Magician Must Exist!");
-            let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, magician.id, EffectType::Stunned));
+            let stunned_magician_option = ctx.db.magician().id().find(last_target_id);
+            if let Some(mut stunned_magician) = stunned_magician_option {
+                let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, magician.id, EffectType::Stunned));
 
-            let stunned_effect = match (stunned_iterator.next(), stunned_iterator.next()) {
-                (None, _) => panic!("Stunned Iterator Should Have First Element!"),
-                (Some(effect), None) => effect,
-                (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
-            };
+                let stunned_effect = match (stunned_iterator.next(), stunned_iterator.next()) {
+                    (None, _) => panic!("Stunned Iterator Should Have First Element!"),
+                    (Some(effect), None) => effect,
+                    (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
+                };
 
-            undo_and_delete_stunned_effect_magician(ctx, &mut stunned_magician, stunned_effect.id);
-            ctx.db.magician().id().update(stunned_magician);
-
+                undo_and_delete_stunned_effect_magician(ctx, &mut stunned_magician, stunned_effect.id);
+                ctx.db.magician().id().update(stunned_magician);
+            }
+            
             hypnosis_information.last_target_id = None;
         }
 

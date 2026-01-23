@@ -1,4 +1,4 @@
-use spacetimedb::{ReducerContext};
+use spacetimedb::{ReducerContext, Identity, Table, TimeDuration, ScheduleAt};
 use crate::*;
 
 pub fn is_permission_unblocked(entries: &[PermissionEntry], key: &str) -> bool
@@ -52,6 +52,20 @@ pub fn remove_subscriber(subscribers: &mut Vec<String>, reason: &str)
     }
 }
 
+pub fn handle_magician_death(ctx: &ReducerContext, magician: &mut Magician) 
+{
+    let player_option = ctx.db.logged_in_players().identity().find(magician.identity);
+    cleanup_on_disconnect_or_death(ctx, magician);
+    
+    if let Some(player) = player_option {
+        let respawn_time = ctx.timestamp.checked_add(TimeDuration::from_micros(5_000_000)).expect("Respawn Timestamp Overflow");
+        let respawn_timer = RespawnTimersTimer { scheduled_id: 0, scheduled_at: ScheduleAt::Time(respawn_time), game_id: magician.game_id, player };
+        ctx.db.respawn_timers().insert(respawn_timer);
+    }
+
+    ctx.db.magician().id().delete(magician.id);
+}
+
 pub fn cleanup_on_disconnect_or_death(ctx: &ReducerContext, magician: &mut Magician)
 {
     let collision_entry = CollisionEntry { entry_type: CollisionEntryType::Magician, id: magician.id };
@@ -71,7 +85,7 @@ pub fn cleanup_on_disconnect_or_death(ctx: &ReducerContext, magician: &mut Magic
     }
 }
 
-pub fn cleanup_on_match_end(ctx: &ReducerContext, match_id: u64)
+pub fn cleanup_on_match_end(ctx: &ReducerContext, match_id: u32)
 {
     // Delete All Players, Effects, Etc
 }

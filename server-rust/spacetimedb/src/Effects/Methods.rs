@@ -1,6 +1,11 @@
 use spacetimedb::{ReducerContext};
 use crate::*;
 
+
+// -------------------
+// Effect Applications
+// -------------------
+
 pub fn apply_damage_effect_magician(ctx: &ReducerContext, magician: &mut Magician, damage_effect: &Option<DamageEffectInformation>) 
 {
     log::info!("Apply Damage Effect Called");
@@ -41,7 +46,7 @@ pub fn apply_speed_effect_magician(ctx: &ReducerContext, target: &mut Magician, 
 
 pub fn apply_hypnosis_effect_magician(ctx: &ReducerContext, target: &mut Magician, hypnosis_effect: &Option<HypnosisEffectInformation>) 
 {
-    log::info!("Apply Hypnosis Effect Called On Magician With Id {}", target.id);
+    log::info!("Apply Hypnosis Effect Called");
     let _hypnosis = hypnosis_effect.as_ref().expect("Hypnosis Effect Must Have Information!");
     add_subscriber_to_permission(&mut target.permissions, "Hypnosised", "HypnosisEffect");
 }
@@ -62,6 +67,18 @@ pub fn apply_tarot_effect_magician(ctx: &ReducerContext, target: &mut Magician, 
     let _tarot = tarot_effect.as_ref().expect("Tarot Effect Must Have Information!");
     add_subscriber_to_permission(&mut target.permissions, "Taroted", "TarotEffect");
 }
+
+pub fn apply_invincible_effect_magician(ctx: &ReducerContext, target: &mut Magician, invincible_effect: &Option<InvincibleEffectInformation>) 
+{
+    log::info!("Apply Invincible Effect Called");
+    let _dust = invincible_effect.as_ref().expect("Invincible Effect Must Have Information!");
+    add_subscriber_to_permission(&mut target.permissions, "Invincibled", "InvincibleEffect");
+}
+
+
+// ---------------
+// Effect Removals
+// ---------------
 
 pub fn undo_dust_effect_magician(ctx: &ReducerContext, target: &mut Magician, dust_effect: &Option<DustEffectInformation>) 
 {
@@ -92,41 +109,19 @@ pub fn undo_hypnosis_effect_magician(ctx: &ReducerContext, target: &mut Magician
     remove_subscriber_from_permission(&mut target.permissions, "Hypnosised", "HypnosisEffect");
 
     if let Some(last_target_id) = hypnosis.last_target_id {
-        let mut stunned_magician = ctx.db.magician().id().find(last_target_id).expect("Hypnosis Last Target Magician Must Exist!"); // Not Necessarily True - Player Could Have Left - Unlikely But Handle That Case Later
-        let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, target.id, EffectType::Stunned));
-
-        let stunned_effect = match (stunned_iterator.next(), stunned_iterator.next()) {
-            (None, _) => panic!("Stunned Iterator Should Have First Element!"),
-            (Some(effect), None) => effect,
-            (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
+        let stunned_magician_option = ctx.db.magician().id().find(last_target_id); 
+        if let Some(mut stunned_magician) = stunned_magician_option {
+            let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, target.id, EffectType::Stunned));
+            let stunned_effect = match (stunned_iterator.next(), stunned_iterator.next()) {
+                (None, _) => panic!("Stunned Iterator Should Have First Element!"),
+                (Some(effect), None) => effect,
+                (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
         };
 
         undo_and_delete_stunned_effect_magician(ctx, &mut stunned_magician, stunned_effect.id);
         ctx.db.magician().id().update(stunned_magician);
+        }    
     }
-}
-
-pub fn undo_and_delete_stunned_effect_magician(ctx: &ReducerContext, target: &mut Magician, stunned_effect_id: u64)
-{
-    log::info!("Undo & Delete Stunned Effect Called");
-    remove_subscriber_from_permission(&mut target.permissions, "Stunned", "StunEffect");
-    target.state = MagicianState::Default;
-    ctx.db.player_effects().id().delete(stunned_effect_id);
-}
-
-pub fn undo_and_delete_cloak_effect_magician(ctx: &ReducerContext, target: &mut Magician, cloak_effect_id: u64)
-{
-    log::info!("Undo & Delete Cloak Effect Called");
-    remove_subscriber_from_permission(&mut target.permissions, "Cloaked", "CloakEffect");
-    ctx.db.player_effects().id().delete(cloak_effect_id);
-}
-
-pub fn undo_and_delete_speed_effect_magician(ctx: &ReducerContext, target: &mut Magician, speed_effect_id: u64)
-{
-    log::info!("Undo & Delete Speed Effect Called");
-    let combat_info = &mut target.combat_information;
-    combat_info.speed_multiplier = 1.0;
-    ctx.db.player_effects().id().delete(speed_effect_id);
 }
 
 pub fn undo_tarot_effect_magician(ctx: &ReducerContext, target: &mut Magician, tarot_effect: &Option<TarotEffectInformation>) 
@@ -135,6 +130,18 @@ pub fn undo_tarot_effect_magician(ctx: &ReducerContext, target: &mut Magician, t
     let _tarot = tarot_effect.as_ref().expect("Tarot Effect Must Have Information!");
     remove_subscriber_from_permission(&mut target.permissions, "Taroted", "TarotEffect");
 }
+
+pub fn undo_invincible_effect_magician(ctx: &ReducerContext, target: &mut Magician, invincible_effect: &Option<InvincibleEffectInformation>) 
+{
+    log::info!("Undo Invincible Effect Called");
+    let _dust = invincible_effect.as_ref().expect("Invincible Effect Must Have Information!");
+    remove_subscriber_from_permission(&mut target.permissions, "Invincibled", "InvincibleEffect");
+}
+
+
+// ---------------
+// Match Functions
+// ---------------
 
 pub fn match_and_apply_single_effect(ctx: &ReducerContext, target: &mut Magician, effect: &PlayerEffect) 
 {
@@ -157,6 +164,8 @@ pub fn match_and_apply_duration_effect(ctx: &ReducerContext, target: &mut Magici
         EffectType::Hypnosis => { apply_hypnosis_effect_magician(ctx, target, &effect.hypnosis_informaton ); }
 
         EffectType::Tarot => { apply_tarot_effect_magician(ctx, target, &effect.tarot_information); },
+
+        EffectType::Invincible => { apply_invincible_effect_magician(ctx, target, &effect.invincible_information); },
 
         _ => {}
     }
@@ -193,6 +202,8 @@ pub fn match_and_undo_duration_effect(ctx: &ReducerContext, target: &mut Magicia
 
         EffectType::Tarot => { undo_tarot_effect_magician(ctx, target, &effect.tarot_information); },
 
+        EffectType::Invincible => { undo_invincible_effect_magician(ctx, target, &effect.invincible_information); },
+
         _ => {}
     }
 }
@@ -204,14 +215,11 @@ pub fn match_and_undo_reapply_effect(ctx: &ReducerContext, target: &mut Magician
     }
 }
 
-pub fn match_and_undo_indefinite_effect(ctx: &ReducerContext) 
-{
-    // Match And Undo Indefinite Effects Is Empty 
-    // Indefinite Effects Must Be Manually Undone & Removed From Database From An Outward Source That Is Not The Scheduled Effect Reducer
-    // This Is Because They Have No Defined Time To Be Undone / Removed, It Is Dynamic And Depends On The Situation (Example: Stun Effect)
-    // Application Follows Normally, When Added To Table, Apply And Mark As Applied
-    // Removal / Undoing Is More Complicated - Depends On The Sender Themselves (Magician Ultimate) Because The Magician Looking At The Target Stuns Them, But It's Variable How Long The Magician Is Looking
-}
+
+// ------------------------------
+// Effect Interupption & Deletion
+// ------------------------------
+
 
 pub fn try_interrupt_cloak_and_speed_effects_magician(ctx: &ReducerContext, magician: &mut Magician)
 {
@@ -239,4 +247,47 @@ pub fn try_interrupt_cloak_and_speed_effects_magician(ctx: &ReducerContext, magi
     }
 }
 
+pub fn try_interrupt_invincible_effect_magician(ctx: &ReducerContext, magician: &mut Magician)
+{
+    let mut invincible_iterator = ctx.db.player_effects().target_sender_and_type().filter((magician.id, magician.id, EffectType::Invincible));
 
+    let invincible_effect_option = match (invincible_iterator.next(), invincible_iterator.next()) {
+        (None, _) => None,
+        (Some(effect), None) => Some(effect),
+        (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Cloak Effect At Most!"),
+    };
+
+    if let Some(invincible_effect) = invincible_effect_option {
+        undo_and_delete_invincible_effect_magician(ctx, magician, invincible_effect.id);
+    }
+}
+
+pub fn undo_and_delete_invincible_effect_magician(ctx: &ReducerContext, target: &mut Magician, invincible_effect_id: u64)
+{
+    log::info!("Undo & Delete Invincible Effect Called");
+    remove_subscriber_from_permission(&mut target.permissions, "Invincibled", "InvincibleEffect");
+    ctx.db.player_effects().id().delete(invincible_effect_id);
+}
+
+pub fn undo_and_delete_stunned_effect_magician(ctx: &ReducerContext, target: &mut Magician, stunned_effect_id: u64)
+{
+    log::info!("Undo & Delete Stunned Effect Called");
+    remove_subscriber_from_permission(&mut target.permissions, "Stunned", "StunEffect");
+    target.state = MagicianState::Default;
+    ctx.db.player_effects().id().delete(stunned_effect_id);
+}
+
+pub fn undo_and_delete_cloak_effect_magician(ctx: &ReducerContext, target: &mut Magician, cloak_effect_id: u64)
+{
+    log::info!("Undo & Delete Cloak Effect Called");
+    remove_subscriber_from_permission(&mut target.permissions, "Cloaked", "CloakEffect");
+    ctx.db.player_effects().id().delete(cloak_effect_id);
+}
+
+pub fn undo_and_delete_speed_effect_magician(ctx: &ReducerContext, target: &mut Magician, speed_effect_id: u64)
+{
+    log::info!("Undo & Delete Speed Effect Called");
+    let combat_info = &mut target.combat_information;
+    combat_info.speed_multiplier = 1.0;
+    ctx.db.player_effects().id().delete(speed_effect_id);
+}

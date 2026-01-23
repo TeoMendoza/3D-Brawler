@@ -19,7 +19,8 @@ pub struct PlayerEffect
     pub speed_information: Option<SpeedEffectInformation>,
     pub hypnosis_informaton: Option<HypnosisEffectInformation>,
     pub stunned_information: Option<StunnedEffectInformation>,
-    pub tarot_information: Option<TarotEffectInformation>
+    pub tarot_information: Option<TarotEffectInformation>,
+    pub invincible_information: Option<InvincibleEffectInformation>
 }
 
 #[table(name = player_effects_table_timer, scheduled(handle_player_effects_table))]

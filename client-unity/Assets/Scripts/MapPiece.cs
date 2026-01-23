@@ -10,9 +10,13 @@ public class MapPiece : MonoBehaviour
 {
     public string PieceName;
     public uint Id;
-
     public void Initialize(Map MapPiece)
     {
         Id = (uint)MapPiece.Id;
+    }
+
+    public void Delete()
+    {
+        Destroy(gameObject);
     }
 }

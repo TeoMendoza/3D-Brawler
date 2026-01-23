@@ -39,6 +39,8 @@ namespace SpacetimeDB.Types
         public StunnedEffectInformation? StunnedInformation;
         [DataMember(Name = "tarot_information")]
         public TarotEffectInformation? TarotInformation;
+        [DataMember(Name = "invincible_information")]
+        public InvincibleEffectInformation? InvincibleInformation;
 
         public PlayerEffect(
             ulong Id,
@@ -53,7 +55,8 @@ namespace SpacetimeDB.Types
             SpeedEffectInformation? SpeedInformation,
             HypnosisEffectInformation? HypnosisInformaton,
             StunnedEffectInformation? StunnedInformation,
-            TarotEffectInformation? TarotInformation
+            TarotEffectInformation? TarotInformation,
+            InvincibleEffectInformation? InvincibleInformation
         )
         {
             this.Id = Id;
@@ -69,6 +72,7 @@ namespace SpacetimeDB.Types
             this.HypnosisInformaton = HypnosisInformaton;
             this.StunnedInformation = StunnedInformation;
             this.TarotInformation = TarotInformation;
+            this.InvincibleInformation = InvincibleInformation;
         }
 
         public PlayerEffect()
