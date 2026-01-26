@@ -10,7 +10,8 @@ pub struct Effect {
     pub speed_information: Option<SpeedEffectInformation>,
     pub hypnosis_information: Option<HypnosisEffectInformation>,
     pub stunned_information: Option<StunnedEffectInformation>,
-    pub tarot_information: Option<TarotEffectInformation>
+    pub tarot_information: Option<TarotEffectInformation>,
+    pub invincible_information: Option<InvincibleEffectInformation>
 }
 
 #[derive(SpacetimeType, Clone)]
@@ -51,6 +52,9 @@ pub struct StunnedEffectInformation { }
 #[derive(SpacetimeType, Clone)]
 pub struct TarotEffectInformation { }
 
+#[derive(SpacetimeType, Clone)]
+pub struct InvincibleEffectInformation { }
+
 #[derive(SpacetimeType, PartialEq, Eq, Clone, Copy, Debug)]
 pub enum EffectType {
     Damage,
@@ -59,7 +63,8 @@ pub enum EffectType {
     Speed,
     Stunned,
     Hypnosis,
-    Tarot
+    Tarot,
+    Invincible
 }
 
 #[derive(SpacetimeType, Clone)]

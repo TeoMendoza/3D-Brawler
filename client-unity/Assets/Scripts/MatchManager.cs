@@ -11,12 +11,14 @@ using Unity.VisualScripting;
 public class MatchManager : MonoBehaviour
 {
     public static MatchManager Instance { get; private set; }
-    public uint? GameId = 1;
+    public uint? GameId = null;
     public DbConnection Conn;
     public Dictionary<Identity, MagicianController> Players = new();
     public MagicianController MagicianPrefab;
     public Dictionary<uint, MapPiece> MapPieces = new();
     public List<MapPiece> MapPrefabs;
+    public bool Initalized = false;
+    public bool Started = false;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -27,21 +29,31 @@ public class MatchManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        if (Initalized && GameId is null && Input.GetKeyDown(KeyCode.P))
+            Conn.Reducers.TryJoinGame();
+        
+        if (Initalized && GameId is not null && Input.GetKeyDown(KeyCode.P)) {
+            Conn.Reducers.TryLeaveGame();
+            CleanupMatchManager();
+        }
+            
     }
 
-    public void InitializeMatch(uint GameId)
+    public void InitializeMatchManager()
     {
-        this.GameId = GameId;
         Conn = GameManager.Conn;
         Conn.Db.Magician.OnInsert += AddNewCharacter;
         Conn.Db.Magician.OnDelete += RemoveCharacter;
-        Conn.Db.Map.OnInsert += AddMapPiece;
-        
-        // I'm Not Entirely Sure These Are Needed
+        Conn.Db.Game.OnUpdate += GameStart;
+        Conn.Db.Game.OnDelete += EndGame;
+        Initalized = true;
+    }
+
+    public void InitializeMatch()
+    {
         foreach (Magician Character in Conn.Db.Magician.Iter())
         {
-            if (Character.GameId == GameId)
+            if (Character.GameId == GameId && Players.ContainsKey(Character.Identity) is false)
             {
                 var prefab = Instantiate(MagicianPrefab);
                 prefab.Initalize(Character);
@@ -49,37 +61,39 @@ public class MatchManager : MonoBehaviour
             }
         }
 
-    }
-
-    public void EndMatch()
-    {
-        // Next Step Is To Destroy All Game Objects In Dictionary And Reset Values And Unsubscribe from DB Stuff
-    }
-
-    public void AddMapPiece(EventContext context, Map MapPiece)
-    {
-        MapPiece MatchingPrefab = default!;
-
-        for (int PrefabIndex = 0; PrefabIndex < MapPrefabs.Count; PrefabIndex++)
+        foreach (Map MapPiece in Conn.Db.Map.Iter())
         {
-            MapPiece CandidatePrefab = MapPrefabs[PrefabIndex];
-            if (CandidatePrefab != null && CandidatePrefab.PieceName == MapPiece.Name)
+            if (MapPieces.ContainsKey((uint)MapPiece.Id)) continue;
+
+            MapPiece MatchingPrefab = default!;
+
+            for (int PrefabIndex = 0; PrefabIndex < MapPrefabs.Count; PrefabIndex++)
             {
-                MatchingPrefab = CandidatePrefab;
-                break;
+                MapPiece CandidatePrefab = MapPrefabs[PrefabIndex];
+                if (CandidatePrefab != null && CandidatePrefab.PieceName == MapPiece.Name)
+                {
+                    MatchingPrefab = CandidatePrefab;
+                    break;
+                }
             }
+
+            if (MatchingPrefab == null) continue;
+
+            MapPiece Prefab = Instantiate(MatchingPrefab);
+            Prefab.Initialize(MapPiece);
+            MapPieces.Add((uint)MapPiece.Id, Prefab);
         }
-
-        if (MatchingPrefab == null) return;
-
-        MapPiece Prefab = Instantiate(MatchingPrefab);
-        Prefab.Initialize(MapPiece);
-        MapPieces.Add((uint)MapPiece.Id, Prefab);
     }
 
     public void AddNewCharacter(EventContext context, Magician Character)
     {
-        if (GameId is not null && Character.GameId == GameId)
+        if (Character.Identity == GameManager.LocalIdentity)
+        {
+            GameId = Character.GameId;
+            InitializeMatch();
+        }
+
+        if (GameId is not null && Character.GameId == GameId && Players.ContainsKey(Character.Identity) is false)
         {
             var prefab = Instantiate(MagicianPrefab);
             prefab.Initalize(Character);     
@@ -87,7 +101,6 @@ public class MatchManager : MonoBehaviour
         }
             
     }
-
     public void RemoveCharacter(EventContext context, Magician Character)
     {
         if (GameId is not null && Character.GameId == GameId)
@@ -95,10 +108,54 @@ public class MatchManager : MonoBehaviour
             Players.TryGetValue(Character.Identity, out var prefab);
             if (prefab != null)
             {
-                prefab.Delete(context);
+                prefab.Delete();
                 Players.Remove(Character.Identity);
             }
         }
+    }
 
+    public void EndGame(EventContext context, Game EndedGame)
+    {
+        if (EndedGame.Id == GameId) {
+            CleanupMatchManager();
+        }
+    }
+
+    public void GameStart(EventContext context, Game oldGame, Game newGame)
+    {
+        if (newGame.Id == GameId && newGame.InProgress is true && oldGame.InProgress is false) {
+            Started = true;
+        }     
+    }
+
+    public void CleanupMatchManager()
+    {
+        var PlayerIdentities = Players.Keys.ToList();
+        for (int Index = 0; Index < PlayerIdentities.Count; Index++)
+        {
+            var Identity = PlayerIdentities[Index];
+            if (Players.TryGetValue(Identity, out var Prefab) && Prefab != null)
+            {
+                Prefab.Delete();
+            }
+            Players.Remove(Identity);
+        }
+
+        
+        var MapPieceIds = MapPieces.Keys.ToList();
+        for (int Index = 0; Index < MapPieceIds.Count; Index++)
+        {
+            var MapPieceId = MapPieceIds[Index];
+            if (MapPieces.TryGetValue(MapPieceId, out var Prefab) && Prefab != null)
+            {
+                Prefab.Delete();
+            }
+            MapPieces.Remove(MapPieceId);
+        }
+
+        GameId = null;
+        Started = false;
+
+        // Send Client To Lobby Screen Once Created
     }
 }

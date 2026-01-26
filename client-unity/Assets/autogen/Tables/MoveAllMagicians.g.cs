@@ -17,6 +17,15 @@ namespace SpacetimeDB.Types
         {
             protected override string RemoteTableName => "move_all_magicians";
 
+            public sealed class GameIdUniqueIndex : UniqueIndexBase<uint>
+            {
+                protected override uint GetKey(MoveAllMagiciansTimer row) => row.GameId;
+
+                public GameIdUniqueIndex(MoveAllMagiciansHandle table) : base(table) { }
+            }
+
+            public readonly GameIdUniqueIndex GameId;
+
             public sealed class ScheduledIdUniqueIndex : UniqueIndexBase<ulong>
             {
                 protected override ulong GetKey(MoveAllMagiciansTimer row) => row.ScheduledId;
@@ -28,6 +37,7 @@ namespace SpacetimeDB.Types
 
             internal MoveAllMagiciansHandle(DbConnection conn) : base(conn)
             {
+                GameId = new(this);
                 ScheduledId = new(this);
             }
 

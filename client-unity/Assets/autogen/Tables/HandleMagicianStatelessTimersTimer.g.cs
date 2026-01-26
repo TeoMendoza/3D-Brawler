@@ -17,6 +17,15 @@ namespace SpacetimeDB.Types
         {
             protected override string RemoteTableName => "handle_magician_stateless_timers_timer";
 
+            public sealed class GameIdUniqueIndex : UniqueIndexBase<uint>
+            {
+                protected override uint GetKey(HandleMagicianStatelessTimersTimer row) => row.GameId;
+
+                public GameIdUniqueIndex(HandleMagicianStatelessTimersTimerHandle table) : base(table) { }
+            }
+
+            public readonly GameIdUniqueIndex GameId;
+
             public sealed class ScheduledIdUniqueIndex : UniqueIndexBase<ulong>
             {
                 protected override ulong GetKey(HandleMagicianStatelessTimersTimer row) => row.ScheduledId;
@@ -28,6 +37,7 @@ namespace SpacetimeDB.Types
 
             internal HandleMagicianStatelessTimersTimerHandle(DbConnection conn) : base(conn)
             {
+                GameId = new(this);
                 ScheduledId = new(this);
             }
 

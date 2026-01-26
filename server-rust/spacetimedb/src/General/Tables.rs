@@ -1,4 +1,5 @@
-use spacetimedb::{table, Identity};
+use spacetimedb::{Identity, ScheduleAt, table};
+use crate::*;
 
 #[table(name = logged_in_players, public)]
 #[table(name = logged_out_players)]
@@ -17,6 +18,22 @@ pub struct Game {
     pub id: u32,
     pub max_players: u32,
     pub current_players: u32,
-    #[index(btree)]
-    pub in_progress: bool
+    #[index(btree)] pub in_progress: bool
+}
+
+#[table(name = game_timers, scheduled(handle_game_end))]
+pub struct GameTimersTimer {
+    #[primary_key] #[auto_inc] pub scheduled_id: u64,
+    pub scheduled_at: ScheduleAt,
+    #[unique] pub game_id: u32,
+}
+
+
+#[table(name = respawn_timers, scheduled(handle_respawn))]
+pub struct RespawnTimersTimer {
+    #[primary_key] #[auto_inc] pub scheduled_id: u64,
+    pub scheduled_at: ScheduleAt,
+    #[index(btree)] pub game_id: u32,
+    pub player: Player,
+    #[unique] pub identity: Identity,
 }

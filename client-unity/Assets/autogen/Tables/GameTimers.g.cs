@@ -13,37 +13,37 @@ namespace SpacetimeDB.Types
 {
     public sealed partial class RemoteTables
     {
-        public sealed class PlayerEffectsTableTimerHandle : RemoteTableHandle<EventContext, PlayerEffectsTableTimer>
+        public sealed class GameTimersHandle : RemoteTableHandle<EventContext, GameTimersTimer>
         {
-            protected override string RemoteTableName => "player_effects_table_timer";
+            protected override string RemoteTableName => "game_timers";
 
             public sealed class GameIdUniqueIndex : UniqueIndexBase<uint>
             {
-                protected override uint GetKey(PlayerEffectsTableTimer row) => row.GameId;
+                protected override uint GetKey(GameTimersTimer row) => row.GameId;
 
-                public GameIdUniqueIndex(PlayerEffectsTableTimerHandle table) : base(table) { }
+                public GameIdUniqueIndex(GameTimersHandle table) : base(table) { }
             }
 
             public readonly GameIdUniqueIndex GameId;
 
             public sealed class ScheduledIdUniqueIndex : UniqueIndexBase<ulong>
             {
-                protected override ulong GetKey(PlayerEffectsTableTimer row) => row.ScheduledId;
+                protected override ulong GetKey(GameTimersTimer row) => row.ScheduledId;
 
-                public ScheduledIdUniqueIndex(PlayerEffectsTableTimerHandle table) : base(table) { }
+                public ScheduledIdUniqueIndex(GameTimersHandle table) : base(table) { }
             }
 
             public readonly ScheduledIdUniqueIndex ScheduledId;
 
-            internal PlayerEffectsTableTimerHandle(DbConnection conn) : base(conn)
+            internal GameTimersHandle(DbConnection conn) : base(conn)
             {
                 GameId = new(this);
                 ScheduledId = new(this);
             }
 
-            protected override object GetPrimaryKey(PlayerEffectsTableTimer row) => row.ScheduledId;
+            protected override object GetPrimaryKey(GameTimersTimer row) => row.ScheduledId;
         }
 
-        public readonly PlayerEffectsTableTimerHandle PlayerEffectsTableTimer;
+        public readonly GameTimersHandle GameTimers;
     }
 }
