@@ -22,21 +22,21 @@ pub fn apply_damage_effect_magician(ctx: &ReducerContext, magician: &mut Magicia
     }
 }
 
-pub fn apply_dust_effect_magician(ctx: &ReducerContext, target: &mut Magician, dust_effect: &Option<DustEffectInformation>) 
+pub fn apply_dust_effect_magician(_ctx: &ReducerContext, target: &mut Magician, dust_effect: &Option<DustEffectInformation>) 
 {
     log::info!("Apply Dust Effect Called");
     let _dust = dust_effect.as_ref().expect("Dust Effect Must Have Information!");
     add_subscriber_to_permission(&mut target.permissions, "Dusted", "DustEffect");
 }
 
-pub fn apply_cloak_effect_magician(ctx: &ReducerContext, target: &mut Magician, cloak_effect: &Option<CloakEffectInformation>) 
+pub fn apply_cloak_effect_magician(_ctx: &ReducerContext, target: &mut Magician, cloak_effect: &Option<CloakEffectInformation>) 
 {
     log::info!("Apply Cloak Effect Called");
     let _cloak = cloak_effect.as_ref().expect("Cloak Effect Must Have Information!");
     add_subscriber_to_permission(&mut target.permissions, "Cloaked", "CloakEffect");
 }
 
-pub fn apply_speed_effect_magician(ctx: &ReducerContext, target: &mut Magician, speed_effect: &Option<SpeedEffectInformation>) 
+pub fn apply_speed_effect_magician(_ctx: &ReducerContext, target: &mut Magician, speed_effect: &Option<SpeedEffectInformation>) 
 {
     log::info!("Apply Speed Effect Called");
     let speed = speed_effect.as_ref().expect("Speed Effect Must Have Information!");
@@ -44,7 +44,7 @@ pub fn apply_speed_effect_magician(ctx: &ReducerContext, target: &mut Magician, 
     combat_info.speed_multiplier = speed.speed_multiplier;
 }   
 
-pub fn apply_hypnosis_effect_magician(ctx: &ReducerContext, target: &mut Magician, hypnosis_effect: &Option<HypnosisEffectInformation>) 
+pub fn apply_hypnosis_effect_magician(_ctx: &ReducerContext, target: &mut Magician, hypnosis_effect: &Option<HypnosisEffectInformation>) 
 {
     log::info!("Apply Hypnosis Effect Called");
     let _hypnosis = hypnosis_effect.as_ref().expect("Hypnosis Effect Must Have Information!");
@@ -61,14 +61,14 @@ pub fn apply_stunned_effect_magician(ctx: &ReducerContext, target: &mut Magician
     target.state = MagicianState::Stunned;
 }
 
-pub fn apply_tarot_effect_magician(ctx: &ReducerContext, target: &mut Magician, tarot_effect: &Option<TarotEffectInformation>) 
+pub fn apply_tarot_effect_magician(_ctx: &ReducerContext, target: &mut Magician, tarot_effect: &Option<TarotEffectInformation>) 
 {
     log::info!("Apply Tarot Effect Called");
     let _tarot = tarot_effect.as_ref().expect("Tarot Effect Must Have Information!");
     add_subscriber_to_permission(&mut target.permissions, "Taroted", "TarotEffect");
 }
 
-pub fn apply_invincible_effect_magician(ctx: &ReducerContext, target: &mut Magician, invincible_effect: &Option<InvincibleEffectInformation>) 
+pub fn apply_invincible_effect_magician(_ctx: &ReducerContext, target: &mut Magician, invincible_effect: &Option<InvincibleEffectInformation>) 
 {
     log::info!("Apply Invincible Effect Called");
     let _dust = invincible_effect.as_ref().expect("Invincible Effect Must Have Information!");
@@ -80,21 +80,21 @@ pub fn apply_invincible_effect_magician(ctx: &ReducerContext, target: &mut Magic
 // Effect Removals
 // ---------------
 
-pub fn undo_dust_effect_magician(ctx: &ReducerContext, target: &mut Magician, dust_effect: &Option<DustEffectInformation>) 
+pub fn undo_dust_effect_magician(_ctx: &ReducerContext, target: &mut Magician, dust_effect: &Option<DustEffectInformation>) 
 {
     log::info!("Undo Dust Effect Called");
     let _dust = dust_effect.as_ref().expect("Dust Effect Must Have Information!");
     remove_subscriber_from_permission(&mut target.permissions, "Dusted", "DustEffect");
 }
 
-pub fn undo_cloak_effect_magician(ctx: &ReducerContext, target: &mut Magician, cloak_effect: &Option<CloakEffectInformation>) 
+pub fn undo_cloak_effect_magician(_ctx: &ReducerContext, target: &mut Magician, cloak_effect: &Option<CloakEffectInformation>) 
 {
     log::info!("Undo Cloak Effect Called");
     let _cloak = cloak_effect.as_ref().expect("Cloak Effect Must Have Information!");
     remove_subscriber_from_permission(&mut target.permissions, "Cloaked", "CloakEffect");
 }
 
-pub fn undo_speed_effect_magician(ctx: &ReducerContext, target: &mut Magician, speed_effect: &Option<SpeedEffectInformation>) 
+pub fn undo_speed_effect_magician(_ctx: &ReducerContext, target: &mut Magician, speed_effect: &Option<SpeedEffectInformation>) 
 {
     log::info!("Undo Speed Effect Called");
     let _speed = speed_effect.as_ref().expect("Speed Effect Must Have Information!");
@@ -126,14 +126,14 @@ pub fn undo_hypnosis_effect_magician(ctx: &ReducerContext, target: &mut Magician
     }
 }
 
-pub fn undo_tarot_effect_magician(ctx: &ReducerContext, target: &mut Magician, tarot_effect: &Option<TarotEffectInformation>) 
+pub fn undo_tarot_effect_magician(_ctx: &ReducerContext, target: &mut Magician, tarot_effect: &Option<TarotEffectInformation>) 
 {
     log::info!("Undo Tarot Effect Called");
     let _tarot = tarot_effect.as_ref().expect("Tarot Effect Must Have Information!");
     remove_subscriber_from_permission(&mut target.permissions, "Taroted", "TarotEffect");
 }
 
-pub fn undo_invincible_effect_magician(ctx: &ReducerContext, target: &mut Magician, invincible_effect: &Option<InvincibleEffectInformation>) 
+pub fn undo_invincible_effect_magician(_ctx: &ReducerContext, target: &mut Magician, invincible_effect: &Option<InvincibleEffectInformation>) 
 {
     log::info!("Undo Invincible Effect Called");
     let _dust = invincible_effect.as_ref().expect("Invincible Effect Must Have Information!");
@@ -173,7 +173,7 @@ pub fn match_and_apply_duration_effect(ctx: &ReducerContext, target: &mut Magici
     }
 }
 
-pub fn match_and_apply_reapply_effect(ctx: &ReducerContext, target: &mut Magician, effect: &PlayerEffect) 
+pub fn match_and_apply_reapply_effect(_ctx: &ReducerContext, _target: &mut Magician, effect: &PlayerEffect) 
 {
     match effect.effect_type {
         _ => {}
@@ -210,7 +210,7 @@ pub fn match_and_undo_duration_effect(ctx: &ReducerContext, target: &mut Magicia
     }
 }
 
-pub fn match_and_undo_reapply_effect(ctx: &ReducerContext, target: &mut Magician, effect: &PlayerEffect) 
+pub fn match_and_undo_reapply_effect(_ctx: &ReducerContext, _target: &mut Magician, effect: &PlayerEffect) 
 {
     match effect.effect_type {
         _ => {}

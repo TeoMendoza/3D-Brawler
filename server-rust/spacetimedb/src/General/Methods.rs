@@ -1,4 +1,4 @@
-use spacetimedb::{ReducerContext, Identity, Table, TimeDuration, ScheduleAt};
+use spacetimedb::{ReducerContext, Table, TimeDuration, ScheduleAt};
 use crate::*;
 
 pub fn is_permission_unblocked(entries: &[PermissionEntry], key: &str) -> bool

@@ -1,4 +1,4 @@
-use spacetimedb::{reducer, Identity, ReducerContext, Table};
+use spacetimedb::{reducer, Identity, ReducerContext};
 use crate::*;
 
 #[reducer]

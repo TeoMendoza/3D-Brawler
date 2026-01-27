@@ -349,7 +349,7 @@ pub fn try_hypnotise(ctx: &ReducerContext, magician: &mut Magician, camera_infor
     raycast
 }
 
-pub fn try_tarot(ctx: &ReducerContext, magician: &mut Magician)
+pub fn try_tarot(_ctx: &ReducerContext, magician: &mut Magician)
 {
     let throwing_cards = &mut magician.bullets;
     let throwing_cards_count = throwing_cards.len();
