@@ -1,1 +1,3 @@
-pub mod reducers;
+pub mod Reducers;
+
+pub use Reducers::*;
