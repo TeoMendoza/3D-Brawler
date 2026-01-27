@@ -617,6 +617,7 @@ namespace SpacetimeDB.Types
                 "move_magicians" => BSATNHelpers.Decode<Reducer.MoveMagicians>(encodedArgs),
                 "move_magicians_lag_test" => BSATNHelpers.Decode<Reducer.MoveMagiciansLagTest>(encodedArgs),
                 "remove_collision_entry_magician" => BSATNHelpers.Decode<Reducer.RemoveCollisionEntryMagician>(encodedArgs),
+                "test_smoke" => BSATNHelpers.Decode<Reducer.TestSmoke>(encodedArgs),
                 "try_join_game" => BSATNHelpers.Decode<Reducer.TryJoinGame>(encodedArgs),
                 "try_leave_game" => BSATNHelpers.Decode<Reducer.TryLeaveGame>(encodedArgs),
                 "" => throw new SpacetimeDBEmptyReducerNameException("Reducer name is empty"),
@@ -660,6 +661,7 @@ namespace SpacetimeDB.Types
                 Reducer.MoveMagicians args => Reducers.InvokeMoveMagicians(eventContext, args),
                 Reducer.MoveMagiciansLagTest args => Reducers.InvokeMoveMagiciansLagTest(eventContext, args),
                 Reducer.RemoveCollisionEntryMagician args => Reducers.InvokeRemoveCollisionEntryMagician(eventContext, args),
+                Reducer.TestSmoke args => Reducers.InvokeTestSmoke(eventContext, args),
                 Reducer.TryJoinGame args => Reducers.InvokeTryJoinGame(eventContext, args),
                 Reducer.TryLeaveGame args => Reducers.InvokeTryLeaveGame(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")
