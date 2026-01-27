@@ -10,23 +10,14 @@ pub fn init(ctx: &ReducerContext) {
     ctx.db.map().insert(Map {id: 0, name: "Ramp".to_string(), collider: ramp_collider() });
     ctx.db.map().insert(Map {id: 0, name: "Ramp2".to_string(), collider: ramp_2_collider() });
     ctx.db.map().insert(Map {id: 0, name: "Platform".to_string(), collider: platform_collider() });
-
-    let game = ctx.db.game().insert(Game {id: 0, max_players: 12, current_players: 1, in_progress: false });
-
-    let tick_millis: u64 = 1000 / 60;
-    let tick_rate: f32 = 1.0 / 60.0;
-
-    ctx.db.move_all_magicians().insert(MoveAllMagiciansTimer {scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: game.id });
-    ctx.db.handle_magician_timers_timer().insert(HandleMagicianTimersTimer {scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: game.id });
-    ctx.db.handle_magician_stateless_timers_timer().insert(HandleMagicianStatelessTimersTimer { scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: game.id });
-    ctx.db.gravity_magician().insert(GravityTimerMagician {scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, gravity: 20.0, game_id: game.id });
-    ctx.db.player_effects_table_timer().insert(PlayerEffectsTableTimer {scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: game.id });
-
-    create_test_player(ctx, game.id);
 }
 
 #[reducer(client_connected)]
 pub fn connect(ctx: &ReducerContext) {
+    if IsUnitTestModeEnabled(ctx) {
+        return;
+    }
+
     log::info!("{} just connected.", ctx.sender);
 
     let logged_out_player_option = ctx.db.logged_out_players().identity().find(ctx.sender);
@@ -45,6 +36,10 @@ pub fn connect(ctx: &ReducerContext) {
 
 #[reducer(client_disconnected)]
 pub fn disconnect(ctx: &ReducerContext) {
+    if IsUnitTestModeEnabled(ctx) {
+        return;
+    }
+
     let player = ctx.db.logged_in_players().identity().find(ctx.sender).expect("Player not found");
 
     let magician_option = ctx.db.magician().identity().find(ctx.sender);
@@ -102,7 +97,7 @@ pub fn try_join_game(ctx: &ReducerContext)
         let mut game: Game = match ctx.db.game().in_progress().filter(false).next() {
             Some(existing_game) => existing_game,
             None => {
-                let created_game = ctx.db.game().insert(Game { id: 0, max_players: 12, current_players: 0, in_progress: false });
+                let created_game = ctx.db.game().insert(Game { id: 0, max_players: 12, current_players: 1, in_progress: false });
                 let tick_millis: u64 = 1000 / 60;
                 let tick_rate: f32 = 1.0 / 60.0;
 
@@ -111,7 +106,8 @@ pub fn try_join_game(ctx: &ReducerContext)
                 ctx.db.handle_magician_stateless_timers_timer().insert(HandleMagicianStatelessTimersTimer { scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: created_game.id });
                 ctx.db.gravity_magician().insert(GravityTimerMagician { scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, gravity: 20.0, game_id: created_game.id });
                 ctx.db.player_effects_table_timer().insert(PlayerEffectsTableTimer {scheduled_id: 0, scheduled_at: ScheduleAt::Interval(Duration::from_millis(tick_millis).into()), tick_rate, game_id: created_game.id });
-
+                
+                create_test_player(ctx, created_game.id);
                 created_game
             }
         };

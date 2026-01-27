@@ -41,6 +41,7 @@ if [ ! -f "$UnitTestsScriptPath" ]; then
 fi
 
 IsServerUp() {
+  local HttpCode
   HttpCode="$(curl -s -o /dev/null -w "%{http_code}" "$LocalServerUrl/" || true)"
   [ "$HttpCode" != "000" ]
 }
@@ -52,71 +53,121 @@ if ! IsServerUp; then
   exit 1
 fi
 
-echo "Step 1: spacetime build"
-(
-  cd "$SpacetimeDbDirectory"
-  spacetime build
-)
+TempLogFile="$(mktemp)"
+cleanup() { rm -f "$TempLogFile"; }
+trap cleanup EXIT
 
-echo "Step 2: spacetime generate (C# bindings)"
-mkdir -p "$BindingsOutputDirectory"
-(
-  cd "$SpacetimeDbDirectory"
-  spacetime generate --lang csharp --out-dir "$BindingsOutputDirectory"
-)
+PrintBlankLine() { echo ""; }
+
+RunQuietInDir() {
+  local StepLabel="$1"
+  local WorkingDirectory="$2"
+  shift 2
+
+  echo "$StepLabel"
+  : > "$TempLogFile"
+  (
+    cd "$WorkingDirectory"
+    "$@" >"$TempLogFile" 2>&1
+  ) || {
+    PrintBlankLine
+    echo "Error: Step failed. Full output:"
+    echo "------------------------------------------------------------"
+    cat "$TempLogFile" || true
+    echo "------------------------------------------------------------"
+    exit 1
+  }
+}
 
 PublishDatabase() {
   local ServerNickname="$1"
   local TargetDatabaseName="$2"
 
-  (
-    cd "$SpacetimeDbDirectory"
-    if [ "$ServerNickname" = "maincloud" ]; then
+  if [ "$ServerNickname" = "maincloud" ]; then
+    RunQuietInDir "Publishing to MAINCLOUD DB '$TargetDatabaseName'..." "$SpacetimeDbDirectory" \
       spacetime publish --server "$ServerNickname" "$TargetDatabaseName" --delete-data
-    else
-      printf "y\n" | spacetime publish --server "$ServerNickname" "$TargetDatabaseName" --delete-data
-    fi
-  )
+  else
+    RunQuietInDir "Publishing to LOCAL DB '$TargetDatabaseName'..." "$SpacetimeDbDirectory" \
+      bash -lc "printf 'y\n' | spacetime publish --server '$ServerNickname' '$TargetDatabaseName' --delete-data"
+  fi
+
+  echo "  Published: $ServerNickname/$TargetDatabaseName"
 }
 
 DeleteDatabase() {
   local ServerNickname="$1"
   local TargetDatabaseName="$2"
 
-  (
-    cd "$SpacetimeDbDirectory"
-    printf "y\n" | spacetime delete --server "$ServerNickname" "$TargetDatabaseName"
-  )
+  RunQuietInDir "Deleting DB '$TargetDatabaseName' on '$ServerNickname'..." "$SpacetimeDbDirectory" \
+    bash -lc "printf 'y\n' | spacetime delete --server '$ServerNickname' '$TargetDatabaseName'"
+
+  echo "  Deleted: $ServerNickname/$TargetDatabaseName"
 }
 
 RunTestsAgainstDatabase() {
   local TargetDatabaseName="$1"
+  echo "Step 4: run unit/integration tests against '$TargetDatabaseName'"
   (
     export SpacetimeDatabaseName="$TargetDatabaseName"
     bash "$UnitTestsScriptPath"
   )
 }
 
+PrintBlankLine
+echo "Configuration"
+echo "  Repo: $RepoRootDirectory"
+echo "  Local server: $LocalServerUrl"
+echo "  Run unit tests: $RunUnitTests"
+echo "  Publish target: $(if [ "$UseMainCloud" = "true" ]; then echo "maincloud"; else echo "local"; fi)"
+echo "  Real DB name: $DatabaseName"
+if [ "$RunUnitTests" = "true" ]; then
+  echo "  Test DB name: $TestDatabaseName"
+fi
+PrintBlankLine
+
+echo "Step 1: spacetime build"
+RunQuietInDir "  Running..." "$SpacetimeDbDirectory" spacetime build
+echo "  Built"
+PrintBlankLine
+
+echo "Step 2: spacetime generate (C# bindings)"
+mkdir -p "$BindingsOutputDirectory"
+RunQuietInDir "  Running..." "$SpacetimeDbDirectory" \
+  spacetime generate --lang csharp --out-dir "$BindingsOutputDirectory"
+echo "  Generated bindings -> $BindingsOutputDirectory"
+PrintBlankLine
+
 if [ "$RunUnitTests" = "true" ]; then
   echo "Step 3: publish to temporary local test DB '$TestDatabaseName'"
   PublishDatabase "local" "$TestDatabaseName"
+  PrintBlankLine
 
   echo "Step 4: run unit/integration tests against '$TestDatabaseName'"
-  RunTestsAgainstDatabase "$TestDatabaseName"
+  (
+    export SpacetimeDatabaseName="$TestDatabaseName"
+    bash "$UnitTestsScriptPath"
+  )
+  PrintBlankLine
 
   echo "Step 5: delete temporary local test DB '$TestDatabaseName'"
   DeleteDatabase "local" "$TestDatabaseName"
+  PrintBlankLine
 
   if [ "$UseMainCloud" = "true" ]; then
     echo "Step 6: publish to MAINCLOUD real DB '$DatabaseName' (manual confirmation required)"
+    echo "  WARNING: This will destroy ALL data in MAINCLOUD DB '$DatabaseName'."
+    PrintBlankLine
     PublishDatabase "maincloud" "$DatabaseName"
   else
     echo "Step 6: publish to LOCAL real DB '$DatabaseName'"
     PublishDatabase "local" "$DatabaseName"
   fi
+  PrintBlankLine
 else
   echo "Step 3: publish to local DB '$DatabaseName'"
   PublishDatabase "local" "$DatabaseName"
+  PrintBlankLine
 fi
 
 echo "Done."
+PrintBlankLine
