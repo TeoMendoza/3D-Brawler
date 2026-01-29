@@ -21,63 +21,31 @@ namespace SpacetimeDB.Types
         public ulong SenderId;
         [DataMember(Name = "game_id")]
         public uint GameId;
+        [DataMember(Name = "effect_info")]
+        public Effect EffectInfo;
         [DataMember(Name = "effect_type")]
         public EffectType EffectType;
-        [DataMember(Name = "application_information")]
-        public ApplicationInformation ApplicationInformation;
-        [DataMember(Name = "damage_information")]
-        public DamageEffectInformation? DamageInformation;
-        [DataMember(Name = "cloak_information")]
-        public CloakEffectInformation? CloakInformation;
-        [DataMember(Name = "dust_information")]
-        public DustEffectInformation? DustInformation;
-        [DataMember(Name = "speed_information")]
-        public SpeedEffectInformation? SpeedInformation;
-        [DataMember(Name = "hypnosis_informaton")]
-        public HypnosisEffectInformation? HypnosisInformaton;
-        [DataMember(Name = "stunned_information")]
-        public StunnedEffectInformation? StunnedInformation;
-        [DataMember(Name = "tarot_information")]
-        public TarotEffectInformation? TarotInformation;
-        [DataMember(Name = "invincible_information")]
-        public InvincibleEffectInformation? InvincibleInformation;
 
         public PlayerEffect(
             ulong Id,
             ulong TargetId,
             ulong SenderId,
             uint GameId,
-            EffectType EffectType,
-            ApplicationInformation ApplicationInformation,
-            DamageEffectInformation? DamageInformation,
-            CloakEffectInformation? CloakInformation,
-            DustEffectInformation? DustInformation,
-            SpeedEffectInformation? SpeedInformation,
-            HypnosisEffectInformation? HypnosisInformaton,
-            StunnedEffectInformation? StunnedInformation,
-            TarotEffectInformation? TarotInformation,
-            InvincibleEffectInformation? InvincibleInformation
+            Effect EffectInfo,
+            EffectType EffectType
         )
         {
             this.Id = Id;
             this.TargetId = TargetId;
             this.SenderId = SenderId;
             this.GameId = GameId;
+            this.EffectInfo = EffectInfo;
             this.EffectType = EffectType;
-            this.ApplicationInformation = ApplicationInformation;
-            this.DamageInformation = DamageInformation;
-            this.CloakInformation = CloakInformation;
-            this.DustInformation = DustInformation;
-            this.SpeedInformation = SpeedInformation;
-            this.HypnosisInformaton = HypnosisInformaton;
-            this.StunnedInformation = StunnedInformation;
-            this.TarotInformation = TarotInformation;
-            this.InvincibleInformation = InvincibleInformation;
         }
 
         public PlayerEffect()
         {
-            this.ApplicationInformation = new();
+            this.EffectInfo = new();
         }
     }
 }

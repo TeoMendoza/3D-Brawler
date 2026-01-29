@@ -45,7 +45,7 @@ public static partial class Module
             identity = new Identity(),
             Id = 10000,
             Name = "Test Magician",
-            MatchId = Match.Id,
+            GameId = Match.Id,
             Position = new DbVector3 { x = 0f, y = 0f, z = 5f},
             Rotation = new DbRotation2 { Yaw = 180, Pitch = 0 },
             Velocity = new DbVector3 { x = 0, y = 0, z = 0f},

@@ -1,7 +1,7 @@
 use spacetimedb::{ReducerContext, Table, Identity};
 use crate::*;
 
-pub fn create_magician(config: MagicianConfig) -> Magician 
+pub fn create_magician(config: MagicianConfig) -> Magician // Creates new magician and returns - Does not insert on it's own
 {
     let player = config.player;
     let game_id = config.game_id;
@@ -24,7 +24,7 @@ pub fn create_magician(config: MagicianConfig) -> Magician
         velocity: DbVector3 { x: 0.0, y: 0.0, z: 0.0 },
         corrected_velocity: DbVector3 { x: 0.0, y: 0.0, z: 0.0 },
         collider: MagicianIdleCollider(),
-        collision_entries: vec![CollisionEntry { entry_type: CollisionEntryType::Map, id: 1 }],
+        collision_entries: vec![CollisionEntry { entry_type: CollisionEntryType::Map, id: 1 }], // Auto registers floor as collision entry
         is_colliding: false,
         state: MagicianState::Default,
         kinematic_information: KinematicInformation { jump: false, falling: false, crouched: false, grounded: false, sprinting: false },
@@ -66,14 +66,14 @@ pub fn create_magician(config: MagicianConfig) -> Magician
     magician
 }
 
-pub fn create_throwing_card() -> ThrowingCard 
+pub fn create_throwing_card() -> ThrowingCard // Creates a throwing card (bullet) with damage effect
 {
     let damage_effect = create_damage_effect(25.0, 1.0);
     let effects: Vec<Effect> = vec![damage_effect];
     ThrowingCard { effects: effects }
 }
 
-pub fn create_damage_effect(base_damage: f32, multiplier: f32) -> Effect
+pub fn create_damage_effect(base_damage: f32, multiplier: f32) -> Effect // Creates a damage effect - Application Type: Single
 {
     let application_information = ApplicationInformation { application_type: ApplicationType::Single, current_time: None, end_time: None, reapply_time: None, current_reapply_time: None, applied: None};
     let damage_information = DamageEffectInformation { base_damage: base_damage, damage_multiplier: multiplier };
@@ -82,7 +82,7 @@ pub fn create_damage_effect(base_damage: f32, multiplier: f32) -> Effect
     damage
 }
 
-pub fn create_cloak_effect(duration: f32) -> Effect 
+pub fn create_cloak_effect(duration: f32) -> Effect // Creates a cloak effect - Application Type: Duration
 {
     let application_information = ApplicationInformation {application_type: ApplicationType::Duration, current_time: Some(0.0), end_time: Some(duration), reapply_time: None, current_reapply_time: None, applied: None};
     let cloak_information = CloakEffectInformation { };
@@ -91,7 +91,7 @@ pub fn create_cloak_effect(duration: f32) -> Effect
     cloak
 }
 
-pub fn create_speed_multiplier_effect(multiplier: f32, duration: f32) -> Effect 
+pub fn create_speed_multiplier_effect(multiplier: f32, duration: f32) -> Effect // Creates a speed effect - Application Type: Duration
 {
     let application_information = ApplicationInformation { application_type: ApplicationType::Duration, current_time: Some(0.0), end_time: Some(duration), reapply_time: None, current_reapply_time: None, applied: None};
     let speed_information = SpeedEffectInformation { speed_multiplier: multiplier };
@@ -100,7 +100,7 @@ pub fn create_speed_multiplier_effect(multiplier: f32, duration: f32) -> Effect
     speed
 }
 
-pub fn create_dust_effect(duration: f32) -> Effect 
+pub fn create_dust_effect(duration: f32) -> Effect // Creates a dust effect - Application Type: Duration
 {
     let application_information = ApplicationInformation { application_type: ApplicationType::Duration, current_time: Some(0.0), end_time: Some(duration), reapply_time: None, current_reapply_time: None, applied: None};
     let dust_information = DustEffectInformation {};
@@ -109,7 +109,7 @@ pub fn create_dust_effect(duration: f32) -> Effect
     dust
 }
 
-pub fn create_hypnosis_effect(duration: f32) -> Effect 
+pub fn create_hypnosis_effect(duration: f32) -> Effect // Creates a hypnosis effect - Application Type: Duration
 {
     let application_information = ApplicationInformation { application_type: ApplicationType::Duration, current_time: Some(0.0), end_time: Some(duration), reapply_time: None, current_reapply_time: None, applied: None};
     let hypnonsis_information = HypnosisEffectInformation { last_target_id: None };
@@ -118,7 +118,7 @@ pub fn create_hypnosis_effect(duration: f32) -> Effect
     hypnosis
 }
 
-pub fn create_stunned_effect() -> Effect 
+pub fn create_stunned_effect() -> Effect // Creates a stun effect - Application Type: Indefinite
 {
     let application_information = ApplicationInformation { application_type: ApplicationType::Indefinite, current_time: None, end_time: None, reapply_time: None, current_reapply_time: None, applied: Some(false)};
     let stunned_information = StunnedEffectInformation { };
@@ -127,7 +127,7 @@ pub fn create_stunned_effect() -> Effect
     stunned
 }
 
-pub fn create_tarot_effect(duration: f32) -> Effect 
+pub fn create_tarot_effect(duration: f32) -> Effect // Creates a tarot effect - Application Type: Duration
 {
     let application_information = ApplicationInformation { application_type: ApplicationType::Duration, current_time: Some(0.0), end_time: Some(duration), reapply_time: None, current_reapply_time: None, applied: None};
     let tarot_information = TarotEffectInformation { };
@@ -136,7 +136,7 @@ pub fn create_tarot_effect(duration: f32) -> Effect
     tarot
 }
 
-pub fn create_invicible_effect(duration: f32) -> Effect 
+pub fn create_invincible_effect(duration: f32) -> Effect // Creates an invincible effect - Application Type: Duration
 {
     let application_information = ApplicationInformation { application_type: ApplicationType::Duration, current_time: Some(0.0), end_time: Some(duration), reapply_time: None, current_reapply_time: None, applied: None};
     let invincible_information = InvincibleEffectInformation { };
@@ -145,7 +145,7 @@ pub fn create_invicible_effect(duration: f32) -> Effect
     invincible
 }
 
-pub fn create_test_player(ctx: &ReducerContext, game_id: u32) 
+pub fn create_test_player(ctx: &ReducerContext, game_id: u32) // Creates new test magician and returns - Inserts on it's own - Magician not controlled by anyone and does not move
 {
     let test_identity = Identity::default();
 

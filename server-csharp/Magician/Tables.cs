@@ -4,7 +4,6 @@ using SpacetimeDB;
 public static partial class Module
 {
     [Table(Name = "magician", Public = true)]
-    [SpacetimeDB.Index.BTree(Name = "SameMatchPlayers", Columns = [nameof(MatchId), nameof(Id)])]
     public partial struct Magician
     {
         [PrimaryKey]
@@ -15,7 +14,7 @@ public static partial class Module
         public string Name;
 
         [SpacetimeDB.Index.BTree(Name = "MatchId")]
-        public uint MatchId;
+        public uint GameId;
         public DbVector3 Position;
         public DbRotation2 Rotation;
         public DbVector3 Velocity;

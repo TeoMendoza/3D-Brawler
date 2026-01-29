@@ -2,22 +2,25 @@ use spacetimedb::{reducer, Identity, ReducerContext};
 use crate::*;
 
 #[reducer]
-pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementRequest) 
+pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementRequest) // Handles player request for movement and looking
 {
-    let mut character = ctx.db.magician().identity().find(ctx.sender).expect("Magician To Move Not Found");
+    let magician_option = ctx.db.magician().identity().find(ctx.sender);
+    if magician_option.is_none() { return; }
+    let mut magician = magician_option.unwrap();
 
-    character.rotation = request.aim;
-    character.velocity = DbVector3 { x: 0.0, y: character.velocity.y, z: 0.0 };
-    character.kinematic_information.jump = false;
-    let speed_mutiplier = character.combat_information.speed_multiplier;
-    let stunned = is_permission_unblocked(&character.permissions, "Stunned") == false;
-    let taroted = is_permission_unblocked(&character.permissions, "Taroted") == false;
+    magician.rotation = request.aim;
+    magician.velocity = DbVector3 { x: 0.0, y: magician.velocity.y, z: 0.0 }; // Y velocity processed in gravity reducer
+    magician.kinematic_information.jump = false;
 
-    if is_permission_unblocked(&character.permissions, "CanWalk") && stunned == false {
+    let speed_mutiplier = magician.combat_information.speed_multiplier;
+    let stunned = is_permission_unblocked(&magician.permissions, "Stunned") == false;
+    let taroted = is_permission_unblocked(&magician.permissions, "Taroted") == false;
+
+    if is_permission_unblocked(&magician.permissions, "CanWalk") && stunned == false {
         let mut local_x: f32 = 0.0;
         let mut local_z: f32 = 0.0;
 
-        if request.move_forward && !request.move_backward {
+        if request.move_forward && !request.move_backward { // Opposite direction requests cancel
             local_z = 2.0;
         } 
         
@@ -33,82 +36,85 @@ pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementR
             local_x = -2.0;
         }
 
-        if is_permission_unblocked(&character.permissions, "CanRun") && request.sprint && request.move_forward && !request.move_backward{
+        if is_permission_unblocked(&magician.permissions, "CanRun") && request.sprint && request.move_forward && !request.move_backward { // Stronger forward sprint - No backward sprint currently
             local_z *= 2.5;
         }
 
-        if is_permission_unblocked(&character.permissions, "CanRun") && request.sprint {
+        if is_permission_unblocked(&magician.permissions, "CanRun") && request.sprint { // Weaker sideways sprint
             local_x *= 1.5;
         }
 
-        let yaw_radians: f32 = to_radians(character.rotation.yaw);
+        let yaw_radians: f32 = to_radians(magician.rotation.yaw);
         let cos_yaw: f32 = yaw_radians.cos();
         let sin_yaw: f32 = yaw_radians.sin();
 
         let world_x: f32 = cos_yaw * local_x + sin_yaw * local_z;
         let world_z: f32 = -sin_yaw * local_x + cos_yaw * local_z;
 
-        character.velocity = DbVector3 { x: world_x, y: character.velocity.y, z: world_z };
+        magician.velocity = DbVector3 { x: world_x, y: magician.velocity.y, z: world_z }; // Converts where player is looking into properly adjusted world speeds
     }
 
-    if is_permission_unblocked(&character.permissions, "CanJump") && request.jump && stunned == false {
-        character.kinematic_information.jump = true;
-        character.velocity.y = 7.5;
+    if is_permission_unblocked(&magician.permissions, "CanJump") && request.jump && stunned == false {
+        magician.kinematic_information.jump = true;
+        magician.velocity.y = 7.5;
     }
 
-    if is_permission_unblocked(&character.permissions, "CanCrouch") && request.crouch && stunned == false {
-        character.velocity = DbVector3 { x: character.velocity.x * 0.5, y: character.velocity.y, z: character.velocity.z * 0.5 };
-        character.kinematic_information.crouched = true;
-        add_subscriber_to_permission(&mut character.permissions, "CanRun", "Crouch");
+    if is_permission_unblocked(&magician.permissions, "CanCrouch") && request.crouch && stunned == false {
+        magician.velocity = DbVector3 { x: magician.velocity.x * 0.5, y: magician.velocity.y, z: magician.velocity.z * 0.5 };
+        magician.kinematic_information.crouched = true;
+        add_subscriber_to_permission(&mut magician.permissions, "CanRun", "Crouch"); // Can't sprint while crouching
     }
 
-    if !request.crouch || stunned == true {
-        character.kinematic_information.crouched = false;
-        remove_subscriber_from_permission(&mut character.permissions, "CanRun", "Crouch");
+    if !request.crouch || stunned == true { // Resets crouch if stunned
+        magician.kinematic_information.crouched = false;
+        remove_subscriber_from_permission(&mut magician.permissions, "CanRun", "Crouch"); // Sprint permission block removed
     }
 
-    character.velocity = if taroted { DbVector3 { x: character.velocity.x * speed_mutiplier * -1.0, y: character.velocity.y, z: character.velocity.z * speed_mutiplier -1.0 } } else { DbVector3 { x: character.velocity.x * speed_mutiplier, y: character.velocity.y, z: character.velocity.z * speed_mutiplier } };
-    ctx.db.magician().identity().update(character);
+    magician.velocity = if taroted { DbVector3 { x: magician.velocity.x * speed_mutiplier * -1.0, y: magician.velocity.y, z: magician.velocity.z * speed_mutiplier -1.0 } } else { DbVector3 { x: magician.velocity.x * speed_mutiplier, y: magician.velocity.y, z: magician.velocity.z * speed_mutiplier } }; // Reverses movement if taroted
+    ctx.db.magician().identity().update(magician);
 }
 
 #[reducer]
-pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: ActionRequestMagician) 
+pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: ActionRequestMagician) // Handles player request for action state - State cases: full block, interuptable, interuptable with cooldown
 {
-    let mut magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician Not Found");
-    let stunned = is_permission_unblocked(&magician.permissions, "Stunned") == false;
+    let magician_option = ctx.db.magician().identity().find(ctx.sender);
+    if magician_option.is_none() { return; }
+    let mut magician = magician_option.unwrap();
+
+    let stunned = is_permission_unblocked(&magician.permissions, "Stunned") == false; // Prevents actions from being taken if stunned
     let old_state: MagicianState = magician.state;
 
-    if request.state == MagicianState::Attack && is_permission_unblocked(&magician.permissions, "CanAttack") && magician.bullets.len() > 0 && stunned == false {
+    if request.state == MagicianState::Attack && is_permission_unblocked(&magician.permissions, "CanAttack") && magician.bullets.len() > 0 && stunned == false { // Case: full block
         magician.state = MagicianState::Attack;
         add_subscriber_to_permission(&mut magician.permissions, "CanAttack", "Attack");
         add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Attack");
         add_subscriber_to_permission(&mut magician.permissions, "CanDust", "Attack");
         add_subscriber_to_permission(&mut magician.permissions, "CanCloak", "Attack");
         add_subscriber_to_permission(&mut magician.permissions, "CanHypnosis", "Attack");
-        try_perform_attack(ctx, &mut magician, request.attack_information);
+        try_perform_attack(ctx, &mut magician, request.attack_information); // Attack performed at request
     } 
     
-    else if request.state == MagicianState::Reload && is_permission_unblocked(&magician.permissions, "CanReload") && (magician.bullets.len() as i32) < magician.bullet_capacity && stunned == false {
+    else if request.state == MagicianState::Reload && is_permission_unblocked(&magician.permissions, "CanReload") && (magician.bullets.len() as i32) < magician.bullet_capacity && stunned == false { // Case: interuptable
         magician.state = MagicianState::Reload;
         add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Reload");
     }
 
-    else if request.state == MagicianState::Dust && is_permission_unblocked(&magician.permissions, "CanDust") && stunned == false {
+    else if request.state == MagicianState::Dust && is_permission_unblocked(&magician.permissions, "CanDust") && stunned == false { // Case: full block
         magician.state = MagicianState::Dust;
         add_subscriber_to_permission(&mut magician.permissions, "CanDust", "Dust");
         add_subscriber_to_permission(&mut magician.permissions, "CanAttack", "Dust");
         add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Dust");
         add_subscriber_to_permission(&mut magician.permissions, "CanCloak", "Dust");
         add_subscriber_to_permission(&mut magician.permissions, "CanHypnosis", "Dust");
-        try_perform_dust(ctx, &mut magician, request.dust_information)
+        try_perform_dust(ctx, &mut magician, request.dust_information) // Dust performed at request
     }
     
-    else if request.state == MagicianState::Cloak && is_permission_unblocked(&magician.permissions, "CanCloak") && stunned == false {
+    else if request.state == MagicianState::Cloak && is_permission_unblocked(&magician.permissions, "CanCloak") && stunned == false { // Case: interruptable with cooldown
         magician.state = MagicianState::Cloak;
         add_subscriber_to_permission(&mut magician.permissions, "CanCloak", "Cloak");
     }
 
-    else if request.state == MagicianState::Hypnosis && is_permission_unblocked(&magician.permissions, "CanHypnosis") && stunned == false {
+    else if request.state == MagicianState::Hypnosis && is_permission_unblocked(&magician.permissions, "CanHypnosis") && stunned == false { // Case: full block
         magician.state = MagicianState::Hypnosis;
         add_subscriber_to_permission(&mut magician.permissions, "CanHypnosis", "Hypnosis");
         add_subscriber_to_permission(&mut magician.permissions, "CanDust", "Hypnosis");
@@ -118,21 +124,21 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
     }
 
     if old_state != magician.state {
-        adjust_timer_for_interruptable_state(&mut magician, old_state);
+        adjust_timer_for_interruptable_state(&mut magician, old_state); // Adjusts timer according to type of state
         match old_state {
-            MagicianState::Reload => { remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Reload"); }
+            MagicianState::Reload => { remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Reload"); } // Reload always available after interrupt (Case: interruptable)
 
-            MagicianState::Cloak => { }
+            MagicianState::Cloak => { } // Cloak not avaialable after interrupt due to cooldown (Case: interruptable with cooldown)
 
             _ => {}
         }
     }
 
-    if magician.state != MagicianState::Default && magician.state != MagicianState::Reload && magician.state != MagicianState::Cloak && magician.state != MagicianState::Stunned {
+    if magician.state != MagicianState::Default && magician.state != MagicianState::Reload && magician.state != MagicianState::Cloak && magician.state != MagicianState::Stunned { // If magician takes offensive action, cloak effects if existing are interrupted
         try_interrupt_cloak_and_speed_effects_magician(ctx, &mut magician);
     }
 
-    if magician.state != MagicianState::Default {
+    if magician.state != MagicianState::Default { // If magician takes any action, invincible effect if existing is interrupted
         try_interrupt_invincible_effect_magician(ctx, &mut magician);
     }
 
@@ -140,19 +146,22 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
 }
 
 #[reducer]
-pub fn handle_stateless_action_request_magician(ctx: &ReducerContext, request: StatelessActionRequestMagician) 
+pub fn handle_stateless_action_request_magician(ctx: &ReducerContext, request: StatelessActionRequestMagician) // Handles player request for state that does not have a consume/use time
 {
-    let mut magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician Not Found");
+    let magician_option = ctx.db.magician().identity().find(ctx.sender);
+    if magician_option.is_none() { return; }
+    let mut magician = magician_option.unwrap();
+
     let stunned = is_permission_unblocked(&magician.permissions, "Stunned") == false;
     let mut took_stateless_action = false;
 
-    if request.action == MagicianStatelessAction::Tarot && is_permission_unblocked(&magician.permissions, "CanTarot") && stunned == false {
+    if request.action == MagicianStatelessAction::Tarot && is_permission_unblocked(&magician.permissions, "CanTarot") && stunned == false { // Stateless actions still have cooldowns - Handled within the ability method itself
         try_tarot(ctx, &mut magician);
         add_subscriber_to_permission(&mut magician.permissions, "CanTarot", "Tarot");
         took_stateless_action = true;
     }
 
-    if took_stateless_action {
+    if took_stateless_action { // If magician takes any stateless action, invincible effect if existing is interrupted
         try_interrupt_invincible_effect_magician(ctx, &mut magician);
     }
 
@@ -160,19 +169,19 @@ pub fn handle_stateless_action_request_magician(ctx: &ReducerContext, request: S
 }
 
 #[reducer]
-pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersTimer) {
+pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersTimer) { // Handles timers for magician action states - Cases: active state, inactive state
     let time: f32 = timer.tick_rate;
     for mut magician in ctx.db.magician().game_id().filter(timer.game_id) {
-        match magician.state {
+        match magician.state { // Case: active state
             MagicianState::Attack => {
-                if tick_active_timer_and_check_expired(&mut magician, "Attack", time) {
-                    if magician.bullets.len() > 0 {
+                if tick_active_timer_and_check_expired(&mut magician, "Attack", time) { // Checks if consume/use time is over, resets permissions and state accordingly
+                    if magician.bullets.len() > 0 { // Switches to reload state automatically if no bullets
                         magician.state = MagicianState::Default;
                     } 
                     
                     else {
                         magician.state = MagicianState::Reload;
-                        add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Reload"); // Add To Every Other State To Ensure Transition Back To Reload If Necessary
+                        add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Reload"); // Add To Every Other State To Ensure Transition Back To Reload (WIP)
                     }
 
                     remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Attack");
@@ -183,14 +192,14 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
             }
 
             MagicianState::Reload => {  
-                if tick_active_timer_and_check_expired(&mut magician, "Reload", time) {
+                if tick_active_timer_and_check_expired(&mut magician, "Reload", time) { // Checks if consume/use time is over, resets permissions and state accordingly
                     magician.state = MagicianState::Default;
-                    try_reload(ctx, &mut magician);
+                    try_reload(ctx, &mut magician); // Reload performed at end of use time
                 }
             }
 
             MagicianState::Dust => {
-                if tick_active_timer_and_check_expired(&mut magician, "Dust", time) {
+                if tick_active_timer_and_check_expired(&mut magician, "Dust", time) { // Checks if consume/use time is over, resets permissions and state accordingly
                     magician.state = MagicianState::Default;
                     remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Dust");
                     remove_subscriber_from_permission(&mut magician.permissions, "CanAttack", "Dust");
@@ -200,29 +209,29 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
             }
 
             MagicianState::Cloak => {
-                if tick_active_timer_and_check_expired(&mut magician, "Cloak", time) {
+                if tick_active_timer_and_check_expired(&mut magician, "Cloak", time) { // Checks if consume/use time is over, resets permissions and state accordingly
                     magician.state = MagicianState::Default;
-                    try_cloak(ctx, &mut magician);
+                    try_cloak(ctx, &mut magician); // Cloak performed at end of use time - Ensures grace period for preventing cloak effect interruption
                 }
             }
 
             MagicianState::Hypnosis => {
-                if tick_active_timer_and_check_expired(&mut magician, "Hypnosis", time) {
+                if tick_active_timer_and_check_expired(&mut magician, "Hypnosis", time) { // Checks if consume/use time is over, resets permissions and state accordingly
                     magician.state = MagicianState::Default;
                     remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Hypnosis");
                     remove_subscriber_from_permission(&mut magician.permissions, "CanAttack", "Hypnosis");
                     remove_subscriber_from_permission(&mut magician.permissions, "CanCloak", "Hypnosis");
                     remove_subscriber_from_permission(&mut magician.permissions, "CanDust", "Hypnosis");
-                    try_hypnosis(ctx, &mut magician);
+                    try_hypnosis(ctx, &mut magician); // Hypnosis performed at end of use time
                 }
             }
 
-            MagicianState::Stunned => {},
+            MagicianState::Stunned => {}, // Stun state needs no permission blocking, as it is simpler to check whether the stun permission itself is active
 
             MagicianState::Default => {}
         }
 
-        for i in 0..magician.timers.len() {
+        for i in 0..magician.timers.len() { // Case: inactive state(s)
             if let Some(expired_timer_name) = tick_cooldown_timer_and_check_expired(&mut magician.timers[i], time) {
                 match expired_timer_name.as_str() {
                     "Attack" => remove_subscriber_from_permission(&mut magician.permissions, "CanAttack", "Attack"),
@@ -407,7 +416,7 @@ pub fn hypnotise(ctx: &ReducerContext, camera_info: HypnosisCameraInformation)
         _ => None,
     };
 
-    let hypnosis_information = hypnosis_effect.hypnosis_informaton.as_mut().expect("Hypnosis Effect Must Have Hypnosis Information");
+    let hypnosis_information = hypnosis_effect.effect_info.hypnosis_information.as_mut().expect("Hypnosis Effect Must Have Hypnosis Information");
     let last_target_id_option: Option<u64> = hypnosis_information.last_target_id;
 
     match (last_target_id_option, raycast_target_id_option) {

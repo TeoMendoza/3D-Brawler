@@ -81,7 +81,7 @@ pub fn try_join_game(ctx: &ReducerContext) // Adds player to first unstarted gam
             ctx.db.game_timers().insert(game_end_timer);
         }
 
-        let effects = vec![create_invicible_effect(5.0)];
+        let effects = vec![create_invincible_effect(5.0)];
         let magician_config = MagicianConfig {player, game_id: game.id, position: DbVector3 { x: 0.0, y: 0.0, z: 0.0 }};
         let magician = create_magician(magician_config);
 
@@ -120,7 +120,7 @@ pub fn handle_respawn(ctx: &ReducerContext, timer: RespawnTimersTimer) // Respaw
     if let Some(player) = player_option {
         let game_option = ctx.db.game().id().find(timer.game_id);
         if game_option.is_some() {
-            let effects = vec![create_invicible_effect(5.0)];
+            let effects = vec![create_invincible_effect(5.0)];
             let magician_config = MagicianConfig {player, game_id: timer.game_id, position: DbVector3 { x: 0.0, y: 0.0, z: 0.0 }};
             let magician = create_magician(magician_config);
 

@@ -14,7 +14,7 @@ public static partial class Module
         long BestEntityId = 0;
         Magician Magician = Ctx.Db.magician.identity.Find(Ctx.Sender) ?? throw new Exception("Magician not found");
 
-        foreach (Magician Other in Ctx.Db.magician.MatchId.Filter(Magician.MatchId))
+        foreach (Magician Other in Ctx.Db.magician.MatchId.Filter(Magician.GameId))
         {
             if (Other.identity == Ctx.Sender) continue;
 

@@ -27,7 +27,7 @@ pub fn cleanup_on_disconnect_or_death(ctx: &ReducerContext, magician: &mut Magic
 
     for player_effect in ctx.db.player_effects().target_id().filter(magician.id) {
         match player_effect.effect_type {
-            EffectType::Hypnosis => undo_hypnosis_effect_magician(ctx, magician, &player_effect.hypnosis_informaton), // Ensures stun effect is cleared if present - Stun effect is indefinite so it must be manually cleaned up
+            EffectType::Hypnosis => undo_hypnosis_effect_magician(ctx, magician, &player_effect.effect_info.hypnosis_information), // Ensures stun effect is cleared if present - Stun effect is indefinite so it must be manually cleaned up
             _ => { }
         }
         ctx.db.player_effects().id().delete(player_effect.id);

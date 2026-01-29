@@ -16,7 +16,7 @@ public static partial class Module
                 identity = Player.identity,
                 Id = Player.Id,
                 Name = Player.Name,
-                MatchId = MatchId,
+                GameId = MatchId,
                 Position = Position,
                 Rotation = new DbRotation2 { Yaw = 0, Pitch = 0 },
                 Velocity = new DbVector3 { x = 0, y = 0, z = 0 },

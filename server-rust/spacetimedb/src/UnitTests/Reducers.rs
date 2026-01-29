@@ -94,7 +94,7 @@ pub fn test_join_and_start_game_single_player(ctx: &ReducerContext) {
     let magician = create_magician(magician_config);
     let inserted_magician = ctx.db.magician().insert(magician);
 
-    let invincible_effect = create_invicible_effect(5.0);
+    let invincible_effect = create_invincible_effect(5.0);
     add_effects_to_table(ctx, vec![invincible_effect], inserted_magician.id, inserted_magician.id, game_id);
 }
 
