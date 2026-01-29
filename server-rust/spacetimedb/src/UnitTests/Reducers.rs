@@ -3,9 +3,6 @@ use std::time::Duration;
 use crate::*;
 
 #[reducer]
-pub fn test_smoke(_ctx: &ReducerContext) { }
-
-#[reducer]
 pub fn test_join_and_start_game_single_player(ctx: &ReducerContext) {
     log::info!("Test Join And Start Game Called");
     let player = ctx
@@ -149,6 +146,7 @@ pub fn disable_unit_test_mode(ctx: &ReducerContext) {
     }
 }
 
-pub fn IsUnitTestModeEnabled(ctx: &ReducerContext) -> bool {
+pub fn IsUnitTestModeEnabled(ctx: &ReducerContext) -> bool 
+{
     ctx.db.unit_test_mode().id().find(0).map(|x| x.enabled).unwrap_or(false)
 }

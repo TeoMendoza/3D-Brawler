@@ -1,7 +1,7 @@
 use spacetimedb::{table, ScheduleAt};
 use crate::*;
 
-#[table(name = player_effects, index(name = sender_and_type, btree(columns = [sender_id, effect_type])), index(name = target_and_type, btree(columns = [target_id, effect_type])), index(name = target_sender_and_type, btree(columns = [target_id, sender_id, effect_type])))]
+#[table(name = player_effects, index(name = target_and_type, btree(columns = [target_id, effect_type])), index(name = target_sender_and_type, btree(columns = [target_id, sender_id, effect_type])))]
 #[derive(Clone)]
 pub struct PlayerEffect
 {

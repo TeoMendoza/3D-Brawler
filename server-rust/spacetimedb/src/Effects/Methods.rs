@@ -102,27 +102,27 @@ pub fn undo_speed_effect_magician(_ctx: &ReducerContext, target: &mut Magician, 
     combat_info.speed_multiplier = 1.0;
 }
 
-pub fn undo_hypnosis_effect_magician(ctx: &ReducerContext, target: &mut Magician, hypnosis_effect: &Option<HypnosisEffectInformation>) 
+pub fn undo_hypnosis_effect_magician(ctx: &ReducerContext, magician: &mut Magician, hypnosis_effect: &Option<HypnosisEffectInformation>) 
 {
     log::info!("Undo Hypnosis Effect Called");
     let hypnosis = hypnosis_effect.as_ref().expect("Hypnosis Effect Must Have Information!");
-    remove_subscriber_from_permission(&mut target.permissions, "Hypnosised", "HypnosisEffect");
+    remove_subscriber_from_permission(&mut magician.permissions, "Hypnosised", "HypnosisEffect");
 
     if let Some(last_target_id) = hypnosis.last_target_id {
-        let stunned_magician_option = ctx.db.magician().id().find(last_target_id); 
-        if let Some(mut stunned_magician) = stunned_magician_option {
-            let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, target.id, EffectType::Stunned));
-            let stunned_effect_option = match (stunned_iterator.next(), stunned_iterator.next()) {
-                (None, _) => None,
-                (Some(effect), None) => Some(effect),
-                (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
-            };
+        let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, magician.id, EffectType::Stunned));
+        let stunned_effect_option = match (stunned_iterator.next(), stunned_iterator.next()) {
+            (None, _) => None,
+            (Some(effect), None) => Some(effect),
+            (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
+        };
 
-            if let Some(stunned_effect) = stunned_effect_option {
+        if let Some(stunned_effect) = stunned_effect_option {
+            let stunned_magician_option = ctx.db.magician().id().find(last_target_id); 
+            if let Some(mut stunned_magician) = stunned_magician_option {
                 undo_and_delete_stunned_effect_magician(ctx, &mut stunned_magician, stunned_effect.id);
                 ctx.db.magician().id().update(stunned_magician);
             }
-        }    
+        } 
     }
 }
 

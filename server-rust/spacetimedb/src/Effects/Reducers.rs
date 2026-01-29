@@ -85,7 +85,7 @@ pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTab
     }
 }
 
-pub fn add_effects_to_table(ctx: &ReducerContext, effects: Vec<Effect>, target_id: u64, sender_id: u64, game_id: u32) -> bool // Make Return Bool To See If Applied 
+pub fn add_effects_to_table(ctx: &ReducerContext, effects: Vec<Effect>, target_id: u64, sender_id: u64, game_id: u32) -> bool
 {
     let magician_option = ctx.db.magician().id().find(target_id);
     if let Some(magician) = magician_option {
