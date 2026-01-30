@@ -13,7 +13,10 @@ pub fn adjust_grounded(_ctx: &ReducerContext, was_grounded: bool, move_velocity:
         magician.kinematic_information.falling = move_velocity.y < -2.0;
     }
 
-    if was_grounded == grounded_now { return; }
+    if was_grounded == grounded_now { 
+        return; 
+    }
+
     if grounded_now {
         remove_subscriber_from_permission(&mut magician.permissions, "CanJump", "Jump");
         remove_subscriber_from_permission(&mut magician.permissions, "CanCrouch", "Jump");
@@ -25,9 +28,9 @@ pub fn adjust_grounded(_ctx: &ReducerContext, was_grounded: bool, move_velocity:
     }
 }
 
-
-pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact>, input_velocity: DbVector3) 
+pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact>) 
 {
+    let input_velocity = magician.velocity;
     let world_up = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
     let min_ground_dot: f32 = 0.75;
     let depth_epsilon: f32 = 2e-3;

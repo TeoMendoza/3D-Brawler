@@ -36,9 +36,8 @@ pub struct GjkResult
 pub struct CollisionEntry 
 { 
     pub entry_type: CollisionEntryType,
-     pub id: u64 
+    pub id: u64 
 }
-
 
 #[derive(SpacetimeType, Copy, Clone, Debug, PartialEq, Eq)]
 pub enum CollisionEntryType 
