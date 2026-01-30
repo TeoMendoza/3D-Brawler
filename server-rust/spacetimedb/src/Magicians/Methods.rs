@@ -2,7 +2,7 @@ use spacetimedb::{ReducerContext};
 use glam::Quat;
 use crate::*;
 
-pub fn adjust_grounded(_ctx: &ReducerContext, was_grounded: bool, move_velocity: &DbVector3, magician: &mut Magician) 
+pub fn adjust_grounded(_ctx: &ReducerContext, was_grounded: bool, move_velocity: &DbVector3, magician: &mut Magician) // Adjusts kinematic state and permissions based on grounded
 {
     let grounded_now: bool = magician.kinematic_information.grounded;
     if grounded_now {
@@ -10,10 +10,10 @@ pub fn adjust_grounded(_ctx: &ReducerContext, was_grounded: bool, move_velocity:
     } 
     
     else {
-        magician.kinematic_information.falling = move_velocity.y < -2.0;
+        magician.kinematic_information.falling = move_velocity.y < -2.0; // Prevents switch to falling when going down ramps
     }
 
-    if was_grounded == grounded_now { 
+    if was_grounded == grounded_now { // Prevents duplicate insert/delete of permissions
         return; 
     }
 
@@ -28,7 +28,7 @@ pub fn adjust_grounded(_ctx: &ReducerContext, was_grounded: bool, move_velocity:
     }
 }
 
-pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact>) 
+pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact>) // Handles correcting velocity and position between player and it's contacts (objects it is colliding with)
 {
     let input_velocity = magician.velocity;
     let world_up = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
@@ -56,14 +56,14 @@ pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact
 
         let normal_velocity_component: f32 = dot(normal, corrected_velocity);
         if normal_velocity_component < 0.0 {
-            corrected_velocity = sub(corrected_velocity, mul(normal, normal_velocity_component));
+            corrected_velocity = sub(corrected_velocity, mul(normal, normal_velocity_component)); // Collide and slide algorithm
         }
 
         let mut depth: f32 = contact.penetration_depth - target_penetration;
         if depth > depth_epsilon {
             if depth > max_depth { depth = max_depth; }
             has_any_position_correction = true;
-            total_position_correction = add(total_position_correction, mul(normal, depth));
+            total_position_correction = add(total_position_correction, mul(normal, depth)); // Position correction
         }
     }
 
@@ -82,7 +82,7 @@ pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact
         }
     }
 
-    if is_grounded_on_map {
+    if is_grounded_on_map { // Map ground collisions should be stable, but for players we want the behavior that pushes them out of eachother
         let desired_horizontal_speed_sq: f32 = input_velocity.x * input_velocity.x + input_velocity.z * input_velocity.z;
 
         if desired_horizontal_speed_sq < 0.001 {
@@ -90,8 +90,8 @@ pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact
             corrected_velocity.z = 0.0;
         } 
         
-        if corrected_velocity.y <= ground_stick_up_threshold { 
-            corrected_velocity.y = 0.0; 
+        if corrected_velocity.y <= ground_stick_up_threshold { // Prevent small jitters upward from velocity correction
+            corrected_velocity.y = 0.0;
         }
 
         if input_velocity.y <= input_up_cancel_threshold { 
@@ -104,7 +104,7 @@ pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact
     magician.kinematic_information.grounded = magician.kinematic_information.grounded || is_grounded_on_map;
 }
 
-pub fn try_build_contact_for_entry(ctx: &ReducerContext, character_local: &Magician, collision_entry: &CollisionEntry, contacts: &mut Vec<CollisionContact>) -> bool 
+pub fn try_build_contact_for_entry(ctx: &ReducerContext, character_local: &Magician, collision_entry: &CollisionEntry, contacts: &mut Vec<CollisionContact>) -> bool // Returns whether target player is colliding with proposed collision entry - Computes properly oriented normal of collision if so
 {
     let position_a = character_local.position;
     let yaw_radians_a: f32 = to_radians(character_local.rotation.yaw);
@@ -118,7 +118,10 @@ pub fn try_build_contact_for_entry(ctx: &ReducerContext, character_local: &Magic
     let gjk_iterations: i32 = 24;
 
     if collision_entry.entry_type == CollisionEntryType::Magician {
-        let other_magician = ctx.db.magician().id().find(collision_entry.id).expect("Colliding Magician Not Found");
+        let other_magician_option = ctx.db.magician().id().find(collision_entry.id);
+        if other_magician_option.is_none() { return false; }
+        let other_magician = other_magician_option.unwrap();
+
         if other_magician.id == character_local.id { return false; }
 
         let collider_b: &Vec<ConvexHullCollider> = &other_magician.collider.convex_hulls;
@@ -165,7 +168,7 @@ pub fn try_build_contact_for_entry(ctx: &ReducerContext, character_local: &Magic
     false
 }
 
-pub fn try_force_overlap_for_entry(ctx: &ReducerContext, character: &mut Magician, entry: &CollisionEntry, was_grounded: bool) -> bool 
+pub fn try_force_overlap_for_entry(ctx: &ReducerContext, character: &mut Magician, entry: &CollisionEntry, was_grounded: bool) -> bool // Calculates distance between player and map pieces and pulls them together with small position correction to emulate sticky behavior (needed for ramps)
 {
     if entry.entry_type != CollisionEntryType::Map { return false; }
     if was_grounded == false && character.kinematic_information.grounded == false { return false; }
@@ -186,7 +189,7 @@ pub fn try_force_overlap_for_entry(ctx: &ReducerContext, character: &mut Magicia
 
     let collider_a = &character.collider;
 
-    let map_piece = ctx.db.map().id().find(entry.id).expect("Colliding Map Piece Not Found");
+    let map_piece = ctx.db.map().id().find(entry.id).expect("Colliding Map Piece Not Found"); // Map pieces are static in db, should always exist
     let collider_b = &map_piece.collider;
 
     let position_a = character.position;
@@ -226,10 +229,10 @@ pub fn try_force_overlap_for_entry(ctx: &ReducerContext, character: &mut Magicia
     true
 }
 
-pub fn try_reload(_ctx: &ReducerContext, magician: &mut Magician) 
+pub fn try_reload(_ctx: &ReducerContext, magician: &mut Magician) // 
 {
-    let bullet_capacity: i32 = magician.bullet_capacity;
-    let missing_bullets: i32 = bullet_capacity - magician.bullets.len() as i32;
+    let bullet_capacity: u8 = magician.bullet_capacity;
+    let missing_bullets: u8 = bullet_capacity - magician.bullets.len() as u8;
     if missing_bullets <= 0 { return; }
 
     let mut new_bullets: Vec<ThrowingCard> = Vec::with_capacity(missing_bullets as usize);

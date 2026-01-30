@@ -21,7 +21,7 @@ pub struct Magician {
     pub stateless_timers: Vec<StatelessTimer>,
     pub timers: Vec<Timer>,
     pub bullets: Vec<ThrowingCard>,
-    pub bullet_capacity: i32,
+    pub bullet_capacity: u8,
     pub effects: Vec<Effect>,   
 }
 
@@ -30,7 +30,7 @@ pub struct MoveAllMagiciansTimer {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,
     pub tick_rate: f32,
-    #[unique] pub game_id: u32,
+    #[unique] pub game_id: u32, // One timer per game
 }
 
 #[table(name = gravity_magician, scheduled(apply_gravity_magician))]
@@ -39,7 +39,7 @@ pub struct GravityTimerMagician {
     pub scheduled_at: ScheduleAt,
     pub tick_rate: f32,
     pub gravity: f32,
-    #[unique] pub game_id: u32,
+    #[unique] pub game_id: u32, // One timer per game
 }
 
 #[table(name = handle_magician_timers_timer, scheduled(handle_magician_timers))]
@@ -47,7 +47,7 @@ pub struct HandleMagicianTimersTimer {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,
     pub tick_rate: f32,
-    #[unique] pub game_id: u32,
+    #[unique] pub game_id: u32, // One timer per game
 }
 
 #[table(name = handle_magician_stateless_timers_timer, scheduled(handle_magician_stateless_timers))]
@@ -55,5 +55,5 @@ pub struct HandleMagicianStatelessTimersTimer {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,
     pub tick_rate: f32,
-    #[unique] pub game_id: u32,
+    #[unique] pub game_id: u32, // One timer per game
 }

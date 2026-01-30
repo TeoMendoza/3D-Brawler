@@ -94,7 +94,7 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
         try_perform_attack(ctx, &mut magician, request.attack_information); // Attack performed at request
     } 
     
-    else if request.state == MagicianState::Reload && is_permission_unblocked(&magician.permissions, "CanReload") && (magician.bullets.len() as i32) < magician.bullet_capacity && stunned == false { // Case: interuptable
+    else if request.state == MagicianState::Reload && is_permission_unblocked(&magician.permissions, "CanReload") && (magician.bullets.len() as u8) < magician.bullet_capacity && stunned == false { // Case: interuptable
         magician.state = MagicianState::Reload;
         add_subscriber_to_permission(&mut magician.permissions, "CanReload", "Reload");
     }
@@ -399,38 +399,39 @@ pub fn move_magicians_lag_test(ctx: &ReducerContext, timer: MoveAllMagiciansTime
 }
 
 #[reducer]
-pub fn hypnotise(ctx: &ReducerContext, camera_info: HypnosisCameraInformation)
+pub fn hypnotise(ctx: &ReducerContext, camera_info: HypnosisCameraInformation) // Handles hypnosis ability camera information and subsequent effect application
 {
-    let mut magician = ctx.db.magician().identity().find(ctx.sender).expect("Magician Not Found!");
+    let magician_option = ctx.db.magician().identity().find(ctx.sender);
+    if magician_option.is_none() { return; }
+    let mut magician = magician_option.unwrap();
 
     let mut hypnosis_iterator = ctx.db.player_effects().target_and_type().filter((magician.id, EffectType::Hypnosis));
     let mut hypnosis_effect = match (hypnosis_iterator.next(), hypnosis_iterator.next()) {
         (None, _) => { return; },
         (Some(effect), None) => effect,
-        (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Hypnosis Effect At Most!"),
+        (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Hypnosis Effect At Most!"), // Only unacceptable case, magician cannot have more than one hypnosis effect active (self applied)
     };
 
     let raycast = try_hypnotise(ctx, &mut magician, camera_info);
-    let raycast_target_id_option: Option<u64> = match raycast.hit_type {
+    let raycast_target_id_option = match raycast.hit_type {
         RaycastHitType::Magician => Some(raycast.hit_entity_id),
-        _ => None,
+        _ => None
     };
 
     let hypnosis_information = hypnosis_effect.effect_info.hypnosis_information.as_mut().expect("Hypnosis Effect Must Have Hypnosis Information");
-    let last_target_id_option: Option<u64> = hypnosis_information.last_target_id;
+    let last_target_id_option = hypnosis_information.last_target_id;
 
-    match (last_target_id_option, raycast_target_id_option) {
-        (Some(last_target_id), Some(raycast_target_id)) if last_target_id == raycast_target_id => { } // Last Target Id And Raycast Target Id Are Both Not None And Are The Same Id Value
+    match (last_target_id_option, raycast_target_id_option) { // Matches current target and last target to corresponding logic - Cases: some & current = last, some & current != last, none & some, some & none, none & none
+        (Some(last_target_id), Some(raycast_target_id)) if last_target_id == raycast_target_id => { } // Case: current = last
 
-        (Some(last_target_id), Some(raycast_target_id)) => { // Last Target Id And Raycast Target Id Are Both Not None But Are Different Id Values
+        (Some(last_target_id), Some(raycast_target_id)) => { // Case: current != last
             let stunned_magician_option = ctx.db.magician().id().find(last_target_id);
             if let Some(mut stunned_magician) = stunned_magician_option {
                 let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, magician.id, EffectType::Stunned));
-
                 let stunned_effect_option = match (stunned_iterator.next(), stunned_iterator.next()) {
                     (None, _) => None,
                     (Some(effect), None) => Some(effect),
-                    (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
+                    (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"), // Only unacceptable case, target cannot have multiple stun effects from same sender
                 };
                 
                 if let Some(stunned_effect) = stunned_effect_option {
@@ -440,20 +441,20 @@ pub fn hypnotise(ctx: &ReducerContext, camera_info: HypnosisCameraInformation)
             }
             
             let applied = add_effects_to_table(ctx, vec![create_stunned_effect()], raycast_target_id, magician.id, magician.game_id);
-            if applied {
+            if applied { // Only store last target if effects get applied - Effects can be blocked if invincible
                 hypnosis_information.last_target_id = Some(raycast_target_id);
             }
             
         }
 
-        (None, Some(raycast_target_id)) => { // Last Target Id Is None But Raycast Target Has Id Value
+        (None, Some(raycast_target_id)) => { // Case: none & some
             let applied = add_effects_to_table(ctx, vec![create_stunned_effect()], raycast_target_id, magician.id, magician.game_id);
-            if applied {
+            if applied { // Only store last target if effects get applied - Effects can be blocked if invincible
                 hypnosis_information.last_target_id = Some(raycast_target_id);
             }
         }
 
-        (Some(last_target_id), None) => { // Last Target Id Has Id Value But Raycast Target Is None
+        (Some(last_target_id), None) => { // Case: some & none
             let stunned_magician_option = ctx.db.magician().id().find(last_target_id);
             if let Some(mut stunned_magician) = stunned_magician_option {
                 let mut stunned_iterator = ctx.db.player_effects().target_sender_and_type().filter((last_target_id, magician.id, EffectType::Stunned));
@@ -461,7 +462,7 @@ pub fn hypnotise(ctx: &ReducerContext, camera_info: HypnosisCameraInformation)
                 let stunned_effect_option = match (stunned_iterator.next(), stunned_iterator.next()) {
                     (None, _) => None,
                     (Some(effect), None) => Some(effect),
-                    (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"),
+                    (Some(_), Some(_)) => panic!("Target Magician Should Only Have One Stun Effect From Sender At Most!"), // Only unacceptable case, target cannot have multiple stun effects from same sender
                 };
                 
                 if let Some(stunned_effect) = stunned_effect_option {
@@ -473,7 +474,7 @@ pub fn hypnotise(ctx: &ReducerContext, camera_info: HypnosisCameraInformation)
             hypnosis_information.last_target_id = None;
         }
 
-        (None, None) => { } // Both Are None
+        (None, None) => { } // Case: none & none
     }
 
     ctx.db.player_effects().id().update(hypnosis_effect);

@@ -50,7 +50,7 @@ namespace SpacetimeDB.Types
         [DataMember(Name = "bullets")]
         public System.Collections.Generic.List<ThrowingCard> Bullets;
         [DataMember(Name = "bullet_capacity")]
-        public int BulletCapacity;
+        public byte BulletCapacity;
         [DataMember(Name = "effects")]
         public System.Collections.Generic.List<Effect> Effects;
 
@@ -73,7 +73,7 @@ namespace SpacetimeDB.Types
             System.Collections.Generic.List<StatelessTimer> StatelessTimers,
             System.Collections.Generic.List<Timer> Timers,
             System.Collections.Generic.List<ThrowingCard> Bullets,
-            int BulletCapacity,
+            byte BulletCapacity,
             System.Collections.Generic.List<Effect> Effects
         )
         {

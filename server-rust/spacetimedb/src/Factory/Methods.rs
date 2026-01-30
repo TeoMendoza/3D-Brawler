@@ -7,7 +7,7 @@ pub fn create_magician(config: MagicianConfig) -> Magician // Creates new magici
     let game_id = config.game_id;
     let position = config.position;
     
-    let bullet_capacity: i32 = 8;
+    let bullet_capacity: u8 = 8;
 
     let mut bullets: Vec<ThrowingCard> = Vec::with_capacity(bullet_capacity as usize);
     for _i in 0..bullet_capacity {
