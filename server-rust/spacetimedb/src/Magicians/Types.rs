@@ -67,7 +67,7 @@ pub enum MagicianState {
     Default,
     Attack,
     Reload,
-    Dust, // Blind Ability
+    Dust,
     Cloak,
     Hypnosis,
     Stunned

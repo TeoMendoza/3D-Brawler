@@ -51,7 +51,7 @@ namespace SpacetimeDB.Types
         {
             [DataMember(Name = "entry")]
             public CollisionEntry Entry;
-            [DataMember(Name = "target_identity")]
+            [DataMember(Name = "_target_identity")]
             public SpacetimeDB.Identity TargetIdentity;
 
             public AddCollisionEntryMagician(

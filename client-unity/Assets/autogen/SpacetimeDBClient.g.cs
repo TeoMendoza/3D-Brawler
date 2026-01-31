@@ -41,6 +41,7 @@ namespace SpacetimeDB.Types
             AddTable(PlayerEffects = new(conn));
             AddTable(PlayerEffectsTableTimer = new(conn));
             AddTable(RespawnTimers = new(conn));
+            AddTable(UnitTestMode = new(conn));
         }
     }
 
@@ -604,7 +605,9 @@ namespace SpacetimeDB.Types
                 "add_collision_entry_magician" => BSATNHelpers.Decode<Reducer.AddCollisionEntryMagician>(encodedArgs),
                 "apply_gravity_magician" => BSATNHelpers.Decode<Reducer.ApplyGravityMagician>(encodedArgs),
                 "connect" => BSATNHelpers.Decode<Reducer.Connect>(encodedArgs),
+                "disable_unit_test_mode" => BSATNHelpers.Decode<Reducer.DisableUnitTestMode>(encodedArgs),
                 "disconnect" => BSATNHelpers.Decode<Reducer.Disconnect>(encodedArgs),
+                "enable_unit_test_mode" => BSATNHelpers.Decode<Reducer.EnableUnitTestMode>(encodedArgs),
                 "handle_action_change_request_magician" => BSATNHelpers.Decode<Reducer.HandleActionChangeRequestMagician>(encodedArgs),
                 "handle_game_end" => BSATNHelpers.Decode<Reducer.HandleGameEnd>(encodedArgs),
                 "handle_magician_stateless_timers" => BSATNHelpers.Decode<Reducer.HandleMagicianStatelessTimers>(encodedArgs),
@@ -617,6 +620,8 @@ namespace SpacetimeDB.Types
                 "move_magicians" => BSATNHelpers.Decode<Reducer.MoveMagicians>(encodedArgs),
                 "move_magicians_lag_test" => BSATNHelpers.Decode<Reducer.MoveMagiciansLagTest>(encodedArgs),
                 "remove_collision_entry_magician" => BSATNHelpers.Decode<Reducer.RemoveCollisionEntryMagician>(encodedArgs),
+                "test_join_and_start_game_single_player" => BSATNHelpers.Decode<Reducer.TestJoinAndStartGameSinglePlayer>(encodedArgs),
+                "test_leave_game_and_cleanup_match_if_empty" => BSATNHelpers.Decode<Reducer.TestLeaveGameAndCleanupMatchIfEmpty>(encodedArgs),
                 "try_join_game" => BSATNHelpers.Decode<Reducer.TryJoinGame>(encodedArgs),
                 "try_leave_game" => BSATNHelpers.Decode<Reducer.TryLeaveGame>(encodedArgs),
                 "" => throw new SpacetimeDBEmptyReducerNameException("Reducer name is empty"),
@@ -647,7 +652,9 @@ namespace SpacetimeDB.Types
                 Reducer.AddCollisionEntryMagician args => Reducers.InvokeAddCollisionEntryMagician(eventContext, args),
                 Reducer.ApplyGravityMagician args => Reducers.InvokeApplyGravityMagician(eventContext, args),
                 Reducer.Connect args => Reducers.InvokeConnect(eventContext, args),
+                Reducer.DisableUnitTestMode args => Reducers.InvokeDisableUnitTestMode(eventContext, args),
                 Reducer.Disconnect args => Reducers.InvokeDisconnect(eventContext, args),
+                Reducer.EnableUnitTestMode args => Reducers.InvokeEnableUnitTestMode(eventContext, args),
                 Reducer.HandleActionChangeRequestMagician args => Reducers.InvokeHandleActionChangeRequestMagician(eventContext, args),
                 Reducer.HandleGameEnd args => Reducers.InvokeHandleGameEnd(eventContext, args),
                 Reducer.HandleMagicianStatelessTimers args => Reducers.InvokeHandleMagicianStatelessTimers(eventContext, args),
@@ -660,6 +667,8 @@ namespace SpacetimeDB.Types
                 Reducer.MoveMagicians args => Reducers.InvokeMoveMagicians(eventContext, args),
                 Reducer.MoveMagiciansLagTest args => Reducers.InvokeMoveMagiciansLagTest(eventContext, args),
                 Reducer.RemoveCollisionEntryMagician args => Reducers.InvokeRemoveCollisionEntryMagician(eventContext, args),
+                Reducer.TestJoinAndStartGameSinglePlayer args => Reducers.InvokeTestJoinAndStartGameSinglePlayer(eventContext, args),
+                Reducer.TestLeaveGameAndCleanupMatchIfEmpty args => Reducers.InvokeTestLeaveGameAndCleanupMatchIfEmpty(eventContext, args),
                 Reducer.TryJoinGame args => Reducers.InvokeTryJoinGame(eventContext, args),
                 Reducer.TryLeaveGame args => Reducers.InvokeTryLeaveGame(eventContext, args),
                 _ => throw new ArgumentOutOfRangeException("Reducer", $"Unknown reducer {reducer}")

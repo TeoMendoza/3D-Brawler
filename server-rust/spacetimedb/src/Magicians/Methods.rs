@@ -2,18 +2,14 @@ use spacetimedb::{ReducerContext};
 use glam::Quat;
 use crate::*;
 
-pub fn adjust_grounded(_ctx: &ReducerContext, was_grounded: bool, move_velocity: &DbVector3, magician: &mut Magician) 
-{
+pub fn adjust_grounded(_ctx: &ReducerContext, was_grounded: bool, move_velocity: &DbVector3, magician: &mut Magician) { // Adjusts kinematic state and permissions based on grounded
     let grounded_now: bool = magician.kinematic_information.grounded;
-    if grounded_now {
-        magician.kinematic_information.falling = false;
-    } 
-    
-    else {
-        magician.kinematic_information.falling = move_velocity.y < -2.0;
-    }
 
-    if was_grounded == grounded_now { return; }
+    if grounded_now { magician.kinematic_information.falling = false; } 
+    else { magician.kinematic_information.falling = move_velocity.y < -2.0; } // Prevents switch to falling when going down ramps
+
+    if was_grounded == grounded_now { return; } // Prevents duplicate insert/delete of permissions
+
     if grounded_now {
         remove_subscriber_from_permission(&mut magician.permissions, "CanJump", "Jump");
         remove_subscriber_from_permission(&mut magician.permissions, "CanCrouch", "Jump");
@@ -25,9 +21,8 @@ pub fn adjust_grounded(_ctx: &ReducerContext, was_grounded: bool, move_velocity:
     }
 }
 
-
-pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact>, input_velocity: DbVector3) 
-{
+pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact>) { // Handles correcting velocity and position between player and it's contacts (objects it is colliding with)
+    let input_velocity = magician.requested_velocity;
     let world_up = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
     let min_ground_dot: f32 = 0.75;
     let depth_epsilon: f32 = 2e-3;
@@ -53,14 +48,14 @@ pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact
 
         let normal_velocity_component: f32 = dot(normal, corrected_velocity);
         if normal_velocity_component < 0.0 {
-            corrected_velocity = sub(corrected_velocity, mul(normal, normal_velocity_component));
+            corrected_velocity = sub(corrected_velocity, mul(normal, normal_velocity_component)); // Collide and slide algorithm
         }
 
         let mut depth: f32 = contact.penetration_depth - target_penetration;
         if depth > depth_epsilon {
             if depth > max_depth { depth = max_depth; }
             has_any_position_correction = true;
-            total_position_correction = add(total_position_correction, mul(normal, depth));
+            total_position_correction = add(total_position_correction, mul(normal, depth)); // Position correction
         }
     }
 
@@ -79,7 +74,7 @@ pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact
         }
     }
 
-    if is_grounded_on_map {
+    if is_grounded_on_map { // Map ground collisions should be stable, but for players we want the behavior that pushes them out of eachother
         let desired_horizontal_speed_sq: f32 = input_velocity.x * input_velocity.x + input_velocity.z * input_velocity.z;
 
         if desired_horizontal_speed_sq < 0.001 {
@@ -87,12 +82,12 @@ pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact
             corrected_velocity.z = 0.0;
         } 
         
-        if corrected_velocity.y <= ground_stick_up_threshold { 
-            corrected_velocity.y = 0.0; 
+        if corrected_velocity.y <= ground_stick_up_threshold { // Prevent small jitters upward from velocity correction
+            corrected_velocity.y = 0.0;
         }
 
         if input_velocity.y <= input_up_cancel_threshold { 
-            magician.velocity.y = 0.0; 
+            magician.requested_velocity.y = 0.0; 
         }
     }
 
@@ -101,8 +96,7 @@ pub fn resolve_contacts(magician: &mut Magician, contacts: &Vec<CollisionContact
     magician.kinematic_information.grounded = magician.kinematic_information.grounded || is_grounded_on_map;
 }
 
-pub fn try_build_contact_for_entry(ctx: &ReducerContext, character_local: &Magician, collision_entry: &CollisionEntry, contacts: &mut Vec<CollisionContact>) -> bool 
-{
+pub fn try_build_contact_for_entry(ctx: &ReducerContext, character_local: &Magician, collision_entry: &CollisionEntry, contacts: &mut Vec<CollisionContact>) -> bool { // Returns whether target player is colliding with proposed collision entry - Computes properly oriented normal of collision if so
     let position_a = character_local.position;
     let yaw_radians_a: f32 = to_radians(character_local.rotation.yaw);
 
@@ -115,7 +109,10 @@ pub fn try_build_contact_for_entry(ctx: &ReducerContext, character_local: &Magic
     let gjk_iterations: i32 = 24;
 
     if collision_entry.entry_type == CollisionEntryType::Magician {
-        let other_magician = ctx.db.magician().id().find(collision_entry.id).expect("Colliding Magician Not Found");
+        let other_magician_option = ctx.db.magician().id().find(collision_entry.id);
+        if other_magician_option.is_none() { return false; }
+        let other_magician = other_magician_option.unwrap();
+
         if other_magician.id == character_local.id { return false; }
 
         let collider_b: &Vec<ConvexHullCollider> = &other_magician.collider.convex_hulls;
@@ -162,13 +159,12 @@ pub fn try_build_contact_for_entry(ctx: &ReducerContext, character_local: &Magic
     false
 }
 
-pub fn try_force_overlap_for_entry(ctx: &ReducerContext, character: &mut Magician, entry: &CollisionEntry, was_grounded: bool) -> bool 
-{
+pub fn try_force_overlap_for_entry(ctx: &ReducerContext, character: &mut Magician, entry: &CollisionEntry, was_grounded: bool) -> bool { // Calculates approximate distance between player and map pieces and if close, pulls them together with small position correction to emulate sticky behavior (needed for ramps)
     if entry.entry_type != CollisionEntryType::Map { return false; }
     if was_grounded == false && character.kinematic_information.grounded == false { return false; }
 
     let upward_velocity_block_threshold: f32 = 0.03;
-    if character.velocity.y > upward_velocity_block_threshold { return false; }
+    if character.requested_velocity.y > upward_velocity_block_threshold { return false; }
 
     let world_up = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
 
@@ -183,7 +179,7 @@ pub fn try_force_overlap_for_entry(ctx: &ReducerContext, character: &mut Magicia
 
     let collider_a = &character.collider;
 
-    let map_piece = ctx.db.map().id().find(entry.id).expect("Colliding Map Piece Not Found");
+    let map_piece = ctx.db.map().id().find(entry.id).expect("Colliding Map Piece Not Found"); // Map pieces are static in db, should always exist
     let collider_b = &map_piece.collider;
 
     let position_a = character.position;
@@ -223,32 +219,32 @@ pub fn try_force_overlap_for_entry(ctx: &ReducerContext, character: &mut Magicia
     true
 }
 
-pub fn try_reload(_ctx: &ReducerContext, magician: &mut Magician) 
-{
-    let bullet_capacity: i32 = magician.bullet_capacity;
-    let missing_bullets: i32 = bullet_capacity - magician.bullets.len() as i32;
-    if missing_bullets <= 0 { return; }
+pub fn try_reload(_ctx: &ReducerContext, magician: &mut Magician) { // Reloads throwing cards to end of magician clip (8 max)
+    let bullet_capacity: u8 = magician.bullet_capacity;
+    let missing_bullets: u8 = bullet_capacity - magician.bullets.len() as u8;
+    if missing_bullets <= 0 { return; } // Should be gated inside action request - Safegaurd regardless
 
     let mut new_bullets: Vec<ThrowingCard> = Vec::with_capacity(missing_bullets as usize);
     for _bullet_index in 0..missing_bullets {
         new_bullets.push(create_throwing_card());
     }
 
-    magician.bullets.splice(0..0, new_bullets);
+    magician.bullets.splice(0..0, new_bullets); // Adds to beginning of clip - Preserves order of bullets as effects can be placed on bullets, which must stay at front (queue like behavior)
 }
 
 
-pub fn try_perform_attack(ctx: &ReducerContext, magician: &mut Magician, attack_information: AttackInformation) 
-{
-    let bullet = magician.bullets.pop().expect("No bullets");
+pub fn try_perform_attack(ctx: &ReducerContext, magician: &mut Magician, attack_information: AttackInformation) { // Consumes a bullet from clip and applies effects of bullet on target if exists
+    let bullet_option = magician.bullets.pop();
+    if bullet_option.is_none() { return; } // Should be gated inside action request - Safegaurd regardless
+
+    let bullet = bullet_option.unwrap();
     let effects = bullet.effects;
 
     let magician_position = magician.position;
     let magician_yaw_radians: f32 = to_radians(magician.rotation.yaw);
     let magician_yaw_only = Quat::from_rotation_y(magician_yaw_radians);
 
-    let spawn_point = add(magician_position, rotate(attack_information.spawn_point_offset, magician_yaw_only));
-
+    let spawn_point = add(magician_position, rotate(attack_information.spawn_point_offset, magician_yaw_only)); // Code below: rebuilds the server accurate representation of the player camera and crosshair
     let camera_yaw_radians: f32 = to_radians(magician.rotation.yaw + attack_information.camera_yaw_offset);
     let camera_pitch_radians: f32 = to_radians(magician.rotation.pitch + attack_information.camera_pitch_offset);
     let camera_rotation = Quat::from_euler(glam::EulerRot::YXZ, camera_yaw_radians, camera_pitch_radians, 0.0);
@@ -265,20 +261,18 @@ pub fn try_perform_attack(ctx: &ReducerContext, magician: &mut Magician, attack_
     let shot_delta = sub(aim_point, spawn_point);
     let shot_direction = normalize_small_vector(shot_delta, camera_forward);
 
-    let shot_hit = raycast_match(ctx, spawn_point, shot_direction, attack_information.max_distance);
+    let shot_hit = raycast_match(ctx, spawn_point, shot_direction, attack_information.max_distance); // Checks for a hit based on the rebuilt data (single target)
     if shot_hit.hit && shot_hit.hit_type == RaycastHitType::Magician {
         add_effects_to_table(ctx, effects, shot_hit.hit_entity_id, magician.id, magician.game_id);
     }
 } 
 
-pub fn try_perform_dust(ctx: &ReducerContext, magician: &mut Magician, dust_information: DustInformation)
-{
+pub fn try_perform_dust(ctx: &ReducerContext, magician: &mut Magician, dust_information: DustInformation) { // Applies dust effect on target if exists
     let magician_position = magician.position;
     let magician_yaw_radians: f32 = to_radians(magician.rotation.yaw);
     let magician_yaw_only = Quat::from_rotation_y(magician_yaw_radians);
 
-    let spawn_point = add(magician_position, rotate(dust_information.spawn_point_offset, magician_yaw_only));
-
+    let spawn_point = add(magician_position, rotate(dust_information.spawn_point_offset, magician_yaw_only)); // Code below: rebuilds the server accurate representation of the player camera and crosshair
     let camera_yaw_radians: f32 = to_radians(magician.rotation.yaw + dust_information.camera_yaw_offset);
     let camera_pitch_radians: f32 = to_radians(magician.rotation.pitch + dust_information.camera_pitch_offset);
     let camera_rotation = Quat::from_euler(glam::EulerRot::YXZ, camera_yaw_radians, camera_pitch_radians, 0.0);
@@ -295,7 +289,7 @@ pub fn try_perform_dust(ctx: &ReducerContext, magician: &mut Magician, dust_info
     let cone_delta: DbVector3 = sub(aim_point, spawn_point);
     let cone_direction: DbVector3 = normalize_small_vector(cone_delta, camera_forward);
 
-    let hits: Vec<Raycast> = raycast_cone_match(ctx, spawn_point, cone_direction, dust_information.max_distance, dust_information.cone_half_angle_degrees);
+    let hits: Vec<Raycast> = raycast_cone_match(ctx, spawn_point, cone_direction, dust_information.max_distance, dust_information.cone_half_angle_degrees); // Checks for a hit based on the rebuilt data (multi target - cone shape)
     for hit in hits {
         let dust_effect = create_dust_effect(2.0);
         let effects: Vec<Effect> = vec![dust_effect];
@@ -303,8 +297,7 @@ pub fn try_perform_dust(ctx: &ReducerContext, magician: &mut Magician, dust_info
     }
 }
 
-pub fn try_cloak(ctx: &ReducerContext, magician: &mut Magician)
-{
+pub fn try_cloak(ctx: &ReducerContext, magician: &mut Magician) { // Applies cloak effects to player
     let cloak_effect = create_cloak_effect(10.0);
     let speed_effect = create_speed_multiplier_effect(1.25, 10.0);
     let effects: Vec<Effect> = vec![cloak_effect, speed_effect];
@@ -312,22 +305,19 @@ pub fn try_cloak(ctx: &ReducerContext, magician: &mut Magician)
     add_effects_to_table(ctx, effects, magician.id, magician.id, magician.game_id);
 }
 
-pub fn try_hypnosis(ctx: &ReducerContext, magician: &mut Magician)
-{
+pub fn try_hypnosis(ctx: &ReducerContext, magician: &mut Magician) { // Applies hypnosis effect to player
     let hypnosis_effect = create_hypnosis_effect(10.0);
     let effects: Vec<Effect> = vec![hypnosis_effect];
 
     add_effects_to_table(ctx, effects, magician.id, magician.id, magician.game_id);
 }
 
-pub fn try_hypnotise(ctx: &ReducerContext, magician: &mut Magician, camera_information: HypnosisCameraInformation) -> Raycast
-{
+pub fn try_hypnotise(ctx: &ReducerContext, magician: &mut Magician, camera_information: HypnosisCameraInformation) -> Raycast { // Returns a raycast target to stun if exists (same base logic as attack)
     let magician_position = magician.position;
     let magician_yaw_radians: f32 = to_radians(magician.rotation.yaw);
     let magician_yaw_only = Quat::from_rotation_y(magician_yaw_radians);
 
-    let spawn_point = add(magician_position, rotate(camera_information.spawn_point_offset, magician_yaw_only));
-
+    let spawn_point = add(magician_position, rotate(camera_information.spawn_point_offset, magician_yaw_only)); // Code below: rebuilds the server accurate representation of the player camera and crosshair
     let camera_yaw_radians: f32 = to_radians(magician.rotation.yaw + camera_information.camera_yaw_offset);
     let camera_pitch_radians: f32 = to_radians(magician.rotation.pitch + camera_information.camera_pitch_offset);
     let camera_rotation = Quat::from_euler(glam::EulerRot::YXZ, camera_yaw_radians, camera_pitch_radians, 0.0);
@@ -349,12 +339,11 @@ pub fn try_hypnotise(ctx: &ReducerContext, magician: &mut Magician, camera_infor
     raycast
 }
 
-pub fn try_tarot(ctx: &ReducerContext, magician: &mut Magician)
-{
+pub fn try_tarot(_ctx: &ReducerContext, magician: &mut Magician) { // Applies tarot effect to the two front cards in the player clip - Effects applied if card hits target
     let throwing_cards = &mut magician.bullets;
     let throwing_cards_count = throwing_cards.len();
 
-    let (top_card_option, second_top_card_option): (Option<&mut ThrowingCard>, Option<&mut ThrowingCard>) = 
+    let (top_card_option, second_top_card_option): (Option<&mut ThrowingCard>, Option<&mut ThrowingCard>) = // Only applies to top two if existing - Ability can be wasted (WIP)
         match throwing_cards_count {
             0 => (None, None),
 
@@ -380,38 +369,36 @@ pub fn try_tarot(ctx: &ReducerContext, magician: &mut Magician)
 
     let mut timers = &mut magician.stateless_timers;
     let tarot_timer = try_find_stateless_timer(&mut timers, "Tarot");
-    tarot_timer.state = StatelessTimerState::InCooldown;
+    tarot_timer.state = StatelessTimerState::InCooldown; // Sets ability on cooldown
 }
 
-pub fn adjust_timer_in_use(magician: &mut Magician, key: &str)
-{
+pub fn adjust_timer_in_use(magician: &mut Magician, key: &str) { // Updates action timer in scenario where action is interupted - Cases: requires cooldown, no cooldown required
     let timer: &mut Timer = try_find_timer(&mut magician.timers, key);
 
-    if key == "Reload" {
+    if key == "Reload" { // Case: no cooldown
         timer.current_time = 0.0;
-        timer.state = TimerState::Inactive;
+        timer.state = TimerState::Usable;
     }
 
-    else if key == "Attack" {
+    else if key == "Attack" { // Case: no cooldown
         timer.current_time = 0.0;
-        timer.state = TimerState::Inactive;
+        timer.state = TimerState::Usable;
     }  
 
-    else if key == "Cloak" {
+    else if key == "Cloak" { // Case: cooldown
         timer.state = TimerState::InCooldown;
     }
 
-    else if key == "Dust" {
+    else if key == "Dust" { // Case: cooldown
         timer.state = TimerState::InCooldown;
     }  
 
-    else if key == "Hypnosis" {
+    else if key == "Hypnosis" { // Case: cooldown
         timer.state = TimerState::InCooldown;
     }  
 }
 
-pub fn adjust_timer_for_interruptable_state(magician: &mut Magician, state: MagicianState)
-{
+pub fn adjust_timer_for_interruptable_state(magician: &mut Magician, state: MagicianState) { // Handles interuptable state timer (self induced)
     match state {
         MagicianState::Reload => adjust_timer_in_use(magician, "Reload"),
         MagicianState::Cloak => adjust_timer_in_use(magician, "Cloak"),
@@ -419,8 +406,7 @@ pub fn adjust_timer_for_interruptable_state(magician: &mut Magician, state: Magi
     }
 }
 
-pub fn adjust_timer_for_stunnable_state(magician: &mut Magician, state: MagicianState)
-{
+pub fn adjust_timer_for_stunnable_state(magician: &mut Magician, state: MagicianState) { // Handles interuptable state timer (induced by other player) - Clears in use permissions of state 
     match state {
         MagicianState::Reload =>  { 
             adjust_timer_in_use(magician, "Reload");
@@ -458,11 +444,11 @@ pub fn adjust_timer_for_stunnable_state(magician: &mut Magician, state: Magician
     }
 }
 
-pub fn tick_active_timer_and_check_expired(magician: &mut Magician, key: &str, delta_time: f32) -> bool {
+pub fn tick_active_timer_and_check_expired(magician: &mut Magician, key: &str, delta_time: f32) -> bool { // Updates active timer and state - Returns if timer is no longer in use (consume time ended)
     let timer = try_find_timer(&mut magician.timers, key);
     timer.current_time += delta_time;
 
-    if timer.state == TimerState::Inactive {
+    if timer.state == TimerState::Usable {
         timer.state = TimerState::InUse;
     }
 
@@ -474,24 +460,22 @@ pub fn tick_active_timer_and_check_expired(magician: &mut Magician, key: &str, d
     false
 }
 
-pub fn tick_cooldown_timer_and_check_expired(timer: &mut Timer, delta_time: f32) -> Option<String> {
+pub fn tick_cooldown_timer_and_check_expired(timer: &mut Timer, delta_time: f32) -> Option<String> { // Updates timer and state for non-active states that are in cooldown - Returns name of expired cooldown timer
     if timer.state != TimerState::InCooldown {
         return None;
     }
 
     timer.current_time += delta_time;
-
     if timer.current_time >= timer.cooldown_time {
         timer.current_time = 0.0;
-        timer.state = TimerState::Inactive;
+        timer.state = TimerState::Usable;
         return Some(timer.name.clone());
     }
 
     None
 }
 
-pub fn try_find_timer<'a>(timers: &'a mut [Timer], key: &str) -> &'a mut Timer 
-{
+pub fn try_find_timer<'a>(timers: &'a mut [Timer], key: &str) -> &'a mut Timer { // Finds requested timer
     for timer in timers.iter_mut() {
         if timer.name == key {
             return timer;
@@ -500,7 +484,7 @@ pub fn try_find_timer<'a>(timers: &'a mut [Timer], key: &str) -> &'a mut Timer
     panic!("Timer not found: {}", key);
 }
 
-pub fn tick_stateless_cooldown_timer_and_check_expired(timer: &mut StatelessTimer, delta_time: f32) -> Option<String> {
+pub fn tick_stateless_cooldown_timer_and_check_expired(timer: &mut StatelessTimer, delta_time: f32) -> Option<String> { // Updates timer for stateless states that are in cooldown - Returns name of expired cooldown timer
     if timer.state != StatelessTimerState::InCooldown {
         return None;
     }
@@ -508,15 +492,14 @@ pub fn tick_stateless_cooldown_timer_and_check_expired(timer: &mut StatelessTime
     timer.current_time += delta_time;
     if timer.current_time >= timer.cooldown_time {
         timer.current_time = 0.0;
-        timer.state = StatelessTimerState::Inactive;
+        timer.state = StatelessTimerState::Useable;
         return Some(timer.name.clone());
     }
 
     None
 }
 
-pub fn try_find_stateless_timer<'a>(timers: &'a mut [StatelessTimer], key: &str) -> &'a mut StatelessTimer 
-{
+pub fn try_find_stateless_timer<'a>(timers: &'a mut [StatelessTimer], key: &str) -> &'a mut StatelessTimer { // Finds requested timer
     for timer in timers.iter_mut() {
         if timer.name == key {
             return timer;

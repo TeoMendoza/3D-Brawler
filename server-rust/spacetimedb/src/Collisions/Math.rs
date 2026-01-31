@@ -31,6 +31,8 @@ pub fn negate(vector: DbVector3) -> DbVector3 { DbVector3 { x: -vector.x, y: -ve
 
 pub fn triple_cross(vector_a: DbVector3, vector_b: DbVector3, vector_c: DbVector3) -> DbVector3 { cross(cross(vector_a, vector_b), vector_c) }
 
+pub fn near_zero(vector: DbVector3) -> bool { length_sq(vector) <= 1e-12 }
+
 pub fn normalize_small_vector(v: DbVector3, fallback: DbVector3) -> DbVector3 {
     let mag_sq: f32 = length_sq(v);
     if mag_sq <= 1e-12 { return fallback; }
@@ -51,8 +53,6 @@ pub fn normalize(v: DbVector3) -> DbVector3 {
     DbVector3 { x: v.x * inv_mag, y: v.y * inv_mag, z: v.z * inv_mag }
 }
 
-pub fn near_zero(vector: DbVector3) -> bool { length_sq(vector) <= 1e-12 }
-
 pub fn perpendicular(vector: DbVector3) -> DbVector3 {
     if vector.x.abs() > vector.z.abs() { return DbVector3 { x: -vector.y, y: vector.x, z: 0.0 }; }
     DbVector3 { x: 0.0, y: -vector.z, z: vector.y }
@@ -71,4 +71,34 @@ pub fn rotate_around_y_axis(vector: DbVector3, yaw_radians: f32) -> DbVector3 {
 pub fn get_collider_center_world(collider: &ComplexCollider, position: DbVector3, yaw_radians: f32) -> DbVector3 {
     let rotated_center = rotate_around_y_axis(collider.center_point, yaw_radians);
     add(position, rotated_center)
+}
+
+pub fn compute_contact_normal(raw_normal: DbVector3, center_a: DbVector3, center_b: DbVector3) -> DbVector3 { // Orients collision normal outward towards target (center_a) - Rounds normals to approximate collisions
+    let mut normal = raw_normal;
+    if dot(normal, normal) < 1e-6 { return DbVector3 { x: 0.0, y: 1.0, z: 0.0 }; }
+    normal = normalize(normal);
+
+    let center_delta = sub(center_a, center_b);
+    let center_delta_sq: f32 = dot(center_delta, center_delta);
+
+    if center_delta_sq > 1e-8 {
+        if dot(normal, center_delta) < 0.0 { normal = negate(normal); }
+    }
+
+    let world_up = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
+    let up_dot: f32 = dot(normal, world_up);
+
+    let floor_snap_dot: f32 = 0.98;
+    let ceiling_snap_dot: f32 = -0.98;
+    let wall_snap_abs_dot: f32 = 0.05;
+
+    if up_dot >= floor_snap_dot { return world_up; } // Floor collision
+    if up_dot <= ceiling_snap_dot { return negate(world_up); } // Ceiling collision
+
+    if up_dot.abs() <= wall_snap_abs_dot { // Wall collision
+        normal.y = 0.0;
+        return normalize(normal);
+    }
+
+    normal
 }

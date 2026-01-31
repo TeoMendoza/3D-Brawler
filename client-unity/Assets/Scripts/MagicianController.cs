@@ -281,7 +281,7 @@ public class MagicianController : MonoBehaviour
             Animator.SetBool("Grounded", Grounded);
         }
 
-        DbVector3 AnimationVelocity = newChar.Velocity;
+        DbVector3 AnimationVelocity = newChar.RequestedVelocity;
         Vector3 vWorld = new(AnimationVelocity.X, 0f, AnimationVelocity.Z);
         Quaternion yawOnly = Quaternion.Euler(0f, newChar.Rotation.Yaw, 0f);
         Vector3 vLocal = Quaternion.Inverse(yawOnly) * vWorld;

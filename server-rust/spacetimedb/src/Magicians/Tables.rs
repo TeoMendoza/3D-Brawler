@@ -9,7 +9,7 @@ pub struct Magician {
     pub name: String,
     pub position: DbVector3,
     pub rotation: DbRotation2,
-    pub velocity: DbVector3,
+    pub requested_velocity: DbVector3,
     pub corrected_velocity: DbVector3,
     pub collider: ComplexCollider,
     pub collision_entries: Vec<CollisionEntry>,
@@ -21,8 +21,7 @@ pub struct Magician {
     pub stateless_timers: Vec<StatelessTimer>,
     pub timers: Vec<Timer>,
     pub bullets: Vec<ThrowingCard>,
-    pub bullet_capacity: i32,
-    pub effects: Vec<Effect>,   
+    pub bullet_capacity: u8,
 }
 
 #[table(name = move_all_magicians, scheduled(move_magicians))]
@@ -30,7 +29,7 @@ pub struct MoveAllMagiciansTimer {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,
     pub tick_rate: f32,
-    #[unique] pub game_id: u32,
+    #[unique] pub game_id: u32, // One timer per game
 }
 
 #[table(name = gravity_magician, scheduled(apply_gravity_magician))]
@@ -39,7 +38,7 @@ pub struct GravityTimerMagician {
     pub scheduled_at: ScheduleAt,
     pub tick_rate: f32,
     pub gravity: f32,
-    #[unique] pub game_id: u32,
+    #[unique] pub game_id: u32, // One timer per game
 }
 
 #[table(name = handle_magician_timers_timer, scheduled(handle_magician_timers))]
@@ -47,7 +46,7 @@ pub struct HandleMagicianTimersTimer {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,
     pub tick_rate: f32,
-    #[unique] pub game_id: u32,
+    #[unique] pub game_id: u32, // One timer per game
 }
 
 #[table(name = handle_magician_stateless_timers_timer, scheduled(handle_magician_stateless_timers))]
@@ -55,5 +54,5 @@ pub struct HandleMagicianStatelessTimersTimer {
     #[primary_key] #[auto_inc] pub scheduled_id: u64,
     pub scheduled_at: ScheduleAt,
     pub tick_rate: f32,
-    #[unique] pub game_id: u32,
+    #[unique] pub game_id: u32, // One timer per game
 }

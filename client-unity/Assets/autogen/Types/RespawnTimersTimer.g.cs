@@ -15,34 +15,29 @@ namespace SpacetimeDB.Types
     {
         [DataMember(Name = "scheduled_id")]
         public ulong ScheduledId;
-        [DataMember(Name = "scheduled_at")]
-        public SpacetimeDB.ScheduleAt ScheduledAt;
         [DataMember(Name = "game_id")]
         public uint GameId;
-        [DataMember(Name = "player")]
-        public Player Player;
         [DataMember(Name = "identity")]
         public SpacetimeDB.Identity Identity;
+        [DataMember(Name = "scheduled_at")]
+        public SpacetimeDB.ScheduleAt ScheduledAt;
 
         public RespawnTimersTimer(
             ulong ScheduledId,
-            SpacetimeDB.ScheduleAt ScheduledAt,
             uint GameId,
-            Player Player,
-            SpacetimeDB.Identity Identity
+            SpacetimeDB.Identity Identity,
+            SpacetimeDB.ScheduleAt ScheduledAt
         )
         {
             this.ScheduledId = ScheduledId;
-            this.ScheduledAt = ScheduledAt;
             this.GameId = GameId;
-            this.Player = Player;
             this.Identity = Identity;
+            this.ScheduledAt = ScheduledAt;
         }
 
         public RespawnTimersTimer()
         {
             this.ScheduledAt = null!;
-            this.Player = new();
         }
     }
 }

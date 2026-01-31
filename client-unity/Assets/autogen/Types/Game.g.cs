@@ -15,24 +15,24 @@ namespace SpacetimeDB.Types
     {
         [DataMember(Name = "id")]
         public uint Id;
+        [DataMember(Name = "in_progress")]
+        public bool InProgress;
         [DataMember(Name = "max_players")]
         public uint MaxPlayers;
         [DataMember(Name = "current_players")]
         public uint CurrentPlayers;
-        [DataMember(Name = "in_progress")]
-        public bool InProgress;
 
         public Game(
             uint Id,
+            bool InProgress,
             uint MaxPlayers,
-            uint CurrentPlayers,
-            bool InProgress
+            uint CurrentPlayers
         )
         {
             this.Id = Id;
+            this.InProgress = InProgress;
             this.MaxPlayers = MaxPlayers;
             this.CurrentPlayers = CurrentPlayers;
-            this.InProgress = InProgress;
         }
 
         public Game()

@@ -15,20 +15,20 @@ namespace SpacetimeDB.Types
     {
         [DataMember(Name = "scheduled_id")]
         public ulong ScheduledId;
-        [DataMember(Name = "scheduled_at")]
-        public SpacetimeDB.ScheduleAt ScheduledAt;
         [DataMember(Name = "game_id")]
         public uint GameId;
+        [DataMember(Name = "scheduled_at")]
+        public SpacetimeDB.ScheduleAt ScheduledAt;
 
         public GameTimersTimer(
             ulong ScheduledId,
-            SpacetimeDB.ScheduleAt ScheduledAt,
-            uint GameId
+            uint GameId,
+            SpacetimeDB.ScheduleAt ScheduledAt
         )
         {
             this.ScheduledId = ScheduledId;
-            this.ScheduledAt = ScheduledAt;
             this.GameId = GameId;
+            this.ScheduledAt = ScheduledAt;
         }
 
         public GameTimersTimer()
