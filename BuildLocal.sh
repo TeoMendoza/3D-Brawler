@@ -5,21 +5,25 @@ DatabaseName="bash"
 LocalServerUrl="http://127.0.0.1:3000"
 
 RunUnitTests="false"
-UseMainCloud="false"
+DeployToSelfHost="false"
 
 for Argument in "$@"; do
   case "$Argument" in
     --unit) RunUnitTests="true" ;;
-    --main) UseMainCloud="true" ;;
+    --deploy) DeployToSelfHost="true" ;;
     *)
       echo "Unknown argument: $Argument"
       echo "Valid arguments:"
       echo "  --unit"
-      echo "  --main"
+      echo "  --deploy"
       exit 1
       ;;
   esac
 done
+
+if [ "$DeployToSelfHost" = "true" ]; then
+  RunUnitTests="true"
+fi
 
 ScriptDirectory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RepoRootDirectory="$ScriptDirectory"
@@ -79,29 +83,50 @@ RunQuietInDir() {
   }
 }
 
-PublishDatabase() {
-  local ServerNickname="$1"
-  local TargetDatabaseName="$2"
-
-  if [ "$ServerNickname" = "maincloud" ]; then
-    RunQuietInDir "Publishing to MAINCLOUD DB '$TargetDatabaseName'..." "$SpacetimeDbDirectory" \
-      spacetime publish --server "$ServerNickname" "$TargetDatabaseName" --delete-data
-  else
-    RunQuietInDir "Publishing to LOCAL DB '$TargetDatabaseName'..." "$SpacetimeDbDirectory" \
-      bash -lc "printf 'y\n' | spacetime publish --server '$ServerNickname' '$TargetDatabaseName' --delete-data"
-  fi
-
-  echo "  Published: $ServerNickname/$TargetDatabaseName"
+PromptYesNo() {
+  local PromptText="$1"
+  local Response
+  printf "%s [y/N]: " "$PromptText"
+  read -r Response || true
+  case "$Response" in
+    y|Y|yes|YES|Yes) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
-DeleteDatabase() {
-  local ServerNickname="$1"
-  local TargetDatabaseName="$2"
+ConfirmSelfHostDeployOrExit() {
+  PrintBlankLine
+  echo "Self-host deployment confirmation"
+  echo "  Target server: self-host"
+  echo "  Target database: $DatabaseName"
+  echo "  Action: publish module and DELETE ALL existing data"
+  PrintBlankLine
+  if ! PromptYesNo "Proceed with self-host deploy?"; then
+    echo "Aborted."
+    exit 1
+  fi
+  PrintBlankLine
+}
 
-  RunQuietInDir "Deleting DB '$TargetDatabaseName' on '$ServerNickname'..." "$SpacetimeDbDirectory" \
-    bash -lc "printf 'y\n' | spacetime delete --server '$ServerNickname' '$TargetDatabaseName'"
+PublishDatabaseLocal() {
+  local TargetDatabaseName="$1"
+  RunQuietInDir "Publishing to LOCAL DB '$TargetDatabaseName'..." "$SpacetimeDbDirectory" \
+    bash -lc "printf 'y\n' | spacetime publish --server 'local' '$TargetDatabaseName' --delete-data"
+  echo "  Published: local/$TargetDatabaseName"
+}
 
-  echo "  Deleted: $ServerNickname/$TargetDatabaseName"
+PublishDatabaseSelfHost() {
+  local TargetDatabaseName="$1"
+  RunQuietInDir "Publishing to SELF-HOST DB '$TargetDatabaseName'..." "$SpacetimeDbDirectory" \
+    bash -lc "printf 'y\n' | spacetime publish --server 'self-host' '$TargetDatabaseName' --delete-data"
+  echo "  Published: self-host/$TargetDatabaseName"
+}
+
+DeleteDatabaseLocal() {
+  local TargetDatabaseName="$1"
+  RunQuietInDir "Deleting DB '$TargetDatabaseName' on 'local'..." "$SpacetimeDbDirectory" \
+    bash -lc "printf 'y\n' | spacetime delete --server 'local' '$TargetDatabaseName'"
+  echo "  Deleted: local/$TargetDatabaseName"
 }
 
 RunTestsAgainstDatabase() {
@@ -113,12 +138,20 @@ RunTestsAgainstDatabase() {
   )
 }
 
+StartSelfHostDocker() {
+  local DockerDirectory
+  DockerDirectory="$(cd "$RepoRootDirectory/.." && cd "Docker" && pwd)"
+  RunQuietInDir "Starting self-host Docker Compose..." "$DockerDirectory" \
+    docker compose up -d
+  echo "  Self-host Docker Compose started"
+}
+
 PrintBlankLine
 echo "Configuration"
 echo "  Repo: $RepoRootDirectory"
 echo "  Local server: $LocalServerUrl"
 echo "  Run unit tests: $RunUnitTests"
-echo "  Publish target: $(if [ "$UseMainCloud" = "true" ]; then echo "maincloud"; else echo "local"; fi)"
+echo "  Deploy to self-host: $DeployToSelfHost"
 echo "  Real DB name: $DatabaseName"
 if [ "$RunUnitTests" = "true" ]; then
   echo "  Test DB name: $TestDatabaseName"
@@ -139,33 +172,35 @@ PrintBlankLine
 
 if [ "$RunUnitTests" = "true" ]; then
   echo "Step 3: publish to temporary local test DB '$TestDatabaseName'"
-  PublishDatabase "local" "$TestDatabaseName"
+  PublishDatabaseLocal "$TestDatabaseName"
   PrintBlankLine
 
-  echo "Step 4: run unit/integration tests against '$TestDatabaseName'"
-  (
-    export SpacetimeDatabaseName="$TestDatabaseName"
-    bash "$UnitTestsScriptPath"
-  )
+  RunTestsAgainstDatabase "$TestDatabaseName"
   PrintBlankLine
 
   echo "Step 5: delete temporary local test DB '$TestDatabaseName'"
-  DeleteDatabase "local" "$TestDatabaseName"
+  DeleteDatabaseLocal "$TestDatabaseName"
   PrintBlankLine
 
-  if [ "$UseMainCloud" = "true" ]; then
-    echo "Step 6: publish to MAINCLOUD real DB '$DatabaseName' (manual confirmation required)"
-    echo "  WARNING: This will destroy ALL data in MAINCLOUD DB '$DatabaseName'."
+  if [ "$DeployToSelfHost" = "true" ]; then
+    echo "Step 6: start self-host Docker Compose"
+    StartSelfHostDocker
     PrintBlankLine
-    PublishDatabase "maincloud" "$DatabaseName"
+
+    echo "Step 7: confirm self-host deploy"
+    ConfirmSelfHostDeployOrExit
+
+    echo "Step 8: publish to SELF-HOST real DB '$DatabaseName'"
+    PublishDatabaseSelfHost "$DatabaseName"
+    PrintBlankLine
   else
     echo "Step 6: publish to LOCAL real DB '$DatabaseName'"
-    PublishDatabase "local" "$DatabaseName"
+    PublishDatabaseLocal "$DatabaseName"
+    PrintBlankLine
   fi
-  PrintBlankLine
 else
   echo "Step 3: publish to local DB '$DatabaseName'"
-  PublishDatabase "local" "$DatabaseName"
+  PublishDatabaseLocal "$DatabaseName"
   PrintBlankLine
 fi
 

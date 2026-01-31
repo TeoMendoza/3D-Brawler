@@ -1,0 +1,40 @@
+Bash Instructions File - In This File You Will Find Documentation On Two Things
+    1. How To Do Automatic Deployment To Both Main And Local Servers - Unit Tests Included
+    2. How To Do Manual Deployment To Both Main And Local Servers - Unit Tests Not Included
+
+
+Automatic Publish Guide (Recommended):
+
+    Publish Module To Self-Host (LAN - Unit Tests Required):
+        1. Start Spacetime Locally - spacetime start
+        2. Run Deploy Build - bash build --deploy
+        3. Confirm Database Publish - terminal prompt
+    
+    Publish Module To Local Host With Unit Tests:
+        1. Start Spacetime Locally - spacetime start
+        2. Run Local Build - bash build --unity
+
+    Publish Module To Local Host:
+        1. Start Spacetime Locally - spacetime start
+        2. Run Local Build - bash build
+
+Manual Publish Guide: 
+
+    Publish Module To Self-Host (LAN):
+        1. Check Rust Module Compiles - spacetime build
+        2. Generate C# Unity Bindings - spacetime generate --lang csharp --out-dir ../../client-unity/Assets/autogen
+        3. Start Docker Image - "docker compose up -d" or start on docker desktop
+        4. Put URL In Game Manager Script In SERVER_URL Variable
+        5. Publish Database Module (Optional) - spacetime publish --server self-host bash --delete-data (delete data optional)
+        6. Close Docker Image - "docker compose down" or close on docker desktop
+
+    Publish Module To Local Host:
+        1. Start Spacetime Locally - spacetime start
+        2. Check Rust Module Compiles - spacetime build
+        3. Generate C# Unity Bindings - spacetime generate --lang csharp --out-dir ../../client-unity/Assets/autogen
+        4. Publish Module Locally - spacetime publish --server local 3dbrawler --delete-data
+
+    Publish Module To Maincloud (Obsolete - Please Use Self Host To Deploy):
+        1. Check Rust Module Compiles - spacetime build
+        2. Generate C# Unity Bindings - spacetime generate --lang csharp --out-dir ../../client-unity/Assets/autogen
+        3. spacetime publish --server maincloud 3dbrawler --delete-data
