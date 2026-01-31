@@ -25,8 +25,8 @@ namespace SpacetimeDB.Types
         public DbVector3 Position;
         [DataMember(Name = "rotation")]
         public DbRotation2 Rotation;
-        [DataMember(Name = "velocity")]
-        public DbVector3 Velocity;
+        [DataMember(Name = "requested_velocity")]
+        public DbVector3 RequestedVelocity;
         [DataMember(Name = "corrected_velocity")]
         public DbVector3 CorrectedVelocity;
         [DataMember(Name = "collider")]
@@ -51,8 +51,6 @@ namespace SpacetimeDB.Types
         public System.Collections.Generic.List<ThrowingCard> Bullets;
         [DataMember(Name = "bullet_capacity")]
         public byte BulletCapacity;
-        [DataMember(Name = "effects")]
-        public System.Collections.Generic.List<Effect> Effects;
 
         public Magician(
             SpacetimeDB.Identity Identity,
@@ -61,7 +59,7 @@ namespace SpacetimeDB.Types
             string Name,
             DbVector3 Position,
             DbRotation2 Rotation,
-            DbVector3 Velocity,
+            DbVector3 RequestedVelocity,
             DbVector3 CorrectedVelocity,
             ComplexCollider Collider,
             System.Collections.Generic.List<CollisionEntry> CollisionEntries,
@@ -73,8 +71,7 @@ namespace SpacetimeDB.Types
             System.Collections.Generic.List<StatelessTimer> StatelessTimers,
             System.Collections.Generic.List<Timer> Timers,
             System.Collections.Generic.List<ThrowingCard> Bullets,
-            byte BulletCapacity,
-            System.Collections.Generic.List<Effect> Effects
+            byte BulletCapacity
         )
         {
             this.Identity = Identity;
@@ -83,7 +80,7 @@ namespace SpacetimeDB.Types
             this.Name = Name;
             this.Position = Position;
             this.Rotation = Rotation;
-            this.Velocity = Velocity;
+            this.RequestedVelocity = RequestedVelocity;
             this.CorrectedVelocity = CorrectedVelocity;
             this.Collider = Collider;
             this.CollisionEntries = CollisionEntries;
@@ -96,7 +93,6 @@ namespace SpacetimeDB.Types
             this.Timers = Timers;
             this.Bullets = Bullets;
             this.BulletCapacity = BulletCapacity;
-            this.Effects = Effects;
         }
 
         public Magician()
@@ -104,7 +100,7 @@ namespace SpacetimeDB.Types
             this.Name = "";
             this.Position = new();
             this.Rotation = new();
-            this.Velocity = new();
+            this.RequestedVelocity = new();
             this.CorrectedVelocity = new();
             this.Collider = new();
             this.CollisionEntries = new();
@@ -114,7 +110,6 @@ namespace SpacetimeDB.Types
             this.StatelessTimers = new();
             this.Timers = new();
             this.Bullets = new();
-            this.Effects = new();
         }
     }
 }

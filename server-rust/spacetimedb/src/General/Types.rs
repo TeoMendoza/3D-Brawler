@@ -34,6 +34,8 @@ pub struct MovementRequest {
 #[derive(SpacetimeType, Clone, Debug)]
 pub enum CharacterType {
     Magician,
+    Hunter, // 2nd character to be added
+    Monk // 3rd character to be added
 }
 
 #[derive(SpacetimeType, Clone, Debug)]
@@ -47,7 +49,7 @@ pub struct Timer {
 
 #[derive(SpacetimeType, Clone, Debug, Eq, PartialEq)]
 pub enum TimerState {
-    Inactive,
+    Usable,
     InUse,
     InCooldown
 }
@@ -63,6 +65,6 @@ pub struct StatelessTimer {
 
 #[derive(SpacetimeType, Clone, Debug, Eq, PartialEq)]
 pub enum StatelessTimerState {
-    Inactive,
+    Useable,
     InCooldown
 }

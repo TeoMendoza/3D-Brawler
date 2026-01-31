@@ -1,6 +1,6 @@
 use crate::*;
 
-pub fn solve_gjk(collider_a: &Vec<ConvexHullCollider>, position_a: DbVector3, yaw_radians_a: f32, collider_b: &Vec<ConvexHullCollider>, position_b: DbVector3, yaw_radians_b: f32, result_out: &mut GjkResult, max_iterations: i32) -> bool {
+pub fn solve_gjk(collider_a: &Vec<ConvexHullCollider>, position_a: DbVector3, yaw_radians_a: f32, collider_b: &Vec<ConvexHullCollider>, position_b: DbVector3, yaw_radians_b: f32, result_out: &mut GjkResult, max_iterations: i32) -> bool { // Returns whether two objects are colliding with information to rebuild accurate normal and depth
     let mut simplex: Vec<GjkVertex> = Vec::with_capacity(4);
     let mut search_direction = DbVector3 { x: 0.0, y: 0.0, z: 1.0 };
 

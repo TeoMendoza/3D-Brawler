@@ -9,7 +9,7 @@ pub struct Magician {
     pub name: String,
     pub position: DbVector3,
     pub rotation: DbRotation2,
-    pub velocity: DbVector3,
+    pub requested_velocity: DbVector3,
     pub corrected_velocity: DbVector3,
     pub collider: ComplexCollider,
     pub collision_entries: Vec<CollisionEntry>,
@@ -22,7 +22,6 @@ pub struct Magician {
     pub timers: Vec<Timer>,
     pub bullets: Vec<ThrowingCard>,
     pub bullet_capacity: u8,
-    pub effects: Vec<Effect>,   
 }
 
 #[table(name = move_all_magicians, scheduled(move_magicians))]

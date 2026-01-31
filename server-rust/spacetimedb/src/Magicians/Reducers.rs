@@ -2,14 +2,13 @@ use spacetimedb::{reducer, Identity, ReducerContext};
 use crate::*;
 
 #[reducer]
-pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementRequest) // Handles player request for movement and looking
-{
+pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementRequest) { // Handles player request for movement and looking
     let magician_option = ctx.db.magician().identity().find(ctx.sender);
     if magician_option.is_none() { return; }
     let mut magician = magician_option.unwrap();
 
     magician.rotation = request.aim;
-    magician.velocity = DbVector3 { x: 0.0, y: magician.velocity.y, z: 0.0 }; // Y velocity processed in gravity reducer
+    magician.requested_velocity = DbVector3 { x: 0.0, y: magician.requested_velocity.y, z: 0.0 }; // Y velocity processed in gravity reducer
     magician.kinematic_information.jump = false;
 
     let speed_mutiplier = magician.combat_information.speed_multiplier;
@@ -51,16 +50,16 @@ pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementR
         let world_x: f32 = cos_yaw * local_x + sin_yaw * local_z;
         let world_z: f32 = -sin_yaw * local_x + cos_yaw * local_z;
 
-        magician.velocity = DbVector3 { x: world_x, y: magician.velocity.y, z: world_z }; // Converts where player is looking into properly adjusted world speeds
+        magician.requested_velocity = DbVector3 { x: world_x, y: magician.requested_velocity.y, z: world_z }; // Converts where player is looking into properly adjusted world speeds
     }
 
     if is_permission_unblocked(&magician.permissions, "CanJump") && request.jump && stunned == false {
         magician.kinematic_information.jump = true;
-        magician.velocity.y = 7.5;
+        magician.requested_velocity.y = 7.5;
     }
 
     if is_permission_unblocked(&magician.permissions, "CanCrouch") && request.crouch && stunned == false {
-        magician.velocity = DbVector3 { x: magician.velocity.x * 0.5, y: magician.velocity.y, z: magician.velocity.z * 0.5 };
+        magician.requested_velocity = DbVector3 { x: magician.requested_velocity.x * 0.5, y: magician.requested_velocity.y, z: magician.requested_velocity.z * 0.5 };
         magician.kinematic_information.crouched = true;
         add_subscriber_to_permission(&mut magician.permissions, "CanRun", "Crouch"); // Can't sprint while crouching
     }
@@ -70,13 +69,12 @@ pub fn handle_movement_request_magician(ctx: &ReducerContext, request: MovementR
         remove_subscriber_from_permission(&mut magician.permissions, "CanRun", "Crouch"); // Sprint permission block removed
     }
 
-    magician.velocity = if taroted { DbVector3 { x: magician.velocity.x * speed_mutiplier * -1.0, y: magician.velocity.y, z: magician.velocity.z * speed_mutiplier -1.0 } } else { DbVector3 { x: magician.velocity.x * speed_mutiplier, y: magician.velocity.y, z: magician.velocity.z * speed_mutiplier } }; // Reverses movement if taroted
+    magician.requested_velocity = if taroted { DbVector3 { x: magician.requested_velocity.x * speed_mutiplier * -1.0, y: magician.requested_velocity.y, z: magician.requested_velocity.z * speed_mutiplier -1.0 } } else { DbVector3 { x: magician.requested_velocity.x * speed_mutiplier, y: magician.requested_velocity.y, z: magician.requested_velocity.z * speed_mutiplier } }; // Reverses movement if taroted
     ctx.db.magician().identity().update(magician);
 }
 
 #[reducer]
-pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: ActionRequestMagician) // Handles player request for action state - State cases: full block, interuptable, interuptable with cooldown
-{
+pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: ActionRequestMagician) { // Handles player request for action state - State cases: full block, interuptable, interuptable with cooldown
     let magician_option = ctx.db.magician().identity().find(ctx.sender);
     if magician_option.is_none() { return; }
     let mut magician = magician_option.unwrap();
@@ -146,8 +144,7 @@ pub fn handle_action_change_request_magician(ctx: &ReducerContext, request: Acti
 }
 
 #[reducer]
-pub fn handle_stateless_action_request_magician(ctx: &ReducerContext, request: StatelessActionRequestMagician) // Handles player request for state that does not have a consume/use time
-{
+pub fn handle_stateless_action_request_magician(ctx: &ReducerContext, request: StatelessActionRequestMagician) { // Handles player request for state that does not have a consume/use time
     let magician_option = ctx.db.magician().identity().find(ctx.sender);
     if magician_option.is_none() { return; }
     let mut magician = magician_option.unwrap();
@@ -232,7 +229,7 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
         }
 
         for i in 0..magician.timers.len() { // Case: inactive state(s)
-            if let Some(expired_timer_name) = tick_cooldown_timer_and_check_expired(&mut magician.timers[i], time) { // Checks if cooldown time is over, resets permissions accordingly
+            if let Some(expired_timer_name) = tick_cooldown_timer_and_check_expired(&mut magician.timers[i], time) { // Checks if cooldown time is over, resets self-block permission accordingly
                 match expired_timer_name.as_str() {
                     "Attack" => remove_subscriber_from_permission(&mut magician.permissions, "CanAttack", "Attack"),
                     "Reload" => remove_subscriber_from_permission(&mut magician.permissions, "CanReload", "Reload"),
@@ -249,12 +246,11 @@ pub fn handle_magician_timers(ctx: &ReducerContext, timer: HandleMagicianTimersT
 }
 
 #[reducer]
-pub fn handle_magician_stateless_timers(ctx: &ReducerContext, timer: HandleMagicianStatelessTimersTimer) // Handles timers for magician actionless states (stateless timers)
-{ 
+pub fn handle_magician_stateless_timers(ctx: &ReducerContext, timer: HandleMagicianStatelessTimersTimer) { // Handles timers for magician actionless states (stateless timers)
     let time = timer.tick_rate;
     for mut magician in ctx.db.magician().game_id().filter(timer.game_id) { 
         for i in 0..magician.stateless_timers.len() {
-            if let Some(expired_timer_name) = tick_stateless_cooldown_timer_and_check_expired(&mut magician.stateless_timers[i], time) { // Checks if cooldown time is over, resets permissions accordingly
+            if let Some(expired_timer_name) = tick_stateless_cooldown_timer_and_check_expired(&mut magician.stateless_timers[i], time) { // Checks if cooldown time is over, resets self-block permissions accordingly
                 match expired_timer_name.as_str() {
                     "Tarot" => remove_subscriber_from_permission(&mut magician.permissions, "CanTarot", "Tarot"),
                     _ => {}
@@ -268,16 +264,15 @@ pub fn handle_magician_stateless_timers(ctx: &ReducerContext, timer: HandleMagic
 }
 
 #[reducer]
-pub fn apply_gravity_magician(ctx: &ReducerContext, timer: GravityTimerMagician) // Applies gravity to players
-{
+pub fn apply_gravity_magician(ctx: &ReducerContext, timer: GravityTimerMagician) { // Applies gravity to players
     let time = timer.tick_rate;
     for mut character in ctx.db.magician().game_id().filter(timer.game_id) {
-        if character.velocity.y > -10.0 { 
-            character.velocity.y -= timer.gravity * time; 
+        if character.requested_velocity.y > -10.0 { 
+            character.requested_velocity.y -= timer.gravity * time; 
         }
 
         else { 
-            character.velocity.y = -10.0; // Max gravity to ensure no huge speeds when jumping from high places
+            character.requested_velocity.y = -10.0; // Max gravity to ensure no huge speeds when jumping from high places
         }
 
         ctx.db.magician().identity().update(character);
@@ -285,9 +280,8 @@ pub fn apply_gravity_magician(ctx: &ReducerContext, timer: GravityTimerMagician)
 }
 
 #[reducer]
-pub fn add_collision_entry_magician(ctx: &ReducerContext, entry: CollisionEntry, _target_identity: Identity) // Adds a collision entry to a magician - Collision entry can be thought of as a possible object colliding with the target player
-{
-    let magician_option = ctx.db.magician().id().find(entry.id); // Self collision registry blocked on client side - If entry.id poses issues, use target_identity (ctx.sender works except with test player since test player same ctx.sender)
+pub fn add_collision_entry_magician(ctx: &ReducerContext, entry: CollisionEntry, _target_identity: Identity) { // Adds a collision entry to a magician - Collision entry can be thought of as a possible object colliding with the target player
+    let magician_option = ctx.db.magician().identity().find(_target_identity); // Self collision registry blocked on client side - If entry.id poses issues, use target_identity (ctx.sender works except with test player since test player same ctx.sender)
     if let Some(mut magician) = magician_option {
         if magician.collision_entries.contains(&entry) == false { // No duplicate entries - Should not happen 
             magician.collision_entries.push(entry); 
@@ -298,9 +292,8 @@ pub fn add_collision_entry_magician(ctx: &ReducerContext, entry: CollisionEntry,
 }
 
 #[reducer]
-pub fn remove_collision_entry_magician(ctx: &ReducerContext, entry: CollisionEntry, _target_identity: Identity) // Removes a collision entry to a magician
-{
-     let magician_option = ctx.db.magician().id().find(entry.id); // If entry.id poses issues, use target_identity (ctx.sender works except with test player since test player same ctx.sender)
+pub fn remove_collision_entry_magician(ctx: &ReducerContext, entry: CollisionEntry, _target_identity: Identity) { // Removes a collision entry to a magician
+     let magician_option = ctx.db.magician().identity().find(_target_identity); // If entry.id poses issues, use target_identity (ctx.sender works except with test player since test player same ctx.sender)
      if let Some(mut magician) = magician_option { 
         if let Some(index) = magician.collision_entries.iter().position(|existing| *existing == entry) {
             magician.collision_entries.swap_remove(index);
@@ -311,9 +304,8 @@ pub fn remove_collision_entry_magician(ctx: &ReducerContext, entry: CollisionEnt
 }
 
 #[reducer]
-pub fn move_magicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) // Handles moving players - Collision detection and response handled in this reducer
-{
-    let tick_time: f32 = timer.tick_rate;
+pub fn move_magicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) { // Handles moving players - Collision detection and response handled in this reducer
+    let time: f32 = timer.tick_rate;
     let min_time_step: f32 = 1e-4;
     let max_substeps: i32 = 8; // Splits work into repeated smaller work to reduce phasing
 
@@ -321,7 +313,7 @@ pub fn move_magicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) // Han
         let was_grounded: bool = magician.kinematic_information.grounded; // Store previous tick grounded data - Used to prevent jitter switching between grounded and falling due to collision response
         magician.kinematic_information.grounded = false; // Grounded is false unless proven otherwise
         magician.is_colliding = false;
-        magician.corrected_velocity = magician.velocity; // Corrected velocity is what is used as the move velocity, .velocity is requested velocity - Requested velocity gets processed and adjusted to due collisions and output as a move velocity
+        magician.corrected_velocity = magician.requested_velocity; // Corrected velocity is what is used as the move velocity, .velocity is requested velocity - Requested velocity gets processed and adjusted to due collisions and output as a move velocity
 
         let mut pre_contacts: Vec<CollisionContact> = Vec::new();
         for entry in magician.collision_entries.iter() {
@@ -332,7 +324,7 @@ pub fn move_magicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) // Han
             resolve_contacts(&mut magician, &pre_contacts); // Resolves contacts at beginning of tick
         }
 
-        let mut remaining_time = tick_time; // Substep work begins here
+        let mut remaining_time = time; // Substep work begins here
         let mut substep_count: i32 = 0;
         let mut post_contacts: Vec<CollisionContact> = Vec::new();
 
@@ -340,7 +332,7 @@ pub fn move_magicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) // Han
             substep_count += 1;
             post_contacts.clear(); // Clears incase populated from last substep
             let step_time = remaining_time / ((max_substeps - substep_count + 1) as f32);
-            let move_velocity = if magician.is_colliding { magician.corrected_velocity } else { magician.velocity }; // If colliding we use corrected velocity, otherwise we can use requested
+            let move_velocity = if magician.is_colliding { magician.corrected_velocity } else { magician.requested_velocity }; // If colliding we use corrected velocity, otherwise we can use requested
             magician.position = add(magician.position, mul(move_velocity, step_time));
 
             let collision_entry_count: usize = magician.collision_entries.len();
@@ -362,7 +354,7 @@ pub fn move_magicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) // Han
             remaining_time -= step_time;
         }
 
-        let final_step_velocity = if magician.is_colliding { magician.corrected_velocity } else { magician.velocity }; // Grab final moving velocity after tick
+        let final_step_velocity = if magician.is_colliding { magician.corrected_velocity } else { magician.requested_velocity }; // Grab final moving velocity after tick
 
         let ground_stick_velocity_threshold: f32 = 2.0;
         let grounded_this_tick: bool = magician.kinematic_information.grounded; // Grounded after tick
@@ -377,20 +369,17 @@ pub fn move_magicians(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) // Han
 }
 
 #[reducer]
-pub fn move_magicians_lag_test(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) // Test reducer to see lag difference and effect between basic movement simulation and our current physics simulation
-{
-    let delta_time: f32 = timer.tick_rate;
-
+pub fn move_magicians_lag_test(ctx: &ReducerContext, timer: MoveAllMagiciansTimer) { // Test reducer to see lag difference and effect between basic movement simulation and our current physics simulation
+    let time: f32 = timer.tick_rate;
     for mut magician in ctx.db.magician().game_id().filter(timer.game_id) {
-        magician.position.x += magician.velocity.x * delta_time;
-        magician.position.y += magician.velocity.y * delta_time;
-        magician.position.z += magician.velocity.z * delta_time;
+        magician.position.x += magician.requested_velocity.x * time;
+        magician.position.y += magician.requested_velocity.y * time;
+        magician.position.z += magician.requested_velocity.z * time;
 
         if magician.position.y < 0.0 {
             magician.position.y = 0.0;
-
-            if magician.velocity.y < 0.0 {
-                magician.velocity.y = 0.0;
+            if magician.requested_velocity.y < 0.0 {
+                magician.requested_velocity.y = 0.0;
             }
         }
 
@@ -399,8 +388,7 @@ pub fn move_magicians_lag_test(ctx: &ReducerContext, timer: MoveAllMagiciansTime
 }
 
 #[reducer]
-pub fn hypnotise(ctx: &ReducerContext, camera_info: HypnosisCameraInformation) // Handles hypnosis ability camera information and subsequent effect application
-{
+pub fn hypnotise(ctx: &ReducerContext, camera_info: HypnosisCameraInformation) { // Handles hypnosis ability camera information and subsequent effect application
     let magician_option = ctx.db.magician().identity().find(ctx.sender);
     if magician_option.is_none() { return; }
     let mut magician = magician_option.unwrap();

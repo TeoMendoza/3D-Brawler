@@ -3,8 +3,7 @@ use crate::*;
 
 #[table(name = player_effects, index(name = target_and_type, btree(columns = [target_id, effect_type])), index(name = target_sender_and_type, btree(columns = [target_id, sender_id, effect_type])))]
 #[derive(Clone)]
-pub struct PlayerEffect
-{
+pub struct PlayerEffect {
     #[primary_key] #[unique] #[auto_inc] pub id: u64,
     #[index(btree)] pub target_id: u64,
     #[index(btree)] pub sender_id: u64,

@@ -1,6 +1,6 @@
 use crate::*;
 
-pub fn epa_solve(gjk: &GjkResult, collider_a: &Vec<ConvexHullCollider>, position_a: DbVector3, yaw_radians_a: f32, collider_b: &Vec<ConvexHullCollider>, position_b: DbVector3, yaw_radians_b: f32, contact_out: &mut Contact) -> bool {
+pub fn epa_solve(gjk: &GjkResult, collider_a: &Vec<ConvexHullCollider>, position_a: DbVector3, yaw_radians_a: f32, collider_b: &Vec<ConvexHullCollider>, position_b: DbVector3, yaw_radians_b: f32, contact_out: &mut Contact) -> bool { // Returns accurate collision normal and depth for two colliding objects
     let max_iterations: i32 = 16;
     let epsilon: f32 = 2e-3;
     let max_polytope_vertices: usize = 64;
@@ -180,32 +180,4 @@ pub fn add_edge_pair(edges: &mut Vec<(i32, i32)>, index_a: i32, index_b: i32) {
     edges.push((index_a, index_b));
 }
 
-pub fn compute_contact_normal(raw_normal: DbVector3, center_a: DbVector3, center_b: DbVector3) -> DbVector3 {
-    let mut normal = raw_normal;
-    if dot(normal, normal) < 1e-6 { return DbVector3 { x: 0.0, y: 1.0, z: 0.0 }; }
-    normal = normalize(normal);
 
-    let center_delta = sub(center_a, center_b);
-    let center_delta_sq: f32 = dot(center_delta, center_delta);
-
-    if center_delta_sq > 1e-8 {
-        if dot(normal, center_delta) < 0.0 { normal = negate(normal); }
-    }
-
-    let world_up = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
-    let up_dot: f32 = dot(normal, world_up);
-
-    let floor_snap_dot: f32 = 0.98;
-    let ceiling_snap_dot: f32 = -0.98;
-    let wall_snap_abs_dot: f32 = 0.05;
-
-    if up_dot >= floor_snap_dot { return world_up; }
-    if up_dot <= ceiling_snap_dot { return DbVector3 { x: 0.0, y: -1.0, z: 0.0 }; }
-
-    if up_dot.abs() <= wall_snap_abs_dot {
-        normal.y = 0.0;
-        return normalize(normal);
-    }
-
-    normal
-}

@@ -10,7 +10,7 @@ namespace SpacetimeDB.Types
     [SpacetimeDB.Type]
     public enum TimerState
     {
-        Inactive,
+        Usable,
         InUse,
         InCooldown,
     }

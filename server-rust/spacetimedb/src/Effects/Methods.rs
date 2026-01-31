@@ -6,8 +6,7 @@ use crate::*;
 // Effect Applications
 // -------------------
 
-pub fn apply_damage_effect_magician(ctx: &ReducerContext, magician: &mut Magician, damage_effect: &Option<DamageEffectInformation>)
-{
+pub fn apply_damage_effect_magician(ctx: &ReducerContext, magician: &mut Magician, damage_effect: &Option<DamageEffectInformation>) { // Applies damage effect
     log::info!("Apply Damage Effect Called");
     let damage = damage_effect.as_ref().expect("Damage Effect Must Have Information!");
     let combat_info = &mut magician.combat_information;
@@ -22,34 +21,29 @@ pub fn apply_damage_effect_magician(ctx: &ReducerContext, magician: &mut Magicia
     }
 }
 
-pub fn apply_dust_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _dust_effect: &Option<DustEffectInformation>) 
-{
+pub fn apply_dust_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _dust_effect: &Option<DustEffectInformation>) {
     log::info!("Apply Dust Effect Called");
     add_subscriber_to_permission(&mut target.permissions, "Dusted", "DustEffect"); // Dust application - Client will read and update visually
 }
 
-pub fn apply_cloak_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _loak_effect: &Option<CloakEffectInformation>) 
-{
+pub fn apply_cloak_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _loak_effect: &Option<CloakEffectInformation>) {
     log::info!("Apply Cloak Effect Called");
     add_subscriber_to_permission(&mut target.permissions, "Cloaked", "CloakEffect"); // Cloak application - Client will read and update visually
 }
 
-pub fn apply_speed_effect_magician(_ctx: &ReducerContext, target: &mut Magician, speed_effect: &Option<SpeedEffectInformation>) 
-{
+pub fn apply_speed_effect_magician(_ctx: &ReducerContext, target: &mut Magician, speed_effect: &Option<SpeedEffectInformation>) {
     log::info!("Apply Speed Effect Called");
     let speed = speed_effect.as_ref().expect("Speed Effect Must Have Information!");
     let combat_info = &mut target.combat_information;
     combat_info.speed_multiplier = speed.speed_multiplier; // Speed application - Modifies movement request speed server side
 }   
 
-pub fn apply_hypnosis_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _hypnosis_effect: &Option<HypnosisEffectInformation>) 
-{
+pub fn apply_hypnosis_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _hypnosis_effect: &Option<HypnosisEffectInformation>) {
     log::info!("Apply Hypnosis Effect Called");
     add_subscriber_to_permission(&mut target.permissions, "Hypnosised", "HypnosisEffect"); // Hypnosis application - Client will read and update visually
 }
 
-pub fn apply_stunned_effect_magician(ctx: &ReducerContext, target: &mut Magician, _stunned_effect: &Option<StunnedEffectInformation>) 
-{
+pub fn apply_stunned_effect_magician(ctx: &ReducerContext, target: &mut Magician, _stunned_effect: &Option<StunnedEffectInformation>) {
     log::info!("Apply Stunned Effect Called");
     add_subscriber_to_permission(&mut target.permissions, "Stunned", "StunEffect"); // Stun application - Client will read and update visually and block requests server side
 
@@ -58,14 +52,12 @@ pub fn apply_stunned_effect_magician(ctx: &ReducerContext, target: &mut Magician
     target.state = MagicianState::Stunned;
 }
 
-pub fn apply_tarot_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _tarot_effect: &Option<TarotEffectInformation>) 
-{
+pub fn apply_tarot_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _tarot_effect: &Option<TarotEffectInformation>) {
     log::info!("Apply Tarot Effect Called");
     add_subscriber_to_permission(&mut target.permissions, "Taroted", "TarotEffect"); // Tarot application - Reverses movement request server side
 }
 
-pub fn apply_invincible_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _invincible_effect: &Option<InvincibleEffectInformation>) 
-{
+pub fn apply_invincible_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _invincible_effect: &Option<InvincibleEffectInformation>) {
     log::info!("Apply Invincible Effect Called");
     add_subscriber_to_permission(&mut target.permissions, "Invincibled", "InvincibleEffect"); // Invincible application - Client will read and update visually
 }
@@ -75,28 +67,24 @@ pub fn apply_invincible_effect_magician(_ctx: &ReducerContext, target: &mut Magi
 // Effect Removals
 // ---------------
 
-pub fn undo_dust_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _dust_effect: &Option<DustEffectInformation>) 
-{
+pub fn undo_dust_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _dust_effect: &Option<DustEffectInformation>) {
     log::info!("Undo Dust Effect Called");
     remove_subscriber_from_permission(&mut target.permissions, "Dusted", "DustEffect"); // Dust undo - Client will read and update visually
 }
 
-pub fn undo_cloak_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _cloak_effect: &Option<CloakEffectInformation>) 
-{
+pub fn undo_cloak_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _cloak_effect: &Option<CloakEffectInformation>) {
     log::info!("Undo Cloak Effect Called");
     remove_subscriber_from_permission(&mut target.permissions, "Cloaked", "CloakEffect"); // Cloak undo - Client will read and update visually
 }
 
-pub fn undo_speed_effect_magician(_ctx: &ReducerContext, target: &mut Magician, speed_effect: &Option<SpeedEffectInformation>) 
-{
+pub fn undo_speed_effect_magician(_ctx: &ReducerContext, target: &mut Magician, speed_effect: &Option<SpeedEffectInformation>) {
     log::info!("Undo Speed Effect Called");
     let _speed = speed_effect.as_ref().expect("Speed Effect Must Have Information!");
     let combat_info = &mut target.combat_information;
     combat_info.speed_multiplier = 1.0; // Speed undo - Reverts movement request speed server side
 }
 
-pub fn undo_hypnosis_effect_magician(ctx: &ReducerContext, magician: &mut Magician, hypnosis_effect: &Option<HypnosisEffectInformation>) // Undoes hypnosis effect - Subsequently manually undoes stun effect if applicable
-{
+pub fn undo_hypnosis_effect_magician(ctx: &ReducerContext, magician: &mut Magician, hypnosis_effect: &Option<HypnosisEffectInformation>) { // Undoes hypnosis effect - Subsequently manually undoes stun effect if applicable
     log::info!("Undo Hypnosis Effect Called");
     let hypnosis = hypnosis_effect.as_ref().expect("Hypnosis Effect Must Have Information!");
     remove_subscriber_from_permission(&mut magician.permissions, "Hypnosised", "HypnosisEffect"); // Hypnosis undo - Client will read and update visually
@@ -119,14 +107,12 @@ pub fn undo_hypnosis_effect_magician(ctx: &ReducerContext, magician: &mut Magici
     }
 }
 
-pub fn undo_tarot_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _tarot_effect: &Option<TarotEffectInformation>) 
-{
+pub fn undo_tarot_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _tarot_effect: &Option<TarotEffectInformation>) {
     log::info!("Undo Tarot Effect Called");
     remove_subscriber_from_permission(&mut target.permissions, "Taroted", "TarotEffect"); // Tarot undo - Returns movement request back to normal server side
 }
 
-pub fn undo_invincible_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _invincible_effect: &Option<InvincibleEffectInformation>) 
-{
+pub fn undo_invincible_effect_magician(_ctx: &ReducerContext, target: &mut Magician, _invincible_effect: &Option<InvincibleEffectInformation>) {
     log::info!("Undo Invincible Effect Called");
     remove_subscriber_from_permission(&mut target.permissions, "Invincibled", "InvincibleEffect"); // Invincible undo - Client will read and update visually
 }
@@ -136,8 +122,7 @@ pub fn undo_invincible_effect_magician(_ctx: &ReducerContext, target: &mut Magic
 // Match Functions
 // ---------------
 
-pub fn match_and_apply_single_effect(ctx: &ReducerContext, target: &mut Magician, effect: &Effect) // Matches single effect with proper application logic
-{
+pub fn match_and_apply_single_effect(ctx: &ReducerContext, target: &mut Magician, effect: &Effect) { // Matches single effect with proper application logic
     match effect.effect_type {
         EffectType::Damage => { apply_damage_effect_magician(ctx, target, &effect.damage_information); },
 
@@ -145,8 +130,7 @@ pub fn match_and_apply_single_effect(ctx: &ReducerContext, target: &mut Magician
     }
 }
 
-pub fn match_and_apply_duration_effect(ctx: &ReducerContext, target: &mut Magician, effect: &Effect) // Matches duration effect with proper application logic
-{
+pub fn match_and_apply_duration_effect(ctx: &ReducerContext, target: &mut Magician, effect: &Effect) { // Matches duration effect with proper application logic
     match effect.effect_type {
         EffectType::Dust => { apply_dust_effect_magician(ctx, target, &effect.dust_information); },
 
@@ -164,15 +148,13 @@ pub fn match_and_apply_duration_effect(ctx: &ReducerContext, target: &mut Magici
     }
 }
 
-pub fn match_and_apply_reapply_effect(_ctx: &ReducerContext, _target: &mut Magician, effect: &Effect) // Matches reapply effect with proper application logic
-{
+pub fn match_and_apply_reapply_effect(_ctx: &ReducerContext, _target: &mut Magician, effect: &Effect) { // Matches reapply effect with proper application logic
     match effect.effect_type {
         _ => {}
     }
 }
 
-pub fn match_and_apply_indefinite_effect(ctx: &ReducerContext, target: &mut Magician, effect: &Effect) // Matches indefinite effect with proper application logic
-{
+pub fn match_and_apply_indefinite_effect(ctx: &ReducerContext, target: &mut Magician, effect: &Effect) { // Matches indefinite effect with proper application logic
     match effect.effect_type {
 
         EffectType::Stunned => { apply_stunned_effect_magician(ctx, target, &effect.stunned_information);}
@@ -182,8 +164,7 @@ pub fn match_and_apply_indefinite_effect(ctx: &ReducerContext, target: &mut Magi
 }
 
 
-pub fn match_and_undo_duration_effect(ctx: &ReducerContext, target: &mut Magician, effect: &Effect) // Matches duration effect with proper undo logic
-{
+pub fn match_and_undo_duration_effect(ctx: &ReducerContext, target: &mut Magician, effect: &Effect) { // Matches duration effect with proper undo logic
     match effect.effect_type {
         EffectType::Dust => { undo_dust_effect_magician(ctx, target, &effect.dust_information); },
 
@@ -201,8 +182,7 @@ pub fn match_and_undo_duration_effect(ctx: &ReducerContext, target: &mut Magicia
     }
 }
 
-pub fn match_and_undo_reapply_effect(_ctx: &ReducerContext, _target: &mut Magician, effect: &Effect) // Matches reapply effect with proper undo logic
-{
+pub fn match_and_undo_reapply_effect(_ctx: &ReducerContext, _target: &mut Magician, effect: &Effect) { // Matches reapply effect with proper undo logic
     match effect.effect_type {
         _ => {}
     }
@@ -214,8 +194,7 @@ pub fn match_and_undo_reapply_effect(_ctx: &ReducerContext, _target: &mut Magici
 // ------------------------------
 
 
-pub fn try_interrupt_cloak_and_speed_effects_magician(ctx: &ReducerContext, magician: &mut Magician) // Undoes magician cloak effects if existing
-{
+pub fn try_interrupt_cloak_and_speed_effects_magician(ctx: &ReducerContext, magician: &mut Magician) { // Undoes magician cloak effects if existing
     let mut cloak_iterator = ctx.db.player_effects().target_sender_and_type().filter((magician.id, magician.id, EffectType::Cloak));
     let mut speed_iterator = ctx.db.player_effects().target_sender_and_type().filter((magician.id, magician.id, EffectType::Speed));
 
@@ -240,10 +219,8 @@ pub fn try_interrupt_cloak_and_speed_effects_magician(ctx: &ReducerContext, magi
     }
 }
 
-pub fn try_interrupt_invincible_effect_magician(ctx: &ReducerContext, magician: &mut Magician) // Undoes magician invincible effect if existing
-{
+pub fn try_interrupt_invincible_effect_magician(ctx: &ReducerContext, magician: &mut Magician) { // Undoes magician invincible effect if existing
     let mut invincible_iterator = ctx.db.player_effects().target_sender_and_type().filter((magician.id, magician.id, EffectType::Invincible));
-
     let invincible_effect_option = match (invincible_iterator.next(), invincible_iterator.next()) {
         (None, _) => None,
         (Some(effect), None) => Some(effect),
@@ -255,30 +232,26 @@ pub fn try_interrupt_invincible_effect_magician(ctx: &ReducerContext, magician: 
     }
 }
 
-pub fn undo_and_delete_invincible_effect_magician(ctx: &ReducerContext, target: &mut Magician, invincible_effect_id: u64)
-{
+pub fn undo_and_delete_invincible_effect_magician(ctx: &ReducerContext, target: &mut Magician, invincible_effect_id: u64) {
     log::info!("Undo & Delete Invincible Effect Called");
     remove_subscriber_from_permission(&mut target.permissions, "Invincibled", "InvincibleEffect"); // Invincible undo - Client will read and update visually
     ctx.db.player_effects().id().delete(invincible_effect_id);
 }
 
-pub fn undo_and_delete_stunned_effect_magician(ctx: &ReducerContext, target: &mut Magician, stunned_effect_id: u64)
-{
+pub fn undo_and_delete_stunned_effect_magician(ctx: &ReducerContext, target: &mut Magician, stunned_effect_id: u64) {
     log::info!("Undo & Delete Stunned Effect Called");
     remove_subscriber_from_permission(&mut target.permissions, "Stunned", "StunEffect"); // Stun undo - Client will read and update visually and will unblock requests server side
     target.state = MagicianState::Default;
     ctx.db.player_effects().id().delete(stunned_effect_id);
 }
 
-pub fn undo_and_delete_cloak_effect_magician(ctx: &ReducerContext, target: &mut Magician, cloak_effect_id: u64)
-{
+pub fn undo_and_delete_cloak_effect_magician(ctx: &ReducerContext, target: &mut Magician, cloak_effect_id: u64) {
     log::info!("Undo & Delete Cloak Effect Called");
     remove_subscriber_from_permission(&mut target.permissions, "Cloaked", "CloakEffect"); // Cloak undo - Client will read and update visually
     ctx.db.player_effects().id().delete(cloak_effect_id);
 }
 
-pub fn undo_and_delete_speed_effect_magician(ctx: &ReducerContext, target: &mut Magician, speed_effect_id: u64) 
-{
+pub fn undo_and_delete_speed_effect_magician(ctx: &ReducerContext, target: &mut Magician, speed_effect_id: u64) {
     log::info!("Undo & Delete Speed Effect Called");
     let combat_info = &mut target.combat_information;
     combat_info.speed_multiplier = 1.0; // Speed undo - Reverts movement request speed server side

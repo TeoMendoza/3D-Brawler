@@ -116,7 +116,7 @@ pub fn try_leave_game(ctx: &ReducerContext) // Cleans up data related to player 
 #[reducer]
 pub fn handle_respawn(ctx: &ReducerContext, timer: RespawnTimersTimer) // Respawns player into game
 { 
-    let player_option = ctx.db.logged_in_players().identity().find(timer.player.identity); // Player not gauranteed to exist - Not sure if this is true, but case handled regardless
+    let player_option = ctx.db.logged_in_players().identity().find(timer.identity); // Player not gauranteed to exist - Not sure if this is true, but case handled regardless
     if let Some(player) = player_option {
         let game_option = ctx.db.game().id().find(timer.game_id);
         if game_option.is_some() {

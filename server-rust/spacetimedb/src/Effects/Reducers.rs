@@ -2,8 +2,7 @@ use spacetimedb::{reducer, ReducerContext, Table};
 use crate::*;
 
 #[reducer]
-pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTableTimer) // Handles effects on players in specified game - Effects Type Cases: single, duration, reapply, indefinite
-{
+pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTableTimer) { // Handles effects on players in specified game - Effects Type Cases: single, duration, reapply, indefinite
     let time = timer.tick_rate;
     for mut player_effect in ctx.db.player_effects().game_id().filter(timer.game_id) {
         let target_option = ctx.db.magician().id().find(player_effect.target_id);
@@ -18,7 +17,6 @@ pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTab
         let app_info = &mut player_effect.effect_info.application_information;
 
         match app_info.application_type {
-            
             ApplicationType::Single => { // Case: single - Single effects are applied once then subsequently deleted
                 match_and_apply_single_effect(ctx, &mut target, &player_effect_clone);
                 ctx.db.player_effects().id().delete(player_effect.id);
@@ -85,8 +83,7 @@ pub fn handle_player_effects_table(ctx: &ReducerContext, timer: PlayerEffectsTab
     }
 }
 
-pub fn add_effects_to_table(ctx: &ReducerContext, effects: Vec<Effect>, target_id: u64, sender_id: u64, game_id: u32) -> bool // Adds effect(s) to database - Insert blocked if invincible
-{
+pub fn add_effects_to_table(ctx: &ReducerContext, effects: Vec<Effect>, target_id: u64, sender_id: u64, game_id: u32) -> bool { // Adds effect(s) to database - Insert blocked if invincible
     let magician_option = ctx.db.magician().id().find(target_id);
     if let Some(magician) = magician_option {
         if is_permission_unblocked(&magician.permissions, "Invincibled") { // If target is invincible, skip effect inserts

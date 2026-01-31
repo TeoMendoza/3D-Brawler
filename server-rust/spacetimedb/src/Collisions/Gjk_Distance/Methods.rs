@@ -1,22 +1,6 @@
 use crate::*;
 
-pub fn compute_distance_and_unit_separation_from_closest_point(closest_minkowski_point: DbVector3, distance_out: &mut f32, separation_direction_out: &mut DbVector3) {
-    let len_sq: f32 = length_sq(closest_minkowski_point);
-
-    if len_sq <= 1e-12 {
-        *distance_out = 0.0;
-        *separation_direction_out = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
-        return;
-    }
-
-    let inv_len: f32 = 1.0 / len_sq.sqrt();
-    *distance_out = 1.0 / inv_len;
-
-    let direction = negate(closest_minkowski_point);
-    *separation_direction_out = DbVector3 { x: direction.x * inv_len, y: direction.y * inv_len, z: direction.z * inv_len };
-}
-
-pub fn solve_gjk_distance(collider_a: &ComplexCollider, position_a: DbVector3, yaw_radians_a: f32, collider_b: &ComplexCollider, position_b: DbVector3, yaw_radians_b: f32, result_out: &mut GjkDistanceResult, max_iterations: i32) -> bool {
+pub fn solve_gjk_distance(collider_a: &ComplexCollider, position_a: DbVector3, yaw_radians_a: f32, collider_b: &ComplexCollider, position_b: DbVector3, yaw_radians_b: f32, result_out: &mut GjkDistanceResult, max_iterations: i32) -> bool { // Returns approximate distance between two non-colliding objects (can be colliding but use case is non colliding)
     let progress_epsilon: f32 = 1e-4;
     let mut simplex: Vec<GjkVertex> = Vec::with_capacity(4);
     let mut search_direction = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
@@ -263,4 +247,20 @@ pub fn evaluate_face(face_a: GjkVertex, face_b: GjkVertex, face_c: GjkVertex, be
         *separation_direction_out = face_separation_direction;
         *closest_minkowski_point_out = face_closest_minkowski_point;
     }
+}
+
+pub fn compute_distance_and_unit_separation_from_closest_point(closest_minkowski_point: DbVector3, distance_out: &mut f32, separation_direction_out: &mut DbVector3) {
+    let len_sq: f32 = length_sq(closest_minkowski_point);
+
+    if len_sq <= 1e-12 {
+        *distance_out = 0.0;
+        *separation_direction_out = DbVector3 { x: 0.0, y: 1.0, z: 0.0 };
+        return;
+    }
+
+    let inv_len: f32 = 1.0 / len_sq.sqrt();
+    *distance_out = 1.0 / inv_len;
+
+    let direction = negate(closest_minkowski_point);
+    *separation_direction_out = DbVector3 { x: direction.x * inv_len, y: direction.y * inv_len, z: direction.z * inv_len };
 }
