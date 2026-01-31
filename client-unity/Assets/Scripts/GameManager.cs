@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    const string SERVER_URL = "http://127.0.0.1:3000"; // For Maincloud Milestone Playable Version Release: "https://maincloud.spacetimedb.com"; For Local Playable Version: "http://127.0.0.1:3000";
+    const string SERVER_URL = "http://127.0.0.1:3000"; // For Self-Host Playable Version (LAN - Must Reget IP For New Networks): Use "http://10.0.0.68:3000" For Solo Deploy Testing & Use Cloudflare Quicktunnel URL; For Maincloud Milestone Playable Version Release: "https://maincloud.spacetimedb.com"; For Local Playable Version: "http://127.0.0.1:3000";
     const string MODULE_NAME = "bash";
 
     public static event Action OnConnected;
